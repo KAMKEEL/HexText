@@ -5,6 +5,7 @@ import kamkeel.hextext.client.FontRendererUtils;
 import kamkeel.hextext.client.RenderInstruction;
 import kamkeel.hextext.client.RenderTextData;
 import kamkeel.hextext.client.RenderTextProcessor;
+import kamkeel.hextext.client.TextEffectController;
 import kamkeel.hextext.client.TokenHighlight;
 import kamkeel.hextext.client.TokenHighlightUtils;
 import kamkeel.hextext.util.ColorCodeUtils;
@@ -16,6 +17,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
@@ -49,6 +51,12 @@ public abstract class MixinFontRenderer {
     @Shadow(remap = false)
     protected abstract void setColor(float r, float g, float b, float a);
 
+    @Shadow
+    protected abstract float renderDefaultChar(int character, boolean italic);
+
+    @Shadow
+    protected abstract float renderUnicodeChar(char character, boolean italic);
+
     @Unique
     private RenderTextData hextext$renderData;
     @Unique
@@ -63,6 +71,10 @@ public abstract class MixinFontRenderer {
     private int hextext$rawTokenSkip;
     @Unique
     private boolean hextext$renderingShadow;
+    @Unique
+    private TextEffectController hextext$effects;
+    @Unique
+    private int hextext$glyphIndex;
 
     @Inject(method = "renderStringAtPos", at = @At("HEAD"))
     private void hextext$begin(String text, boolean shadow, CallbackInfo ci) {
@@ -72,6 +84,11 @@ public abstract class MixinFontRenderer {
         hextext$baseColor = this.textColor;
         hextext$shadow = shadow;
         hextext$renderingShadow = shadow;
+        if (hextext$effects == null) {
+            hextext$effects = new TextEffectController();
+        }
+        hextext$effects.begin();
+        hextext$glyphIndex = 0;
         if (rawMode) {
             hextext$resetFormattingStyles();
         }
@@ -134,10 +151,58 @@ public abstract class MixinFontRenderer {
     private void hextext$end(String text, boolean shadow, CallbackInfo ci) {
         hextext$renderData = null;
         hextext$colorStack = null;
+        hextext$resetEffects();
         if (!hextext$renderingShadow && hextext$pendingHighlights != null && !hextext$pendingHighlights.isEmpty()) {
             TokenHighlightUtils.drawHighlights(hextext$pendingHighlights, this.FONT_HEIGHT);
             hextext$pendingHighlights.clear();
         }
+    }
+
+    @Redirect(method = "renderStringAtPos", at = @At(value = "INVOKE",
+        target = "Lnet/minecraft/client/gui/FontRenderer;renderDefaultChar(IZ)F"))
+    private float hextext$renderDefaultChar(FontRenderer instance, int character, boolean italic) {
+        return hextext$renderGlyph(false, character, italic);
+    }
+
+    @Redirect(method = "renderStringAtPos", at = @At(value = "INVOKE",
+        target = "Lnet/minecraft/client/gui/FontRenderer;renderUnicodeChar(CZ)F"))
+    private float hextext$renderUnicodeChar(FontRenderer instance, char character, boolean italic) {
+        return hextext$renderGlyph(true, character, italic);
+    }
+
+    @Unique
+    private float hextext$renderGlyph(boolean unicode, int codePoint, boolean italic) {
+        TextEffectController.GlyphEffects glyphEffects = null;
+        Integer override = null;
+        if (hextext$effects != null) {
+            glyphEffects = hextext$effects.beforeGlyph(hextext$glyphIndex, this.textColor);
+            if (glyphEffects != null) {
+                override = glyphEffects.getColorOverride();
+            }
+        }
+
+        int previousColor = this.textColor;
+        if (override != null) {
+            hextext$applyRgbColor(override, hextext$renderingShadow);
+        }
+
+        if (glyphEffects != null) {
+            glyphEffects.begin(this.posX, this.posY, this.FONT_HEIGHT);
+        }
+
+        float width = unicode ? renderUnicodeChar((char) codePoint, italic)
+            : renderDefaultChar(codePoint, italic);
+
+        if (glyphEffects != null) {
+            glyphEffects.end();
+        }
+
+        if (override != null) {
+            hextext$setColorFromInt(previousColor);
+        }
+
+        hextext$glyphIndex++;
+        return width;
     }
 
     @Inject(method = "getStringWidth", at = @At("RETURN"), cancellable = true)
@@ -238,6 +303,15 @@ public abstract class MixinFontRenderer {
             case SET_ITALIC:
                 this.italicStyle = instruction.isEnabled();
                 break;
+            case SET_RAINBOW:
+            case SET_DINNERBONE:
+            case SET_IGNITE:
+            case SET_SHAKE:
+            case RESET_EFFECTS:
+                if (hextext$effects != null) {
+                    hextext$effects.applyInstruction(instruction, hextext$glyphIndex);
+                }
+                break;
         }
 
         if (instruction.resetsFormatting()) {
@@ -278,6 +352,14 @@ public abstract class MixinFontRenderer {
         this.strikethroughStyle = false;
         this.underlineStyle = false;
         this.italicStyle = false;
+        hextext$resetEffects();
+    }
+
+    @Unique
+    private void hextext$resetEffects() {
+        if (hextext$effects != null) {
+            hextext$effects.resetEffects();
+        }
     }
 
 }
