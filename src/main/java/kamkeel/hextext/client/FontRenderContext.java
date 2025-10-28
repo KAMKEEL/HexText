@@ -1,13 +1,13 @@
 package kamkeel.hextext.client;
 
 /**
- * Thread-local flags controlling how the legacy font renderer interprets formatting codes.
+ * Thread-local flags controlling how the font renderer interprets formatting codes.
  */
-public final class LegacyFontRenderContext {
+public final class FontRenderContext {
 
     private static final ThreadLocal<Integer> RAW_TEXT_DEPTH = ThreadLocal.withInitial(() -> 0);
 
-    private LegacyFontRenderContext() {}
+    private FontRenderContext() {}
 
     public static void pushRawTextRendering() {
         RAW_TEXT_DEPTH.set(RAW_TEXT_DEPTH.get() + 1);

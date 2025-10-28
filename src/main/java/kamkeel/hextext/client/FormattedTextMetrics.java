@@ -1,6 +1,6 @@
 package kamkeel.hextext.client;
 
-import kamkeel.hextext.ColorCodeUtils;
+import kamkeel.hextext.util.ColorCodeUtils;
 
 /**
  * Utility methods for measuring formatted Minecraft text for the legacy renderer.
