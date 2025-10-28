@@ -85,6 +85,9 @@ public abstract class MixinFontRenderer {
 
     @ModifyVariable(method = "renderStringAtPos", at = @At("HEAD"), argsOnly = true)
     private String hextext$legacy$replaceRenderText(String text) {
+        if (LegacyFontRenderContext.isRawTextRendering()) {
+            return ColorCodeUtils.normalizeForRawDisplay(text);
+        }
         if (hextext$legacyRenderData != null && hextext$legacyRenderData.isModified()) {
             return hextext$legacyRenderData.getSanitized();
         }
@@ -356,6 +359,9 @@ public abstract class MixinFontRenderer {
     @Unique
     private float hextext$getCharWidthFloat(char chr) {
         if (chr == 167) {
+            if (LegacyFontRenderContext.isRawTextRendering()) {
+                return ((FontRenderer) (Object) this).getCharWidth('&');
+            }
             return 0.0f;
         }
         int width = ((FontRenderer) (Object) this).getCharWidth(chr);
