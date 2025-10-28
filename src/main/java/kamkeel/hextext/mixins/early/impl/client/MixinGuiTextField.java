@@ -12,19 +12,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinGuiTextField {
 
     @Unique
-    private boolean angelica$legacy$rawPushed;
+    private boolean hextext$legacy$rawPushed;
 
     @Inject(method = "drawTextBox", at = @At("HEAD"))
-    private void angelica$legacy$beginRawMode(CallbackInfo ci) {
+    private void hextext$legacy$beginRawMode(CallbackInfo ci) {
         LegacyFontRenderContext.pushRawTextRendering();
-        angelica$legacy$rawPushed = true;
+        hextext$legacy$rawPushed = true;
     }
 
     @Inject(method = "drawTextBox", at = @At("RETURN"))
-    private void angelica$legacy$endRawMode(CallbackInfo ci) {
-        if (angelica$legacy$rawPushed) {
+    private void hextext$legacy$endRawMode(CallbackInfo ci) {
+        if (hextext$legacy$rawPushed) {
             LegacyFontRenderContext.popRawTextRendering();
-            angelica$legacy$rawPushed = false;
+            hextext$legacy$rawPushed = false;
         }
     }
 }
