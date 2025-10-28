@@ -1,6 +1,6 @@
 package kamkeel.hextext.mixins.early.impl.client;
 
-import kamkeel.hextext.client.LegacyFontRenderContext;
+import kamkeel.hextext.client.FontRenderContext;
 import net.minecraft.client.gui.GuiTextField;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -16,14 +16,14 @@ public abstract class MixinGuiTextField {
 
     @Inject(method = "drawTextBox", at = @At("HEAD"))
     private void hextext$legacy$beginRawMode(CallbackInfo ci) {
-        LegacyFontRenderContext.pushRawTextRendering();
+        FontRenderContext.pushRawTextRendering();
         hextext$legacy$rawPushed = true;
     }
 
     @Inject(method = "drawTextBox", at = @At("RETURN"))
     private void hextext$legacy$endRawMode(CallbackInfo ci) {
         if (hextext$legacy$rawPushed) {
-            LegacyFontRenderContext.popRawTextRendering();
+            FontRenderContext.popRawTextRendering();
             hextext$legacy$rawPushed = false;
         }
     }

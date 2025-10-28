@@ -1,0 +1,59 @@
+package kamkeel.hextext.client;
+
+import org.junit.Test;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.*;
+
+public class RenderTextProcessorTest {
+
+    @Test
+    public void testNonRawHexProcessing() {
+        RenderTextData data = RenderTextProcessor.prepare("&FFAA11Hello", false);
+        assertTrue(data.shouldReplaceText());
+        assertEquals("Hello", data.getDisplayText());
+        assertTrue(data.hasInstructions());
+        Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
+        assertNotNull(instructions);
+        List<RenderInstruction> atZero = instructions.get(0);
+        assertEquals(1, atZero.size());
+        RenderInstruction instruction = atZero.get(0);
+        assertEquals(RenderInstruction.Type.APPLY_RGB, instruction.getType());
+        assertEquals(0xFFAA11, instruction.getRgb());
+        assertTrue(instruction.shouldClearStack());
+    }
+
+    @Test
+    public void testRawVanillaFormatting() {
+        RenderTextData data = RenderTextProcessor.prepare("&aHello", true);
+        assertTrue(data.shouldReplaceText());
+        assertEquals("§a&aHello", data.getDisplayText());
+        assertFalse(data.hasInstructions());
+    }
+
+    @Test
+    public void testRawHexColor() {
+        RenderTextData data = RenderTextProcessor.prepare("&ABCDEFWorld", true);
+        assertTrue(data.shouldReplaceText());
+        assertEquals("&ABCDEFWorld", data.getDisplayText());
+        Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
+        assertNotNull(instructions);
+        assertEquals(1, instructions.size());
+        RenderInstruction instruction = instructions.get(0).get(0);
+        assertEquals(RenderInstruction.Type.APPLY_RGB, instruction.getType());
+        assertEquals(0xABCDEF, instruction.getRgb());
+    }
+
+    @Test
+    public void testResetInstruction() {
+        RenderTextData data = RenderTextProcessor.prepare("&rReset", false);
+        assertTrue(data.shouldReplaceText());
+        assertEquals("§rReset", data.getDisplayText());
+        Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
+        assertNotNull(instructions);
+        RenderInstruction instruction = instructions.get(0).get(0);
+        assertEquals(RenderInstruction.Type.RESET_TO_BASE, instruction.getType());
+    }
+}
