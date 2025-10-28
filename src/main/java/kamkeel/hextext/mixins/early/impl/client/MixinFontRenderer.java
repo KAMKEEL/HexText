@@ -5,6 +5,7 @@ import kamkeel.hextext.client.FormattedTextMetrics;
 import kamkeel.hextext.client.LegacyFontRenderContext;
 import kamkeel.hextext.client.LegacyRenderAction;
 import kamkeel.hextext.client.LegacyRenderTextData;
+import kamkeel.hextext.client.TokenHighlight;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.util.MathHelper;
@@ -350,21 +351,6 @@ public abstract class MixinFontRenderer {
         int y2 = MathHelper.ceiling_float_int(bottom);
 
         Gui.drawRect(x1, y1, x2, y2, highlight.color);
-    }
-
-    @Unique
-    private static final class TokenHighlight {
-        private final float x;
-        private final float y;
-        private final float width;
-        private final int color;
-
-        private TokenHighlight(float x, float y, float width, int color) {
-            this.x = x;
-            this.y = y;
-            this.width = width;
-            this.color = color;
-        }
     }
 
     @Unique
