@@ -1,0 +1,26 @@
+{
+  "modListVersion": 2,
+  "modList": [
+    {
+      "modid": "${modId}",
+      "name": "${modName}",
+      "description": "A mod that provides Hex Colors to Chat",
+      "version": "${modVersion}",
+      "mcversion": "${minecraftVersion}",
+      "url": "None",
+      "updateUrl": "",
+      "authorList": [
+        "Kam",
+        "alpderps"
+      ],
+      "credits": "",
+      "logoFile": "",
+      "screenshots": [],
+      "parent": "",
+      "requiredMods": [],
+      "dependencies": [],
+      "dependants": [],
+      "useDependencyInformation": false
+    }
+  ]
+}

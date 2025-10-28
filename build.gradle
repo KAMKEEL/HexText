@@ -1,0 +1,14 @@
+//version: 1707058017
+
+plugins {
+    id 'com.gtnewhorizons.gtnhconvention'
+    id 'idea'
+}
+
+group= "kamkeel.hextext"
+
+tasks.runServer { setWorkingDir(file("run/server")) }
+
+version = "1.0"
+group= "kamkeel.hextext"
+archivesBaseName = "hextext"
