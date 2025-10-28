@@ -70,6 +70,22 @@ public class RenderTextProcessorTest {
     }
 
     @Test
+    public void testRawFormattingAfterPlainText() {
+        String input = "Pre Stuff &lPost";
+        RenderTextData data = RenderTextProcessor.prepare(input, true);
+        assertFalse(data.shouldReplaceText());
+        assertTrue(data.hasInstructions());
+        Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
+        assertNotNull(instructions);
+        int tokenIndex = input.indexOf('&');
+        assertTrue("Expected instruction entry for formatting token", instructions.containsKey(tokenIndex));
+        List<RenderInstruction> atIndex = instructions.get(tokenIndex);
+        assertNotNull(atIndex);
+        assertFalse(atIndex.isEmpty());
+        assertEquals(RenderInstruction.Type.SET_BOLD, atIndex.get(0).getType());
+    }
+
+    @Test
     public void testResetInstruction() {
         RenderTextData data = RenderTextProcessor.prepare("&rReset", false);
         assertTrue(data.shouldReplaceText());

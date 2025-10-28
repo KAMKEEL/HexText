@@ -72,6 +72,9 @@ public abstract class MixinFontRenderer {
         hextext$baseColor = this.textColor;
         hextext$shadow = shadow;
         hextext$renderingShadow = shadow;
+        if (rawMode) {
+            hextext$resetFormattingStyles();
+        }
         if (!shadow && rawMode) {
             if (hextext$pendingHighlights == null) {
                 hextext$pendingHighlights = new ArrayList<>();
