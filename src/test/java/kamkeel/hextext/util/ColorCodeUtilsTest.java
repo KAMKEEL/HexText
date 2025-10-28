@@ -21,6 +21,15 @@ public class ColorCodeUtilsTest {
     }
 
     @Test
+    public void testMinecraftColorIndex() {
+        assertEquals(0, ColorCodeUtils.getMinecraftColorIndex('0'));
+        assertEquals(9, ColorCodeUtils.getMinecraftColorIndex('9'));
+        assertEquals(10, ColorCodeUtils.getMinecraftColorIndex('a'));
+        assertEquals(15, ColorCodeUtils.getMinecraftColorIndex('F'));
+        assertEquals(-1, ColorCodeUtils.getMinecraftColorIndex('g'));
+    }
+
+    @Test
     public void testDetectColorCodeLength() {
         assertEquals(7, ColorCodeUtils.detectColorCodeLength("&123456rest", 0));
         assertEquals(2, ColorCodeUtils.detectColorCodeLength("§ares", 0));

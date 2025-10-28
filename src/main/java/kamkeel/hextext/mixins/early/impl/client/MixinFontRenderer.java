@@ -44,6 +44,7 @@ public abstract class MixinFontRenderer {
     @Shadow protected float posX;
     @Shadow protected float posY;
     @Shadow public int FONT_HEIGHT;
+    @Shadow private int[] colorCode;
 
     @Shadow(remap = false)
     protected abstract void setColor(float r, float g, float b, float a);
@@ -194,6 +195,13 @@ public abstract class MixinFontRenderer {
                 hextext$applyRgbColor(instruction.getRgb(), hextext$shadow);
                 hextext$resetFormattingStyles();
                 break;
+            case APPLY_VANILLA_COLOR:
+                if (instruction.shouldClearStack() && hextext$colorStack != null) {
+                    hextext$colorStack.clear();
+                }
+                hextext$applyVanillaColor(instruction.getParameter());
+                hextext$resetFormattingStyles();
+                break;
             case PUSH_RGB:
                 if (hextext$colorStack == null) {
                     hextext$colorStack = new ArrayDeque<>();
@@ -215,6 +223,21 @@ public abstract class MixinFontRenderer {
                 hextext$setColorFromInt(hextext$baseColor);
                 hextext$resetFormattingStyles();
                 break;
+            case SET_RANDOM:
+                this.randomStyle = instruction.isEnabled();
+                break;
+            case SET_BOLD:
+                this.boldStyle = instruction.isEnabled();
+                break;
+            case SET_STRIKETHROUGH:
+                this.strikethroughStyle = instruction.isEnabled();
+                break;
+            case SET_UNDERLINE:
+                this.underlineStyle = instruction.isEnabled();
+                break;
+            case SET_ITALIC:
+                this.italicStyle = instruction.isEnabled();
+                break;
         }
     }
 
@@ -231,6 +254,17 @@ public abstract class MixinFontRenderer {
     private void hextext$applyRgbColor(int rgb, boolean shadow) {
         int effective = shadow ? ColorCodeUtils.calculateShadowColor(rgb) : rgb;
         hextext$setColorFromInt(effective);
+    }
+
+    @Unique
+    private void hextext$applyVanillaColor(int colorIndex) {
+        int index = Math.max(0, Math.min(colorIndex, 15));
+        int paletteIndex = hextext$shadow ? index + 16 : index;
+        if (colorCode != null && paletteIndex >= 0 && paletteIndex < colorCode.length) {
+            hextext$setColorFromInt(colorCode[paletteIndex]);
+        } else {
+            hextext$setColorFromInt(hextext$baseColor);
+        }
     }
 
     @Unique

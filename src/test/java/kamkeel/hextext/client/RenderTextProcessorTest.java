@@ -28,22 +28,45 @@ public class RenderTextProcessorTest {
     @Test
     public void testRawVanillaFormatting() {
         RenderTextData data = RenderTextProcessor.prepare("&aHello", true);
-        assertTrue(data.shouldReplaceText());
-        assertEquals("§a&aHello", data.getDisplayText());
-        assertFalse(data.hasInstructions());
+        assertFalse(data.shouldReplaceText());
+        assertNull(data.getDisplayText());
+        assertTrue(data.hasInstructions());
+        Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
+        assertNotNull(instructions);
+        List<RenderInstruction> atZero = instructions.get(0);
+        assertNotNull(atZero);
+        assertEquals(1, atZero.size());
+        RenderInstruction instruction = atZero.get(0);
+        assertEquals(RenderInstruction.Type.APPLY_VANILLA_COLOR, instruction.getType());
+        assertEquals(10, instruction.getParameter());
     }
 
     @Test
     public void testRawHexColor() {
         RenderTextData data = RenderTextProcessor.prepare("&ABCDEFWorld", true);
-        assertTrue(data.shouldReplaceText());
-        assertEquals("&ABCDEFWorld", data.getDisplayText());
+        assertFalse(data.shouldReplaceText());
+        assertNull(data.getDisplayText());
         Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
         assertNotNull(instructions);
         assertEquals(1, instructions.size());
         RenderInstruction instruction = instructions.get(0).get(0);
         assertEquals(RenderInstruction.Type.APPLY_RGB, instruction.getType());
         assertEquals(0xABCDEF, instruction.getRgb());
+    }
+
+    @Test
+    public void testRawBoldFormatting() {
+        RenderTextData data = RenderTextProcessor.prepare("&lBold", true);
+        assertFalse(data.shouldReplaceText());
+        assertNull(data.getDisplayText());
+        Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
+        assertNotNull(instructions);
+        List<RenderInstruction> atZero = instructions.get(0);
+        assertNotNull(atZero);
+        assertEquals(1, atZero.size());
+        RenderInstruction instruction = atZero.get(0);
+        assertEquals(RenderInstruction.Type.SET_BOLD, instruction.getType());
+        assertTrue(instruction.isEnabled());
     }
 
     @Test

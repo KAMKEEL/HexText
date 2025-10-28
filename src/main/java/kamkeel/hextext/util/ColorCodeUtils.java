@@ -49,6 +49,17 @@ public final class ColorCodeUtils {
         return (lower >= '0' && lower <= '9') || (lower >= 'a' && lower <= 'f');
     }
 
+    public static int getMinecraftColorIndex(char c) {
+        char lower = Character.toLowerCase(c);
+        if (lower >= '0' && lower <= '9') {
+            return lower - '0';
+        }
+        if (lower >= 'a' && lower <= 'f') {
+            return 10 + (lower - 'a');
+        }
+        return -1;
+    }
+
     public static boolean isStyleCode(char c) {
         char lower = Character.toLowerCase(c);
         return lower == 'k' || lower == 'l' || lower == 'm' || lower == 'n' || lower == 'o';

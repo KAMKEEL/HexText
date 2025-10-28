@@ -42,7 +42,6 @@ public final class RenderTextProcessor {
                             sanitized.append('&');
                             sanitized.append(processed, i + 1, i + 7);
                         }
-                        modified = true;
                         i += 6;
                         continue;
                     }
@@ -50,15 +49,40 @@ public final class RenderTextProcessor {
 
                 if (ColorCodeUtils.isFormattingCode(next)) {
                     boolean isReset = ColorCodeUtils.isResetCode(next);
-                    if (isReset) {
-                        instructions = ensureInstructionMap(instructions);
-                        instructions.computeIfAbsent(instructionIndex, key -> new ArrayList<>())
-                            .add(RenderInstruction.resetToBase());
-                    }
                     if (rawMode) {
-                        sanitized.append('§').append(next);
+                        instructions = ensureInstructionMap(instructions);
+                        List<RenderInstruction> bucket =
+                            instructions.computeIfAbsent(instructionIndex, key -> new ArrayList<>());
+                        char lower = Character.toLowerCase(next);
+                        if (ColorCodeUtils.isMinecraftColorCode(lower)) {
+                            int colorIndex = ColorCodeUtils.getMinecraftColorIndex(lower);
+                            if (colorIndex >= 0) {
+                                bucket.add(RenderInstruction.applyVanillaColor(colorIndex));
+                            }
+                        } else if (isReset) {
+                            bucket.add(RenderInstruction.resetToBase());
+                        } else if (ColorCodeUtils.isStyleCode(lower)) {
+                            switch (lower) {
+                                case 'k':
+                                    bucket.add(RenderInstruction.setRandom(true));
+                                    break;
+                                case 'l':
+                                    bucket.add(RenderInstruction.setBold(true));
+                                    break;
+                                case 'm':
+                                    bucket.add(RenderInstruction.setStrikethrough(true));
+                                    break;
+                                case 'n':
+                                    bucket.add(RenderInstruction.setUnderline(true));
+                                    break;
+                                case 'o':
+                                    bucket.add(RenderInstruction.setItalic(true));
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
                         sanitized.append('&').append(next);
-                        modified = true;
                         i++;
                         continue;
                     } else {
@@ -79,8 +103,9 @@ public final class RenderTextProcessor {
                             .add(RenderInstruction.push(rgb));
                         if (rawMode) {
                             sanitized.append(processed, i, i + 8);
+                        } else {
+                            modified = true;
                         }
-                        modified = true;
                         i += 7;
                         continue;
                     }
@@ -93,8 +118,9 @@ public final class RenderTextProcessor {
                         .add(RenderInstruction.pop());
                     if (rawMode) {
                         sanitized.append(processed, i, i + 9);
+                    } else {
+                        modified = true;
                     }
-                    modified = true;
                     i += 8;
                     continue;
                 }
@@ -103,11 +129,17 @@ public final class RenderTextProcessor {
             sanitized.append(current);
         }
 
-        if (!modified && (instructions == null || instructions.isEmpty())) {
+        Map<Integer, List<RenderInstruction>> normalizedInstructions = normalizeInstructions(instructions);
+
+        if (!modified && (normalizedInstructions == null || normalizedInstructions.isEmpty())) {
             return RenderTextData.unchanged();
         }
 
-        return RenderTextData.withDisplayText(sanitized.toString(), normalizeInstructions(instructions));
+        if (!modified && normalizedInstructions != null) {
+            return RenderTextData.withInstructions(normalizedInstructions);
+        }
+
+        return RenderTextData.withDisplayText(sanitized.toString(), normalizedInstructions);
     }
 
     private static Map<Integer, List<RenderInstruction>> ensureInstructionMap(
