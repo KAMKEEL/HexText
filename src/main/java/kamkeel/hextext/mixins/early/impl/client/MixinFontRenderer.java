@@ -196,14 +196,12 @@ public abstract class MixinFontRenderer {
                     hextext$colorStack.clear();
                 }
                 hextext$applyRgbColor(instruction.getRgb(), hextext$shadow);
-                hextext$resetFormattingStyles();
                 break;
             case APPLY_VANILLA_COLOR:
                 if (instruction.shouldClearStack() && hextext$colorStack != null) {
                     hextext$colorStack.clear();
                 }
                 hextext$applyVanillaColor(instruction.getParameter());
-                hextext$resetFormattingStyles();
                 break;
             case PUSH_RGB:
                 if (hextext$colorStack == null) {
@@ -224,7 +222,6 @@ public abstract class MixinFontRenderer {
                     hextext$colorStack.clear();
                 }
                 hextext$setColorFromInt(hextext$baseColor);
-                hextext$resetFormattingStyles();
                 break;
             case SET_RANDOM:
                 this.randomStyle = instruction.isEnabled();
@@ -241,6 +238,10 @@ public abstract class MixinFontRenderer {
             case SET_ITALIC:
                 this.italicStyle = instruction.isEnabled();
                 break;
+        }
+
+        if (instruction.resetsFormatting()) {
+            hextext$resetFormattingStyles();
         }
     }
 

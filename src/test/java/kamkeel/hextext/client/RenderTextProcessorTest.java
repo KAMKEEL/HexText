@@ -95,4 +95,20 @@ public class RenderTextProcessorTest {
         RenderInstruction instruction = instructions.get(0).get(0);
         assertEquals(RenderInstruction.Type.RESET_TO_BASE, instruction.getType());
     }
+
+    @Test
+    public void testRgbTagClearsFormatting() {
+        RenderTextData data = RenderTextProcessor.prepare("&lBold <123456>World", false);
+        assertTrue(data.hasInstructions());
+        boolean foundPush = false;
+        for (List<RenderInstruction> instructionList : data.getInstructions().values()) {
+            for (RenderInstruction instruction : instructionList) {
+                if (instruction.getType() == RenderInstruction.Type.PUSH_RGB) {
+                    foundPush = true;
+                    assertTrue("Expected RGB push to clear formatting", instruction.resetsFormatting());
+                }
+            }
+        }
+        assertTrue("Expected PUSH_RGB instruction", foundPush);
+    }
 }
