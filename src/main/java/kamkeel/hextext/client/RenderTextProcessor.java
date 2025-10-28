@@ -48,12 +48,13 @@ public final class RenderTextProcessor {
                 }
 
                 if (ColorCodeUtils.isFormattingCode(next)) {
-                    boolean isReset = ColorCodeUtils.isResetCode(next);
+                    char lower = Character.toLowerCase(next);
+                    boolean isReset = ColorCodeUtils.isResetCode(lower);
+
                     if (rawMode) {
                         instructions = ensureInstructionMap(instructions);
                         List<RenderInstruction> bucket =
                             instructions.computeIfAbsent(instructionIndex, key -> new ArrayList<>());
-                        char lower = Character.toLowerCase(next);
                         if (ColorCodeUtils.isMinecraftColorCode(lower)) {
                             int colorIndex = ColorCodeUtils.getMinecraftColorIndex(lower);
                             if (colorIndex >= 0) {
@@ -81,11 +82,26 @@ public final class RenderTextProcessor {
                                 default:
                                     break;
                             }
+                        } else if (ColorCodeUtils.isHexTextEffectCode(lower)) {
+                            appendEffectInstruction(bucket, lower);
                         }
                         sanitized.append('&').append(next);
                         i++;
                         continue;
                     } else {
+                        List<RenderInstruction> bucket = null;
+                        if (ColorCodeUtils.isHexTextEffectCode(lower)) {
+                            instructions = ensureInstructionMap(instructions);
+                            bucket = instructions.computeIfAbsent(instructionIndex, key -> new ArrayList<>());
+                            appendEffectInstruction(bucket, lower);
+                        }
+                        if (isReset || ColorCodeUtils.isMinecraftColorCode(lower)) {
+                            instructions = ensureInstructionMap(instructions);
+                            if (bucket == null) {
+                                bucket = instructions.computeIfAbsent(instructionIndex, key -> new ArrayList<>());
+                            }
+                            bucket.add(RenderInstruction.resetEffects());
+                        }
                         sanitized.append('§');
                         modified = true;
                         continue;
@@ -150,5 +166,24 @@ public final class RenderTextProcessor {
     private static Map<Integer, List<RenderInstruction>> normalizeInstructions(
             Map<Integer, List<RenderInstruction>> instructions) {
         return (instructions == null || instructions.isEmpty()) ? null : instructions;
+    }
+
+    private static void appendEffectInstruction(List<RenderInstruction> bucket, char lower) {
+        switch (Character.toLowerCase(lower)) {
+            case 'g':
+                bucket.add(RenderInstruction.setRainbow(true));
+                break;
+            case 'h':
+                bucket.add(RenderInstruction.setDinnerbone(true));
+                break;
+            case 'i':
+                bucket.add(RenderInstruction.setIgnite(true));
+                break;
+            case 'j':
+                bucket.add(RenderInstruction.setShake(true));
+                break;
+            default:
+                break;
+        }
     }
 }
