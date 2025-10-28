@@ -78,6 +78,39 @@ public class ColorCodeUtils {
         return detectColorCodeLengthInternal(str, pos, false);
     }
 
+    public static String normalizeForRawDisplay(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+
+        StringBuilder builder = null;
+
+        for (int i = 0; i < text.length(); i++) {
+            char current = text.charAt(i);
+
+            if (current == 167) {
+                if (builder == null) {
+                    builder = new StringBuilder(text.length() + 8);
+                    builder.append(text, 0, i);
+                }
+
+                if (i + 1 < text.length()) {
+                    builder.append('&');
+                    builder.append(text.charAt(++i));
+                } else {
+                    builder.append('§');
+                }
+                continue;
+            }
+
+            if (builder != null) {
+                builder.append(current);
+            }
+        }
+
+        return builder == null ? text : builder.toString();
+    }
+
     private static int detectColorCodeLengthInternal(CharSequence str, int pos, boolean skipDueToRaw) {
         if (str == null || pos < 0 || pos >= str.length()) {
             return 0;
