@@ -41,6 +41,8 @@ public final class RenderTextProcessor {
                         if (rawMode) {
                             sanitized.append('&');
                             sanitized.append(processed, i + 1, i + 7);
+                        } else {
+                            modified = true;
                         }
                         i += 6;
                         continue;
@@ -48,12 +50,41 @@ public final class RenderTextProcessor {
                 }
 
                 if (ColorCodeUtils.isFormattingCode(next)) {
-                    boolean isReset = ColorCodeUtils.isResetCode(next);
+                    char lower = Character.toLowerCase(next);
+                    if (ColorCodeUtils.isEffectCode(lower)) {
+                        instructions = ensureInstructionMap(instructions);
+                        List<RenderInstruction> bucket =
+                            instructions.computeIfAbsent(instructionIndex, key -> new ArrayList<>());
+                        switch (lower) {
+                            case 'g':
+                                bucket.add(RenderInstruction.setRainbow(true, instructionIndex));
+                                break;
+                            case 'h':
+                                bucket.add(RenderInstruction.setDinnerbone(true));
+                                break;
+                            case 'i':
+                                bucket.add(RenderInstruction.setIgnite(true));
+                                break;
+                            case 'j':
+                                bucket.add(RenderInstruction.setShake(true));
+                                break;
+                            default:
+                                break;
+                        }
+                        if (rawMode) {
+                            sanitized.append('&').append(next);
+                        } else {
+                            modified = true;
+                        }
+                        i++;
+                        continue;
+                    }
+
+                    boolean isReset = ColorCodeUtils.isResetCode(lower);
                     if (rawMode) {
                         instructions = ensureInstructionMap(instructions);
                         List<RenderInstruction> bucket =
                             instructions.computeIfAbsent(instructionIndex, key -> new ArrayList<>());
-                        char lower = Character.toLowerCase(next);
                         if (ColorCodeUtils.isMinecraftColorCode(lower)) {
                             int colorIndex = ColorCodeUtils.getMinecraftColorIndex(lower);
                             if (colorIndex >= 0) {
@@ -86,6 +117,11 @@ public final class RenderTextProcessor {
                         i++;
                         continue;
                     } else {
+                        if (isReset) {
+                            instructions = ensureInstructionMap(instructions);
+                            instructions.computeIfAbsent(instructionIndex, key -> new ArrayList<>())
+                                .add(RenderInstruction.resetToBase());
+                        }
                         sanitized.append('§');
                         modified = true;
                         continue;

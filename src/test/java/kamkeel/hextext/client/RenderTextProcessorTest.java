@@ -111,4 +111,36 @@ public class RenderTextProcessorTest {
         }
         assertTrue("Expected PUSH_RGB instruction", foundPush);
     }
+
+    @Test
+    public void testRainbowInstructionNonRaw() {
+        RenderTextData data = RenderTextProcessor.prepare("&gRainbow", false);
+        assertTrue(data.shouldReplaceText());
+        assertEquals("Rainbow", data.getDisplayText());
+        assertTrue(data.hasInstructions());
+        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        assertNotNull(instructions);
+        assertFalse(instructions.isEmpty());
+        RenderInstruction instruction = instructions.get(0);
+        assertEquals(RenderInstruction.Type.SET_RAINBOW, instruction.getType());
+        assertTrue(instruction.isEnabled());
+        assertEquals(0, instruction.getParameter());
+    }
+
+    @Test
+    public void testDinnerboneInstructionRaw() {
+        RenderTextData data = RenderTextProcessor.prepare("&hFlip", true);
+        assertFalse(data.shouldReplaceText());
+        assertTrue(data.hasInstructions());
+        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        assertNotNull(instructions);
+        boolean found = false;
+        for (RenderInstruction instruction : instructions) {
+            if (instruction.getType() == RenderInstruction.Type.SET_DINNERBONE) {
+                assertTrue(instruction.isEnabled());
+                found = true;
+            }
+        }
+        assertTrue("Expected dinnerbone instruction", found);
+    }
 }

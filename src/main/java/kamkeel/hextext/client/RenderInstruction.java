@@ -15,7 +15,11 @@ public final class RenderInstruction {
         SET_BOLD,
         SET_STRIKETHROUGH,
         SET_UNDERLINE,
-        SET_ITALIC
+        SET_ITALIC,
+        SET_RAINBOW,
+        SET_DINNERBONE,
+        SET_IGNITE,
+        SET_SHAKE
     }
 
     private final Type type;
@@ -73,6 +77,22 @@ public final class RenderInstruction {
 
     public static RenderInstruction setItalic(boolean enabled) {
         return new RenderInstruction(Type.SET_ITALIC, 0, false, 0, enabled, false);
+    }
+
+    public static RenderInstruction setRainbow(boolean enabled, int anchorIndex) {
+        return new RenderInstruction(Type.SET_RAINBOW, 0, false, anchorIndex, enabled, false);
+    }
+
+    public static RenderInstruction setDinnerbone(boolean enabled) {
+        return new RenderInstruction(Type.SET_DINNERBONE, 0, false, 0, enabled, false);
+    }
+
+    public static RenderInstruction setIgnite(boolean enabled) {
+        return new RenderInstruction(Type.SET_IGNITE, 0, false, 0, enabled, false);
+    }
+
+    public static RenderInstruction setShake(boolean enabled) {
+        return new RenderInstruction(Type.SET_SHAKE, 0, false, 0, enabled, false);
     }
 
     public Type getType() {
