@@ -74,7 +74,7 @@ public final class StringUtils {
                 } else if (codeLen == 2) {
                     char fmt = Character.toLowerCase(str.charAt(i + 1));
 
-                    if (ColorCodeUtils.isMinecraftColorCode(fmt)) {
+                    if (ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g') {
                         currentColorCode = code;
                         colorStack.clear();
                         styleCodes.setLength(0);
@@ -82,7 +82,7 @@ public final class StringUtils {
                         currentColorCode = null;
                         colorStack.clear();
                         styleCodes.setLength(0);
-                    } else if (ColorCodeUtils.isStyleCode(fmt)) {
+                    } else if (ColorCodeUtils.isStyleCode(fmt) || ColorCodeUtils.isEffectCode(fmt)) {
                         styleCodes.append(code);
                     }
                 }
