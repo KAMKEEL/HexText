@@ -1,8 +1,8 @@
 {
   "required": true,
   "minVersion": "0.7.11",
-  "package": "kamkeel.hextext.mixins.early.impl",
-  "plugin": "kamkeel.hextext.mixins.early.HexTextEarlyMixins",
+  "package": "kamkeel.hextext.mixin.client",
+  "plugin": "kamkeel.hextext.mixin.config.HexTextMixinPlugin",
   "refmap": "mixins.hextext.refmap.json",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
