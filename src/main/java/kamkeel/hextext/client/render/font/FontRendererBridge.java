@@ -20,6 +20,8 @@ public interface FontRendererBridge {
 
     int getTextColor();
 
+    boolean isBoldStyle();
+
     float getAlpha();
 
     float getRedComponent();

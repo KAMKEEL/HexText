@@ -195,7 +195,17 @@ public final class FontRendererRenderPipeline {
         }
 
         applyTemporaryColor(baseColor);
-        return renderGlyphInternal(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
+        float width = renderGlyphInternal(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
+
+        if (bridge.isBoldStyle()) {
+            float boldOffset = unicode ? 0.5f : 1.0f;
+            GL11.glPushMatrix();
+            GL11.glTranslatef(boldOffset, 0.0f, 0.0f);
+            renderGlyphInternal(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
+            GL11.glPopMatrix();
+        }
+
+        return width;
     }
 
     private float renderGlyphInternal(boolean unicode, int defaultIndex, char unicodeChar, boolean italic,

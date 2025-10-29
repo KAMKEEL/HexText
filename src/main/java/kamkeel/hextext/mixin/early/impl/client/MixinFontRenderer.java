@@ -170,6 +170,11 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
     }
 
     @Override
+    public boolean isBoldStyle() {
+        return this.boldStyle;
+    }
+
+    @Override
     public float getAlpha() {
         return this.alpha;
     }

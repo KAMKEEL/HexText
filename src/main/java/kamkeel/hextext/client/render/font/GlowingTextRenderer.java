@@ -39,8 +39,12 @@ public final class GlowingTextRenderer {
     }
 
     public static int computeOutlineColor(int baseColor) {
+        if ((baseColor & 0xFFFFFF) == 0) {
+            return 0xFFFFFF;
+        }
+
         int darkened = ColorMath.scaleBrightness(baseColor, OUTLINE_DARKEN_FACTOR);
-        if ((darkened & 0xFFFFFF) == 0 && (baseColor & 0xFFFFFF) != 0) {
+        if ((darkened & 0xFFFFFF) == 0) {
             return ColorMath.scaleBrightness(baseColor, OUTLINE_RECOVERY_FACTOR);
         }
         return darkened;
