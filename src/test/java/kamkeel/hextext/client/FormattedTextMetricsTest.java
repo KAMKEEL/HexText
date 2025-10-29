@@ -76,6 +76,55 @@ public class FormattedTextMetricsTest {
         assertEquals(expected, actual);
     }
 
+    @Test
+    public void trimStringToWidthMatchesVanillaWithBold() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        widthFunction.setWidth(' ', 4.0f);
+        String text = "\u00A7lHello world";
+        int maxWidth = 30;
+
+        String expected = vanillaTrimStringToWidth(text, maxWidth, widthFunction);
+        String actual = FormattedTextMetrics.trimStringToWidth(text, maxWidth, false, widthFunction, 0.0f, 1.0f);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void trimStringToWidthKeepsSpaceWhenWithinLimit() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        widthFunction.setWidth(' ', 4.0f);
+        String text = "Hello world";
+        int maxWidth = 29; // allows "Hello " but not the following 'w'
+
+        String actual = FormattedTextMetrics.trimStringToWidth(text, maxWidth, false, widthFunction, 0.0f, 1.0f);
+
+        assertEquals("Hello ", actual);
+    }
+
+    @Test
+    public void trimStringToWidthHonoursAmpersandFormatting() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        widthFunction.setWidth(' ', 4.0f);
+        String text = "&lHello &cworld";
+        int maxWidth = 35;
+
+        String actual = FormattedTextMetrics.trimStringToWidth(text, maxWidth, false, widthFunction, 0.0f, 1.0f);
+
+        assertEquals("&lHello ", actual);
+    }
+
+    @Test
+    public void trimStringToWidthTreatsAmpersandLiterallyInRawMode() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        widthFunction.setWidth('&', 3.0f);
+        widthFunction.setWidth('l', 2.0f);
+        String text = "&lHi";
+
+        String actual = FormattedTextMetrics.trimStringToWidth(text, 15, true, widthFunction, 0.0f, 1.0f);
+
+        assertEquals("&lHi", actual);
+    }
+
     private static int vanillaSizeStringToWidth(CharSequence text, int maxWidth,
             SimpleCharWidthFunction widthFunction) {
         int length = text.length();
@@ -124,5 +173,51 @@ public class FormattedTextMetricsTest {
         }
 
         return index;
+    }
+
+    private static String vanillaTrimStringToWidth(CharSequence text, int maxWidth,
+            SimpleCharWidthFunction widthFunction) {
+        StringBuilder builder = new StringBuilder();
+        int width = 0;
+        boolean expectingFormatCode = false;
+        boolean bold = false;
+        final int length = text.length();
+
+        for (int index = 0; index < length && width < maxWidth; index++) {
+            char character = text.charAt(index);
+
+            if (expectingFormatCode) {
+                expectingFormatCode = false;
+                builder.append(character);
+                char fmt = Character.toLowerCase(character);
+                if (fmt == 'l') {
+                    bold = true;
+                } else if (fmt == 'r' || (fmt >= '0' && fmt <= '9') || (fmt >= 'a' && fmt <= 'f')) {
+                    bold = false;
+                }
+                continue;
+            }
+
+            if (character == '\u00A7') {
+                expectingFormatCode = true;
+                builder.append(character);
+                continue;
+            }
+
+            int charWidth = Math.max(0, Math.round(widthFunction.getWidth(character)));
+            int nextWidth = width + charWidth;
+            if (bold) {
+                nextWidth += 1;
+            }
+
+            if (nextWidth > maxWidth) {
+                break;
+            }
+
+            builder.append(character);
+            width = nextWidth;
+        }
+
+        return builder.toString();
     }
 }

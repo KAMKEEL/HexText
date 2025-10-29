@@ -28,6 +28,11 @@ public final class FontRendererUtils {
             character -> getCharWidth(renderer, character, rawMode), 0.0f, 1.0f);
     }
 
+    public static String trimStringToWidthForward(FontRenderer renderer, String text, int width, boolean rawMode) {
+        return FormattedTextMetrics.trimStringToWidth(text, width, rawMode,
+            character -> getCharWidth(renderer, character, rawMode), 0.0f, 1.0f);
+    }
+
     public static String trimStringFromEnd(FontRenderer renderer, String text, int width, boolean rawMode) {
         if (text == null || text.isEmpty()) {
             return "";
@@ -101,7 +106,7 @@ public final class FontRendererUtils {
             }
 
             float nextWidth = currentWidth + glyphWidth;
-            if (bold && glyphWidth > 0.0f) {
+            if (bold) {
                 nextWidth += 1.0f;
             }
 

@@ -68,6 +68,64 @@ public final class FormattedTextMetrics {
         return Math.max(maxWidth, currentLineWidth);
     }
 
+    public static String trimStringToWidth(CharSequence text, int maxWidth, boolean rawMode,
+            CharWidthFunction charWidthFunc, float glyphSpacing, float boldExtra) {
+        if (text == null || text.length() == 0 || maxWidth <= 0) {
+            return "";
+        }
+
+        StringBuilder builder = new StringBuilder(text.length());
+        float currentWidth = 0.0f;
+        boolean isBold = false;
+        final int length = text.length();
+
+        for (int index = 0; index < length && currentWidth < maxWidth; ) {
+            if (!rawMode) {
+                int codeLen = ColorCodeUtils.detectColorCodeLength(text, index);
+                if (codeLen > 0) {
+                    builder.append(text, index, index + codeLen);
+                    if (codeLen == 2 && index + 1 < length) {
+                        char fmt = Character.toLowerCase(text.charAt(index + 1));
+                        if (fmt == 'l') {
+                            isBold = true;
+                        } else if (fmt == 'r' || ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g') {
+                            isBold = false;
+                        }
+                    } else if ((codeLen == 7 && text.charAt(index) == '&')
+                        || (codeLen >= 8 && text.charAt(index) == '<')) {
+                        isBold = false;
+                    }
+                    index += codeLen;
+                    continue;
+                }
+            }
+
+            char character = text.charAt(index);
+            float charWidth = charWidthFunc.getWidth(character);
+            if (charWidth < 0.0f) {
+                charWidth = 0.0f;
+            }
+
+            float nextWidth = currentWidth + charWidth;
+            if (isBold) {
+                nextWidth += boldExtra;
+            }
+            if (charWidth > 0.0f) {
+                nextWidth += glyphSpacing;
+            }
+
+            if (nextWidth > maxWidth) {
+                break;
+            }
+
+            builder.append(character);
+            currentWidth = nextWidth;
+            index++;
+        }
+
+        return builder.toString();
+    }
+
     public static int computeLineBreakIndex(CharSequence text, int maxWidth, boolean rawMode,
             CharWidthFunction charWidthFunc, float glyphSpacing, float boldExtra) {
         if (text == null || text.length() == 0 || maxWidth <= 0) {
