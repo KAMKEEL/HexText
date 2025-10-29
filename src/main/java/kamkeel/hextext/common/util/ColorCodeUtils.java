@@ -179,4 +179,46 @@ public final class ColorCodeUtils {
 
         return (red << 16) | (green << 8) | blue;
     }
+
+    /**
+     * Checks if the supplied character sequence contains any recognised Minecraft or HexText
+     * formatting tokens.
+     *
+     * @param input sequence to inspect
+     * @return {@code true} when a formatting token is encountered, {@code false} otherwise
+     */
+    public static boolean containsFormattingCodes(CharSequence input) {
+        if (input == null || input.length() == 0) {
+            return false;
+        }
+
+        for (int index = 0; index < input.length(); index++) {
+            if (detectColorCodeLengthIgnoringRaw(input, index) > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Finds the index of the first formatting token at or after {@code start}.
+     *
+     * @param input sequence to inspect
+     * @param start index to begin searching from
+     * @return the index of the first token or {@code -1} when none exist in the range
+     */
+    public static int indexOfNextFormattingCode(CharSequence input, int start) {
+        if (input == null || start < 0 || start >= input.length()) {
+            return -1;
+        }
+
+        for (int index = start; index < input.length(); index++) {
+            if (detectColorCodeLengthIgnoringRaw(input, index) > 0) {
+                return index;
+            }
+        }
+
+        return -1;
+    }
 }

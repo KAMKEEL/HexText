@@ -124,4 +124,131 @@ public final class StringUtils {
 
         return builder.toString();
     }
+
+    /**
+     * Removes all recognised formatting tokens from the provided text. This is an alias for
+     * {@link #stripColorCodes(CharSequence)} that reads more clearly in contexts where any
+     * non-textual extras should be discarded.
+     */
+    public static String stripExtras(CharSequence input) {
+        return stripColorCodes(input);
+    }
+
+    /**
+     * Removes colour-related formatting codes while preserving styles such as bold/italic.
+     */
+    public static String stripHexColors(CharSequence input) {
+        if (input == null) {
+            return null;
+        }
+
+        StringBuilder builder = null;
+        int index = 0;
+        while (index < input.length()) {
+            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index);
+            if (codeLen > 0) {
+                if (isHexColorToken(input, index, codeLen)) {
+                    if (builder == null) {
+                        builder = new StringBuilder(input.length());
+                        builder.append(input, 0, index);
+                    }
+                    index += codeLen;
+                    continue;
+                }
+
+                if (builder != null) {
+                    builder.append(input, index, index + codeLen);
+                }
+                index += codeLen;
+                continue;
+            }
+
+            if (builder != null) {
+                builder.append(input.charAt(index));
+            }
+            index++;
+        }
+
+        return builder == null ? input.toString() : builder.toString();
+    }
+
+    /**
+     * Removes style/effect formatting codes (bold, italic, rainbow etc.) while leaving colours
+     * untouched.
+     */
+    public static String stripStyles(CharSequence input) {
+        if (input == null) {
+            return null;
+        }
+
+        StringBuilder builder = null;
+        int index = 0;
+        while (index < input.length()) {
+            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index);
+            if (codeLen > 0) {
+                if (isStyleOrEffectToken(input, index, codeLen)) {
+                    if (builder == null) {
+                        builder = new StringBuilder(input.length());
+                        builder.append(input, 0, index);
+                    }
+                    index += codeLen;
+                    continue;
+                }
+
+                if (builder != null) {
+                    builder.append(input, index, index + codeLen);
+                }
+                index += codeLen;
+                continue;
+            }
+
+            if (builder != null) {
+                builder.append(input.charAt(index));
+            }
+            index++;
+        }
+
+        return builder == null ? input.toString() : builder.toString();
+    }
+
+    /**
+     * @return {@code true} when the input contains any formatting codes understood by HexText.
+     */
+    public static boolean containsFormattingCodes(CharSequence input) {
+        return ColorCodeUtils.containsFormattingCodes(input);
+    }
+
+    private static boolean isHexColorToken(CharSequence input, int index, int codeLen) {
+        char start = input.charAt(index);
+        if (codeLen == 7 && start == '&') {
+            return true;
+        }
+
+        if (codeLen == 8 && start == '<') {
+            return true;
+        }
+
+        if (codeLen == 9 && start == '<') {
+            return true;
+        }
+
+        if (codeLen == 2 && (start == '&' || start == 167)) {
+            char fmt = Character.toLowerCase(input.charAt(index + 1));
+            return ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g';
+        }
+
+        return false;
+    }
+
+    private static boolean isStyleOrEffectToken(CharSequence input, int index, int codeLen) {
+        if (codeLen == 2) {
+            char start = input.charAt(index);
+            if (start == '&' || start == 167) {
+                char fmt = Character.toLowerCase(input.charAt(index + 1));
+                return ColorCodeUtils.isStyleCode(fmt) || ColorCodeUtils.isEffectCode(fmt);
+            }
+        }
+
+        return false;
+    }
 }
