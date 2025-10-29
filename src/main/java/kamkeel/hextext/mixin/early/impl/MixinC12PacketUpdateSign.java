@@ -1,5 +1,7 @@
 package kamkeel.hextext.mixin.early.impl;
 
+import kamkeel.hextext.common.sign.SignSide;
+import kamkeel.hextext.common.sign.SignUpdatePacket;
 import kamkeel.hextext.common.util.SignTextHelper;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
@@ -14,13 +16,16 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(C12PacketUpdateSign.class)
-public abstract class MixinC12PacketUpdateSign extends Packet {
+public abstract class MixinC12PacketUpdateSign extends Packet implements SignUpdatePacket {
 
     @Unique
     private static final int HEXTEXT_SIGN_PACKET_LIMIT = 50;
 
     @Shadow
     private String[] field_149590_d;
+
+    @Unique
+    private SignSide hextext$editingSide = SignSide.FRONT;
 
     @ModifyConstant(method = "readPacketData", constant = @Constant(intValue = 15))
     private int hextext$expandReadLimit(int original) {
@@ -35,5 +40,30 @@ public abstract class MixinC12PacketUpdateSign extends Packet {
         for (int i = 0; i < field_149590_d.length; i++) {
             field_149590_d[i] = SignTextHelper.clampToVisibleLimit(field_149590_d[i]);
         }
+    }
+
+    @Inject(method = "writePacketData", at = @At("TAIL"))
+    private void hextext$writeSide(PacketBuffer data, CallbackInfo ci) {
+        data.writeByte(hextext$editingSide.ordinal());
+    }
+
+    @Inject(method = "readPacketData", at = @At("TAIL"))
+    private void hextext$readSide(PacketBuffer data, CallbackInfo ci) {
+        int ordinal = data.readByte();
+        if (ordinal < 0 || ordinal >= SignSide.values().length) {
+            hextext$editingSide = SignSide.FRONT;
+        } else {
+            hextext$editingSide = SignSide.values()[ordinal];
+        }
+    }
+
+    @Override
+    public void hextext$setEditingSide(SignSide side) {
+        this.hextext$editingSide = side == null ? SignSide.FRONT : side;
+    }
+
+    @Override
+    public SignSide hextext$getEditingSide() {
+        return hextext$editingSide;
     }
 }
