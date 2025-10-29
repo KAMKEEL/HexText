@@ -157,18 +157,30 @@ public final class FontRendererRenderPipeline {
 
     public float renderGlyph(char glyph, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
             GlyphRenderer glyphRenderer) {
+        return renderGlyph(glyph, italic, unicode, defaultIndex, unicodeChar, glyphRenderer, false);
+    }
+
+    public float renderGlyphBoldDuplicate(char glyph, boolean italic, boolean unicode, int defaultIndex,
+            char unicodeChar, GlyphRenderer glyphRenderer) {
+        return renderGlyph(glyph, italic, unicode, defaultIndex, unicodeChar, glyphRenderer, true);
+    }
+
+    private float renderGlyph(char glyph, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
+            GlyphRenderer glyphRenderer, boolean boldDuplicate) {
         int baseColor = bridge.getTextColor();
-        if (effects.hasActiveEffects()) {
+        if (!boldDuplicate && effects.hasActiveEffects()) {
             int targetColor = effects.computeColor(visibleGlyphIndex);
             int appliedColor = shadowPass ? ColorCodeUtils.calculateShadowColor(targetColor) : targetColor;
             setColorFromInt(appliedColor);
             effects.beforeGlyph(bridge.getFontRenderer(), glyph, visibleGlyphIndex, bridge.getPosX(), bridge.getPosY(),
                 bridge.getFontHeight());
-            float width = renderGlyphWithColor(appliedColor, italic, unicode, defaultIndex, unicodeChar, glyphRenderer);
+            float width = renderGlyphWithColor(appliedColor, italic, unicode, defaultIndex, unicodeChar, glyphRenderer,
+                false);
             effects.afterGlyph();
             return width;
         }
-        return renderGlyphWithColor(baseColor, italic, unicode, defaultIndex, unicodeChar, glyphRenderer);
+        return renderGlyphWithColor(baseColor, italic, unicode, defaultIndex, unicodeChar, glyphRenderer,
+            boldDuplicate);
     }
 
     public void advanceGlyphIndex() {
@@ -176,11 +188,12 @@ public final class FontRendererRenderPipeline {
     }
 
     private float renderGlyphWithColor(int color, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
-            GlyphRenderer glyphRenderer) {
-        if (!renderingShadow && GlowingTextRenderer.isOutlineEnabled()) {
+            GlyphRenderer glyphRenderer, boolean skipOutline) {
+        if (!renderingShadow && GlowingTextRenderer.isOutlineEnabled() && !skipOutline) {
             return renderGlyphWithOutline(color, italic, unicode, defaultIndex, unicodeChar, glyphRenderer);
         }
-        return renderGlyphInternal(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
+        applyTemporaryColor(color);
+        return renderGlyphDirect(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
     }
 
     private float renderGlyphWithOutline(int baseColor, boolean italic, boolean unicode, int defaultIndex,
@@ -190,15 +203,16 @@ public final class FontRendererRenderPipeline {
         for (float[] offset : GlowingTextRenderer.getOutlineOffsets()) {
             GL11.glPushMatrix();
             GL11.glTranslatef(offset[0], offset[1], 0.0f);
-            renderGlyphInternal(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
+            renderGlyphDirect(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
             GL11.glPopMatrix();
         }
 
         applyTemporaryColor(baseColor);
-        return renderGlyphInternal(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
+        float width = renderGlyphDirect(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
+        return width;
     }
 
-    private float renderGlyphInternal(boolean unicode, int defaultIndex, char unicodeChar, boolean italic,
+    private float renderGlyphDirect(boolean unicode, int defaultIndex, char unicodeChar, boolean italic,
             GlyphRenderer glyphRenderer) {
         return unicode
             ? glyphRenderer.renderUnicode(unicodeChar, italic)
