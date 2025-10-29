@@ -1,11 +1,13 @@
 package kamkeel.hextext.mixins.early.impl.client;
 
+import kamkeel.hextext.client.ColorStateTracker;
 import kamkeel.hextext.client.FontRenderContext;
 import kamkeel.hextext.client.FontRendererUtils;
 import kamkeel.hextext.client.RenderInstruction;
 import kamkeel.hextext.client.RenderTextData;
 import kamkeel.hextext.client.RenderTextProcessor;
 import kamkeel.hextext.client.TokenHighlight;
+import kamkeel.hextext.client.TextEffectController;
 import kamkeel.hextext.client.TokenHighlightUtils;
 import kamkeel.hextext.util.ColorCodeUtils;
 import kamkeel.hextext.util.StringUtils;
@@ -13,16 +15,16 @@ import net.minecraft.client.gui.FontRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 
 @Mixin(value = FontRenderer.class)
@@ -49,12 +51,16 @@ public abstract class MixinFontRenderer {
     @Shadow(remap = false)
     protected abstract void setColor(float r, float g, float b, float a);
 
+    @Invoker("renderDefaultChar")
+    protected abstract float hextext$invokeRenderDefaultChar(int character, boolean italic);
+
+    @Invoker("renderUnicodeChar")
+    protected abstract float hextext$invokeRenderUnicodeChar(char character, boolean italic);
+
     @Unique
     private RenderTextData hextext$renderData;
     @Unique
-    private Deque<Integer> hextext$colorStack;
-    @Unique
-    private int hextext$baseColor;
+    private ColorStateTracker hextext$colorState;
     @Unique
     private boolean hextext$shadow;
     @Unique
@@ -63,15 +69,38 @@ public abstract class MixinFontRenderer {
     private int hextext$rawTokenSkip;
     @Unique
     private boolean hextext$renderingShadow;
+    @Unique
+    private TextEffectController hextext$effects;
+    @Unique
+    private int hextext$visibleGlyphIndex;
+    @Unique
+    private int hextext$pendingRenderColor;
+    @Unique
+    private boolean hextext$hasPendingRenderColor;
+
+    @Inject(method = "renderString", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;setColor(FFFF)V", shift = At.Shift.AFTER, remap = false), locals = LocalCapture.CAPTURE_FAILHARD)
+    private void hextext$capturePreparedColor(String text, int x, int y, int color, boolean dropShadow,
+            CallbackInfoReturnable<Integer> cir) {
+        hextext$pendingRenderColor = color & 0xFFFFFF;
+        hextext$hasPendingRenderColor = true;
+    }
 
     @Inject(method = "renderStringAtPos", at = @At("HEAD"))
     private void hextext$begin(String text, boolean shadow, CallbackInfo ci) {
         boolean rawMode = FontRenderContext.isRawTextRendering();
         hextext$renderData = RenderTextProcessor.prepare(text, rawMode);
-        hextext$colorStack = null;
-        hextext$baseColor = this.textColor;
+        if (hextext$colorState == null) {
+            hextext$colorState = new ColorStateTracker();
+        }
         hextext$shadow = shadow;
         hextext$renderingShadow = shadow;
+        if (hextext$effects == null) {
+            hextext$effects = new TextEffectController();
+        }
+        int initialColor = hextext$resolveInitialColor();
+        hextext$colorState.begin(initialColor, shadow);
+        this.textColor = initialColor;
+        hextext$effects.begin(initialColor);
         if (rawMode) {
             hextext$resetFormattingStyles();
         }
@@ -85,6 +114,7 @@ public abstract class MixinFontRenderer {
             hextext$pendingHighlights.clear();
         }
         hextext$rawTokenSkip = 0;
+        hextext$visibleGlyphIndex = 0;
     }
 
     @ModifyVariable(method = "renderStringAtPos", at = @At("HEAD"), argsOnly = true)
@@ -133,7 +163,6 @@ public abstract class MixinFontRenderer {
     @Inject(method = "renderStringAtPos", at = @At("TAIL"))
     private void hextext$end(String text, boolean shadow, CallbackInfo ci) {
         hextext$renderData = null;
-        hextext$colorStack = null;
         if (!hextext$renderingShadow && hextext$pendingHighlights != null && !hextext$pendingHighlights.isEmpty()) {
             TokenHighlightUtils.drawHighlights(hextext$pendingHighlights, this.FONT_HEIGHT);
             hextext$pendingHighlights.clear();
@@ -188,40 +217,72 @@ public abstract class MixinFontRenderer {
         cir.setReturnValue(StringUtils.extractFormatFromString(text));
     }
 
+    @SuppressWarnings("unused")
+    @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;renderDefaultChar(IZ)F"))
+    private float hextext$renderDefaultChar(FontRenderer fontRenderer, int character, boolean italic,
+            int glyphIndex, char glyph, boolean italicFlag) {
+        return hextext$renderGlyphWithEffects(glyph, italic, false, character, glyph);
+    }
+
+    @SuppressWarnings("unused")
+    @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;renderUnicodeChar(CZ)F"))
+    private float hextext$renderUnicodeChar(FontRenderer fontRenderer, char character, boolean italic,
+            int glyphIndex, char glyph, boolean italicFlag) {
+        return hextext$renderGlyphWithEffects(glyph, italic, true, 0, character);
+    }
+
+    @Unique
+    private float hextext$renderGlyphWithEffects(char glyph, boolean italic, boolean unicode, int defaultIndex, char unicodeChar) {
+        int glyphIndex = hextext$visibleGlyphIndex;
+        float width;
+        if (hextext$effects != null && hextext$effects.hasActiveEffects()) {
+            int targetColor = hextext$effects.computeColor(glyphIndex);
+            int appliedColor = hextext$shadow ? ColorCodeUtils.calculateShadowColor(targetColor) : targetColor;
+            hextext$setColorFromInt(appliedColor);
+            hextext$effects.beforeGlyph((FontRenderer) (Object) this, glyph, glyphIndex, this.posX, this.posY, this.FONT_HEIGHT);
+            width = unicode
+                ? hextext$invokeRenderUnicodeChar(unicodeChar, italic)
+                : hextext$invokeRenderDefaultChar(defaultIndex, italic);
+            hextext$effects.afterGlyph();
+        } else {
+            width = unicode
+                ? hextext$invokeRenderUnicodeChar(unicodeChar, italic)
+                : hextext$invokeRenderDefaultChar(defaultIndex, italic);
+        }
+        return width;
+    }
+
+    @Inject(method = "doDraw", at = @At("TAIL"), remap = false)
+    private void hextext$advanceVisibleGlyphIndex(float width, CallbackInfo ci) {
+        hextext$visibleGlyphIndex++;
+    }
+
     @Unique
     private void hextext$executeInstruction(RenderInstruction instruction) {
+        boolean resetStyles = instruction.resetsFormatting();
+
         switch (instruction.getType()) {
             case APPLY_RGB:
-                if (instruction.shouldClearStack() && hextext$colorStack != null) {
-                    hextext$colorStack.clear();
-                }
-                hextext$applyRgbColor(instruction.getRgb(), hextext$shadow);
+                int appliedRgb = hextext$colorState.applyRgb(instruction.getRgb(), instruction.shouldClearStack(),
+                    hextext$effects, hextext$renderingShadow);
+                hextext$setColorFromInt(appliedRgb);
                 break;
             case APPLY_VANILLA_COLOR:
-                if (instruction.shouldClearStack() && hextext$colorStack != null) {
-                    hextext$colorStack.clear();
-                }
-                hextext$applyVanillaColor(instruction.getParameter());
+                int vanillaColor = hextext$colorState.applyVanillaColor(instruction.getParameter(), colorCode,
+                    instruction.shouldClearStack(), hextext$effects, hextext$renderingShadow);
+                hextext$setColorFromInt(vanillaColor);
                 break;
             case PUSH_RGB:
-                if (hextext$colorStack == null) {
-                    hextext$colorStack = new ArrayDeque<>();
-                }
-                hextext$colorStack.push(this.textColor);
-                hextext$applyRgbColor(instruction.getRgb(), hextext$shadow);
+                int pushedColor = hextext$colorState.push(instruction.getRgb(), hextext$effects, hextext$renderingShadow);
+                hextext$setColorFromInt(pushedColor);
                 break;
             case POP_COLOR:
-                if (hextext$colorStack != null && !hextext$colorStack.isEmpty()) {
-                    hextext$setColorFromInt(hextext$colorStack.pop());
-                } else {
-                    hextext$setColorFromInt(hextext$baseColor);
-                }
+                int restoredColor = hextext$colorState.pop(hextext$effects, hextext$renderingShadow);
+                hextext$setColorFromInt(restoredColor);
                 break;
             case RESET_TO_BASE:
-                if (hextext$colorStack != null) {
-                    hextext$colorStack.clear();
-                }
-                hextext$setColorFromInt(hextext$baseColor);
+                int baseColor = hextext$colorState.resetToBase(hextext$effects, hextext$renderingShadow);
+                hextext$setColorFromInt(baseColor);
                 break;
             case SET_RANDOM:
                 this.randomStyle = instruction.isEnabled();
@@ -238,16 +299,51 @@ public abstract class MixinFontRenderer {
             case SET_ITALIC:
                 this.italicStyle = instruction.isEnabled();
                 break;
+            case SET_RAINBOW:
+                if (instruction.shouldClearStack()) {
+                    hextext$colorState.clearStacks();
+                }
+                if (hextext$effects != null) {
+                    hextext$effects.resetDynamicEffects();
+                    hextext$effects.setRainbow(instruction.isEnabled(), hextext$visibleGlyphIndex);
+                    if (!hextext$renderingShadow) {
+                        hextext$effects.updateBaseColor(this.textColor);
+                    }
+                }
+                resetStyles = true;
+                break;
+            case SET_DINNERBONE:
+                if (hextext$effects != null) {
+                    hextext$effects.setDinnerbone(instruction.isEnabled());
+                }
+                break;
+            case SET_IGNITE:
+                if (hextext$effects != null) {
+                    if (instruction.isEnabled() && !hextext$renderingShadow) {
+                        hextext$effects.updateBaseColor(this.textColor);
+                    }
+                    hextext$effects.setIgnite(instruction.isEnabled());
+                }
+                break;
+            case SET_SHAKE:
+                if (hextext$effects != null) {
+                    hextext$effects.setShake(instruction.isEnabled());
+                }
+                break;
         }
 
-        if (instruction.resetsFormatting()) {
+        if (resetStyles) {
             hextext$resetFormattingStyles();
         }
     }
 
     @Unique
     private void hextext$setColorFromInt(int rgb) {
-        this.textColor = rgb;
+        int masked = rgb & 0xFFFFFF;
+        this.textColor = masked;
+        if (hextext$colorState != null) {
+            hextext$colorState.setCurrentColor(masked);
+        }
         setColor((float) (rgb >> 16 & 255) / 255.0F,
             (float) (rgb >> 8 & 255) / 255.0F,
             (float) (rgb & 255) / 255.0F,
@@ -255,20 +351,15 @@ public abstract class MixinFontRenderer {
     }
 
     @Unique
-    private void hextext$applyRgbColor(int rgb, boolean shadow) {
-        int effective = shadow ? ColorCodeUtils.calculateShadowColor(rgb) : rgb;
-        hextext$setColorFromInt(effective);
-    }
-
-    @Unique
-    private void hextext$applyVanillaColor(int colorIndex) {
-        int index = Math.max(0, Math.min(colorIndex, 15));
-        int paletteIndex = hextext$shadow ? index + 16 : index;
-        if (colorCode != null && paletteIndex >= 0 && paletteIndex < colorCode.length) {
-            hextext$setColorFromInt(colorCode[paletteIndex]);
-        } else {
-            hextext$setColorFromInt(hextext$baseColor);
+    private int hextext$resolveInitialColor() {
+        if (hextext$hasPendingRenderColor) {
+            hextext$hasPendingRenderColor = false;
+            return hextext$pendingRenderColor & 0xFFFFFF;
         }
+        int r = Math.round(this.red * 255.0f);
+        int g = Math.round(this.blue * 255.0f);
+        int b = Math.round(this.green * 255.0f);
+        return (r << 16) | (g << 8) | b;
     }
 
     @Unique
