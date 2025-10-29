@@ -31,7 +31,7 @@ public abstract class MixinTileEntitySign extends TileEntity {
 
     // Back Sign Text
     @Unique
-    public String[] hextext$backSignText;
+    public String[] hextext$backSignText = new String[] {"", "", "", ""};;
 
     @Unique
     private boolean hextext$isGlowingBack = false;
