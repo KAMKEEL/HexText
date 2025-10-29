@@ -10,6 +10,7 @@ import java.io.File;
 public final class HexTextConfig {
 
     public static final String CATEGORY_EFFECTS = "effects";
+    public static final String CATEGORY_RENDERING = "rendering";
 
     private static final float DEFAULT_RAINBOW_SPEED = 3000.0f;
     private static final int DEFAULT_SHAKE_INTERVAL = 100;
@@ -23,11 +24,14 @@ public final class HexTextConfig {
     private static final int MAX_IGNITE_INTERVAL = 1000;
     private static final float MAX_RAINBOW_SPEED = 5000.0f;
 
+    private static final boolean DEFAULT_GLOWING_TEXT_OUTLINE = true;
+
     private static Configuration configuration;
 
     private static float rainbowSpeed = DEFAULT_RAINBOW_SPEED;
     private static int shakeInterval = DEFAULT_SHAKE_INTERVAL;
     private static int igniteInterval = DEFAULT_IGNITE_INTERVAL;
+    private static boolean glowingTextOutlineEnabled = DEFAULT_GLOWING_TEXT_OUTLINE;
 
     private HexTextConfig() {
     }
@@ -48,6 +52,8 @@ public final class HexTextConfig {
 
         configuration.addCustomCategoryComment(CATEGORY_EFFECTS,
             "Timing controls for HexText's dynamic formatting effects.");
+        configuration.addCustomCategoryComment(CATEGORY_RENDERING,
+            "Rendering controls for HexText's font renderer enhancements.");
 
         rainbowSpeed = clamp(configuration.getFloat(
             "rainbowCycleDurationMs",
@@ -76,6 +82,13 @@ public final class HexTextConfig {
             "Milliseconds for ignite to fade from bright to dim and back again. Lower values animate faster."
         ), MIN_IGNITE_INTERVAL, MAX_IGNITE_INTERVAL);
 
+        glowingTextOutlineEnabled = configuration.getBoolean(
+            "enableGlowingTextOutline",
+            CATEGORY_RENDERING,
+            DEFAULT_GLOWING_TEXT_OUTLINE,
+            "Renders all HexText output with an eight-direction glowing outline similar to Minecraft 1.17 glow ink."
+        );
+
         if (configuration.hasChanged()) {
             configuration.save();
         }
@@ -95,6 +108,10 @@ public final class HexTextConfig {
 
     public static Configuration getConfiguration() {
         return configuration;
+    }
+
+    public static boolean isGlowingTextOutlineEnabled() {
+        return glowingTextOutlineEnabled;
     }
 
     private static float clamp(float value, float min, float max) {

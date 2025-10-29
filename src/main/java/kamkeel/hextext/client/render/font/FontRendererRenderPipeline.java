@@ -10,12 +10,17 @@ import kamkeel.hextext.client.render.TextEffectController;
 import kamkeel.hextext.client.render.TokenHighlight;
 import kamkeel.hextext.client.render.TokenHighlightUtils;
 import kamkeel.hextext.common.util.ColorCodeUtils;
+import kamkeel.hextext.common.util.ColorMath;
 import kamkeel.hextext.common.util.StringUtils;
+import kamkeel.hextext.config.HexTextConfig;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.lwjgl.opengl.GL11;
 
 public final class FontRendererRenderPipeline {
+
+    private static final float OUTLINE_OFFSET = 1.0f;
 
     private final FontRendererBridge bridge;
     private final ColorStateTracker colorState = new ColorStateTracker();
@@ -161,11 +166,16 @@ public final class FontRendererRenderPipeline {
             setColorFromInt(appliedColor);
             effects.beforeGlyph(bridge.getFontRenderer(), glyph, visibleGlyphIndex, bridge.getPosX(), bridge.getPosY(),
                 bridge.getFontHeight());
+            renderOutlineIfNeeded(glyph, italic, unicode, defaultIndex, unicodeChar, glyphRenderer, appliedColor);
             width = unicode
                 ? glyphRenderer.renderUnicode(unicodeChar, italic)
                 : glyphRenderer.renderDefault(defaultIndex, italic);
             effects.afterGlyph();
         } else {
+            if (!renderingShadow) {
+                int currentColor = colorState.getCurrentColor();
+                renderOutlineIfNeeded(glyph, italic, unicode, defaultIndex, unicodeChar, glyphRenderer, currentColor);
+            }
             width = unicode
                 ? glyphRenderer.renderUnicode(unicodeChar, italic)
                 : glyphRenderer.renderDefault(defaultIndex, italic);
@@ -175,6 +185,62 @@ public final class FontRendererRenderPipeline {
 
     public void advanceGlyphIndex() {
         visibleGlyphIndex++;
+    }
+
+    private void renderOutlineIfNeeded(char glyph, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
+            GlyphRenderer glyphRenderer, int activeColor) {
+        if (!HexTextConfig.isGlowingTextOutlineEnabled() || renderingShadow) {
+            return;
+        }
+        if (glyph == 0 || Character.isWhitespace(glyph) || glyph == '\u00A0') {
+            return;
+        }
+
+        int outlineColor = computeOutlineColor(activeColor);
+
+        float alpha = bridge.getAlpha();
+        float outlineRed = (float) (outlineColor >> 16 & 255) / 255.0F;
+        float outlineGreen = (float) (outlineColor >> 8 & 255) / 255.0F;
+        float outlineBlue = (float) (outlineColor & 255) / 255.0F;
+
+        for (int offsetX = -1; offsetX <= 1; offsetX++) {
+            for (int offsetY = -1; offsetY <= 1; offsetY++) {
+                if (offsetX == 0 && offsetY == 0) {
+                    continue;
+                }
+                GL11.glPushMatrix();
+                GL11.glTranslatef(offsetX * OUTLINE_OFFSET, offsetY * OUTLINE_OFFSET, 0.0f);
+                bridge.applyColorComponents(outlineRed, outlineGreen, outlineBlue, alpha);
+                if (unicode) {
+                    glyphRenderer.renderUnicode(unicodeChar, italic);
+                } else {
+                    glyphRenderer.renderDefault(defaultIndex, italic);
+                }
+                GL11.glPopMatrix();
+            }
+        }
+
+        restoreColorComponents(activeColor);
+    }
+
+    private void restoreColorComponents(int rgb) {
+        float red = (float) (rgb >> 16 & 255) / 255.0F;
+        float green = (float) (rgb >> 8 & 255) / 255.0F;
+        float blue = (float) (rgb & 255) / 255.0F;
+        bridge.applyColorComponents(red, green, blue, bridge.getAlpha());
+    }
+
+    private int computeOutlineColor(int baseColor) {
+        int masked = baseColor & 0xFFFFFF;
+        float red = (float) (masked >> 16 & 255) / 255.0F;
+        float green = (float) (masked >> 8 & 255) / 255.0F;
+        float blue = (float) (masked & 255) / 255.0F;
+        float luminance = 0.2126f * red + 0.7152f * green + 0.0722f * blue;
+
+        if (luminance > 0.6f) {
+            return ColorMath.scaleBrightness(masked, 0.35f);
+        }
+        return ColorMath.blend(masked, 0xFFFFFF, 0.65f);
     }
 
     private void executeInstruction(RenderInstruction instruction) {
