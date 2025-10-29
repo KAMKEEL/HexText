@@ -21,7 +21,7 @@ public final class GlowingTextRenderer {
     private static final float OUTLINE_DARKEN_FACTOR = 0.4f;
     private static final float OUTLINE_RECOVERY_FACTOR = 0.35f;
 
-    private static boolean outlineEnabled = true;
+    private static boolean outlineEnabled = false;
 
     private GlowingTextRenderer() {
     }
