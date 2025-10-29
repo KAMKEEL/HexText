@@ -1,8 +1,5 @@
 package kamkeel.hextext.config;
 
-import cpw.mods.fml.client.event.ConfigChangedEvent;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import kamkeel.hextext.HexText;
 import net.minecraftforge.common.config.Configuration;
 
 import java.io.File;
@@ -114,13 +111,4 @@ public final class HexTextConfig {
         return Math.min(value, max);
     }
 
-    public static class EventHandler {
-
-        @SubscribeEvent
-        public void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {
-            if (HexText.ID.equals(event.modID)) {
-                sync();
-            }
-        }
-    }
 }

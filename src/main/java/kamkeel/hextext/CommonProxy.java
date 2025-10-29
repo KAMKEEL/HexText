@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import kamkeel.hextext.config.HexTextConfig;
+import kamkeel.hextext.config.HexTextConfigEventHandler;
 
 public class CommonProxy {
     public static final Logger LOGGER = LogManager.getLogger(HexText.ID);
@@ -16,7 +17,7 @@ public class CommonProxy {
 
     public static void eventsInit() {
         if (!eventsRegistered) {
-            FMLCommonHandler.instance().bus().register(new HexTextConfig.EventHandler());
+            FMLCommonHandler.instance().bus().register(new HexTextConfigEventHandler());
             eventsRegistered = true;
         }
     }

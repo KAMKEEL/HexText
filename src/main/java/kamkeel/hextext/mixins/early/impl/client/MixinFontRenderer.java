@@ -239,11 +239,6 @@ public abstract class MixinFontRenderer {
         return renderer.render();
     }
 
-    @FunctionalInterface
-    private interface GlyphRenderer {
-        float render();
-    }
-
     @Unique
     private void hextext$executeInstruction(RenderInstruction instruction) {
         switch (instruction.getType()) {
