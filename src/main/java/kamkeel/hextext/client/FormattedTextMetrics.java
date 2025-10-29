@@ -33,11 +33,12 @@ public final class FormattedTextMetrics {
                         char fmt = Character.toLowerCase(text.charAt(index + 1));
                         if (fmt == 'l') {
                             isBold = true;
-                        } else if (fmt == 'r') {
-                            isBold = false;
-                        } else if ((fmt >= '0' && fmt <= '9') || (fmt >= 'a' && fmt <= 'f')) {
+                        } else if (fmt == 'r' || ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g') {
                             isBold = false;
                         }
+                    } else if ((codeLen == 7 && text.charAt(index) == '&')
+                        || (codeLen >= 8 && text.charAt(index) == '<')) {
+                        isBold = false;
                     }
                     index += codeLen;
                     continue;
@@ -73,9 +74,9 @@ public final class FormattedTextMetrics {
             return 0;
         }
 
-        int lastSafePosition = 0;
         float currentWidth = 0.0f;
         boolean isBold = false;
+        int lastBreakable = -1;
         final int length = text.length();
 
         for (int index = 0; index < length; ) {
@@ -86,14 +87,14 @@ public final class FormattedTextMetrics {
                         char fmt = Character.toLowerCase(text.charAt(index + 1));
                         if (fmt == 'l') {
                             isBold = true;
-                        } else if (fmt == 'r') {
-                            isBold = false;
-                        } else if ((fmt >= '0' && fmt <= '9') || (fmt >= 'a' && fmt <= 'f')) {
+                        } else if (fmt == 'r' || ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g') {
                             isBold = false;
                         }
+                    } else if ((codeLen == 7 && text.charAt(index) == '&')
+                        || (codeLen >= 8 && text.charAt(index) == '<')) {
+                        isBold = false;
                     }
                     index += codeLen;
-                    lastSafePosition = index;
                     continue;
                 }
             }
@@ -101,6 +102,10 @@ public final class FormattedTextMetrics {
             char character = text.charAt(index);
             if (character == '\n') {
                 return index;
+            }
+
+            if (character == ' ') {
+                lastBreakable = index;
             }
 
             float charWidth = charWidthFunc.getWidth(character);
@@ -118,12 +123,12 @@ public final class FormattedTextMetrics {
             }
 
             if (nextWidth > maxWidth) {
-                return Math.min(lastSafePosition, length);
+                int fallback = lastBreakable >= 0 && lastBreakable < index ? lastBreakable : index;
+                return Math.min(fallback, length);
             }
 
             currentWidth = nextWidth;
             index++;
-            lastSafePosition = index;
         }
 
         return length;
