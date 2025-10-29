@@ -112,16 +112,32 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
         cir.setReturnValue(StringUtils.extractFormatFromString(text));
     }
 
-    @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;renderDefaultChar(IZ)F"))
+    @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE",
+        target = "Lnet/minecraft/client/gui/FontRenderer;renderDefaultChar(IZ)F"), ordinal = 0)
     private float hextext$renderDefaultChar(FontRenderer fontRenderer, int character, boolean italic,
             int glyphIndex, char glyph, boolean italicFlag) {
-        return hextext$pipeline.renderGlyph(glyph, italic, false, character, glyph, hextext$glyphRenderer);
+        return hextext$pipeline.renderGlyph(glyph, italic, false, character, glyph, hextext$glyphRenderer, true);
     }
 
-    @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;renderUnicodeChar(CZ)F"))
+    @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE",
+        target = "Lnet/minecraft/client/gui/FontRenderer;renderDefaultChar(IZ)F"), ordinal = 1)
+    private float hextext$renderBoldDefaultOverlay(FontRenderer fontRenderer, int character, boolean italic,
+            int glyphIndex, char glyph, boolean italicFlag) {
+        return hextext$pipeline.renderGlyph(glyph, italic, false, character, glyph, hextext$glyphRenderer, false);
+    }
+
+    @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE",
+        target = "Lnet/minecraft/client/gui/FontRenderer;renderUnicodeChar(CZ)F"), ordinal = 0)
     private float hextext$renderUnicodeChar(FontRenderer fontRenderer, char character, boolean italic,
             int glyphIndex, char glyph, boolean italicFlag) {
-        return hextext$pipeline.renderGlyph(glyph, italic, true, 0, character, hextext$glyphRenderer);
+        return hextext$pipeline.renderGlyph(glyph, italic, true, 0, character, hextext$glyphRenderer, true);
+    }
+
+    @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE",
+        target = "Lnet/minecraft/client/gui/FontRenderer;renderUnicodeChar(CZ)F"), ordinal = 1)
+    private float hextext$renderBoldUnicodeOverlay(FontRenderer fontRenderer, char character, boolean italic,
+            int glyphIndex, char glyph, boolean italicFlag) {
+        return hextext$pipeline.renderGlyph(glyph, italic, true, 0, character, hextext$glyphRenderer, false);
     }
 
     @Inject(method = "doDraw", at = @At("TAIL"), remap = false)

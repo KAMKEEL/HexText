@@ -156,7 +156,7 @@ public final class FontRendererRenderPipeline {
     }
 
     public float renderGlyph(char glyph, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
-            GlyphRenderer glyphRenderer) {
+            GlyphRenderer glyphRenderer, boolean allowOutline) {
         int baseColor = bridge.getTextColor();
         if (effects.hasActiveEffects()) {
             int targetColor = effects.computeColor(visibleGlyphIndex);
@@ -164,11 +164,12 @@ public final class FontRendererRenderPipeline {
             setColorFromInt(appliedColor);
             effects.beforeGlyph(bridge.getFontRenderer(), glyph, visibleGlyphIndex, bridge.getPosX(), bridge.getPosY(),
                 bridge.getFontHeight());
-            float width = renderGlyphWithColor(appliedColor, italic, unicode, defaultIndex, unicodeChar, glyphRenderer);
+            float width = renderGlyphWithColor(appliedColor, italic, unicode, defaultIndex, unicodeChar, glyphRenderer,
+                allowOutline);
             effects.afterGlyph();
             return width;
         }
-        return renderGlyphWithColor(baseColor, italic, unicode, defaultIndex, unicodeChar, glyphRenderer);
+        return renderGlyphWithColor(baseColor, italic, unicode, defaultIndex, unicodeChar, glyphRenderer, allowOutline);
     }
 
     public void advanceGlyphIndex() {
@@ -176,8 +177,8 @@ public final class FontRendererRenderPipeline {
     }
 
     private float renderGlyphWithColor(int color, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
-            GlyphRenderer glyphRenderer) {
-        if (!renderingShadow && GlowingTextRenderer.isOutlineEnabled()) {
+            GlyphRenderer glyphRenderer, boolean allowOutline) {
+        if (!renderingShadow && GlowingTextRenderer.isOutlineEnabled() && allowOutline) {
             return renderGlyphWithOutline(color, italic, unicode, defaultIndex, unicodeChar, glyphRenderer);
         }
         return renderGlyphInternal(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
