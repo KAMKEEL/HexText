@@ -30,11 +30,36 @@ public class ColorCodeUtilsTest {
     }
 
     @Test
-    public void testDetectColorCodeLength() {
-        assertEquals(7, ColorCodeUtils.detectColorCodeLength("&123456rest", 0));
+    public void detectLegacyFormattingCodeLength() {
+        assertEquals(2, ColorCodeUtils.detectColorCodeLength("&l", 0));
+    }
+
+    @Test
+    public void detectInlineHexColorLength() {
+        assertEquals(7, ColorCodeUtils.detectColorCodeLength("&123abc", 0));
         assertEquals(2, ColorCodeUtils.detectColorCodeLength("§ares", 0));
+    }
+
+    @Test
+    public void detectTaggedHexColorLengths() {
+        assertEquals(8, ColorCodeUtils.detectColorCodeLength("<abcdef>", 0));
+        assertEquals(9, ColorCodeUtils.detectColorCodeLength("</abcdef>", 0));
         assertEquals(9, ColorCodeUtils.detectColorCodeLength("</ABCDEF>xyz", 0));
         assertEquals(8, ColorCodeUtils.detectColorCodeLength("<ABCDEF>xyz", 0));
+    }
+
+    @Test
+    public void rawModeDisablesDetection() {
+        assertEquals(0, ColorCodeUtils.detectColorCodeLength("&123abc", 0, true));
+    }
+
+    @Test
+    public void validatesHexStrings() {
+        assertTrue(ColorCodeUtils.isValidHexString("a1b2c3"));
+    }
+
+    @Test
+    public void detectPlainTextHasNoCode() {
         assertEquals(0, ColorCodeUtils.detectColorCodeLength("plain", 0));
     }
 
