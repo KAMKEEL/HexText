@@ -47,4 +47,16 @@ public class StringUtilsTest {
         String normalized = StringUtils.normalizeForRawDisplay("§aHello §rWorld");
         assertEquals("&aHello &rWorld", normalized);
     }
+
+    @Test
+    public void convertLegacyFormattingCodesReplacesAmpersands() {
+        String converted = StringUtils.convertLegacyFormattingCodes("&lBold &NA");
+        assertEquals("§lBold §NA", converted);
+    }
+
+    @Test
+    public void convertLegacyFormattingCodesIgnoresNonFormattingAmpersands() {
+        String converted = StringUtils.convertLegacyFormattingCodes("Fish & Chips");
+        assertEquals("Fish & Chips", converted);
+    }
 }

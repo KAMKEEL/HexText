@@ -19,12 +19,14 @@ public final class FontRendererUtils {
     }
 
     public static float calculateMaxLineWidth(FontRenderer renderer, String text, boolean rawMode) {
-        return FormattedTextMetrics.calculateMaxLineWidth(text, rawMode,
+        String processed = StringUtils.convertLegacyFormattingCodes(text);
+        return FormattedTextMetrics.calculateMaxLineWidth(processed, rawMode,
             character -> getCharWidth(renderer, character, rawMode), 0.0f, 1.0f);
     }
 
     public static int computeLineBreakIndex(FontRenderer renderer, String text, int maxWidth, boolean rawMode) {
-        return FormattedTextMetrics.computeLineBreakIndex(text, maxWidth, rawMode,
+        String processed = StringUtils.convertLegacyFormattingCodes(text);
+        return FormattedTextMetrics.computeLineBreakIndex(processed, maxWidth, rawMode,
             character -> getCharWidth(renderer, character, rawMode), 0.0f, 1.0f);
     }
 

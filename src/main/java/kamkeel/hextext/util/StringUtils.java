@@ -42,6 +42,39 @@ public final class StringUtils {
         return builder == null ? text : builder.toString();
     }
 
+    public static String convertLegacyFormattingCodes(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+
+        StringBuilder builder = null;
+        int length = text.length();
+
+        for (int i = 0; i < length; i++) {
+            char current = text.charAt(i);
+
+            if (current == '&' && i + 1 < length) {
+                char next = text.charAt(i + 1);
+                if (ColorCodeUtils.isFormattingCode(next)) {
+                    if (builder == null) {
+                        builder = new StringBuilder(length);
+                        builder.append(text, 0, i);
+                    }
+                    builder.append('§');
+                    builder.append(next);
+                    i++;
+                    continue;
+                }
+            }
+
+            if (builder != null) {
+                builder.append(current);
+            }
+        }
+
+        return builder == null ? text : builder.toString();
+    }
+
     public static String extractFormatFromString(String str) {
         if (str == null || str.isEmpty()) {
             return "";
