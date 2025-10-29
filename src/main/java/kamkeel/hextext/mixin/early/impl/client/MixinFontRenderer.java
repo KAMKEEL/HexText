@@ -35,7 +35,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
     @Shadow public int FONT_HEIGHT;
     @Shadow private int[] colorCode;
 
-    @Shadow(remap = false)
+    @Shadow
     protected abstract void setColor(float r, float g, float b, float a);
 
     @Invoker("renderDefaultChar")
@@ -60,7 +60,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
         }
     };
 
-    @Inject(method = "renderString", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;setColor(FFFF)V", shift = At.Shift.AFTER, remap = false), locals = LocalCapture.CAPTURE_FAILHARD)
+    @Inject(method = "renderString", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;setColor(FFFF)V", shift = At.Shift.AFTER), locals = LocalCapture.CAPTURE_FAILHARD)
     private void hextext$capturePreparedColor(String text, int x, int y, int color, boolean dropShadow,
             CallbackInfoReturnable<Integer> cir) {
         hextext$pipeline.capturePreparedColor(color);
@@ -124,7 +124,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
         return hextext$pipeline.renderGlyph(glyph, italic, true, 0, character, hextext$glyphRenderer);
     }
 
-    @Inject(method = "doDraw", at = @At("TAIL"), remap = false)
+    @Inject(method = "doDraw", at = @At("TAIL"))
     private void hextext$advanceVisibleGlyphIndex(float width, CallbackInfo ci) {
         hextext$pipeline.advanceGlyphIndex();
     }
