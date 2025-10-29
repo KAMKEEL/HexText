@@ -2,8 +2,7 @@ package kamkeel.hextext.common.util;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class StringUtilsTest {
 
@@ -46,5 +45,26 @@ public class StringUtilsTest {
     public void normalizeForRawDisplayConvertsSectionSigns() {
         String normalized = StringUtils.normalizeForRawDisplay("§aHello §rWorld");
         assertEquals("&aHello &rWorld", normalized);
+    }
+
+    @Test
+    public void stripColorCodesRemovesMinecraftFormatting() {
+        String input = "&aGreen <#FFAA00>and &lBold";
+        String result = StringUtils.stripColorCodes(input);
+        assertEquals("Green and Bold", result);
+    }
+
+    @Test
+    public void containsColorCodesDetectsHexAndLegacyCodes() {
+        assertTrue(StringUtils.containsColorCodes("<#123456>Fancy"));
+        assertTrue(StringUtils.containsColorCodes("&aHello"));
+        assertFalse(StringUtils.containsColorCodes("No formatting here"));
+    }
+
+    @Test
+    public void stripExtrasRemovesStraySectionCharacters() {
+        String input = "Text with stray " + (char) 167 + " section";
+        String result = StringUtils.stripExtras(input);
+        assertEquals("Text with stray  section", result);
     }
 }

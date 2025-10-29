@@ -76,6 +76,22 @@ public final class ColorCodeUtils {
         return Character.toLowerCase(c) == 'r';
     }
 
+    public static String translateAlternateColorCodes(char alternateChar, String text) {
+        if (text == null) {
+            return null;
+        }
+
+        char[] characters = text.toCharArray();
+        for (int i = 0; i < characters.length - 1; i++) {
+            if (characters[i] == alternateChar && isFormattingCode(characters[i + 1])) {
+                characters[i] = 167;
+                characters[i + 1] = Character.toLowerCase(characters[i + 1]);
+            }
+        }
+
+        return new String(characters);
+    }
+
     public static int parseHexColor(String hex) {
         if (!isValidHexString(hex)) {
             return -1;
@@ -178,5 +194,13 @@ public final class ColorCodeUtils {
         int blue = (int) (b * 255);
 
         return (red << 16) | (green << 8) | blue;
+    }
+
+    public static String toHexString(int rgb) {
+        return String.format("%06X", rgb & 0x00FFFFFF);
+    }
+
+    public static String formatHexColor(int rgb) {
+        return "<#" + toHexString(rgb) + ">";
     }
 }

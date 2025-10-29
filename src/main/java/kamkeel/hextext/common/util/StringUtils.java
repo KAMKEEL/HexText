@@ -124,4 +124,41 @@ public final class StringUtils {
 
         return builder.toString();
     }
+
+    public static boolean containsColorCodes(CharSequence input) {
+        if (input == null || input.length() == 0) {
+            return false;
+        }
+
+        for (int index = 0; index < input.length(); ) {
+            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index);
+            if (codeLen > 0) {
+                return true;
+            }
+
+            char current = input.charAt(index);
+            if (current == 167) {
+                if (index + 1 < input.length()) {
+                    char next = input.charAt(index + 1);
+                    if (ColorCodeUtils.isFormattingCode(next)) {
+                        return true;
+                    }
+                }
+                return true;
+            }
+
+            index++;
+        }
+
+        return false;
+    }
+
+    public static String stripExtras(CharSequence input) {
+        String stripped = stripColorCodes(input);
+        if (stripped == null || stripped.indexOf(167) < 0) {
+            return stripped;
+        }
+
+        return stripped.replace(String.valueOf((char) 167), "");
+    }
 }

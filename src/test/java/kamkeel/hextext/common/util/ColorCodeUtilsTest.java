@@ -42,4 +42,27 @@ public class ColorCodeUtilsTest {
     public void testCalculateShadowColor() {
         assertEquals(0x1E1E1E, ColorCodeUtils.calculateShadowColor(0x7A7A7A));
     }
+
+    @Test
+    public void translateAlternateColorCodesConvertsToSectionSymbols() {
+        String input = "&aHello &lWorld";
+        String result = ColorCodeUtils.translateAlternateColorCodes('&', input);
+        assertEquals("§aHello §lWorld", result);
+    }
+
+    @Test
+    public void translateAlternateColorCodesHandlesNullInput() {
+        assertNull(ColorCodeUtils.translateAlternateColorCodes('&', null));
+    }
+
+    @Test
+    public void toHexStringProducesUppercaseValues() {
+        assertEquals("ABCDEF", ColorCodeUtils.toHexString(0xABCDEF));
+        assertEquals("0000FF", ColorCodeUtils.toHexString(0x0000FF));
+    }
+
+    @Test
+    public void formatHexColorWrapsWithBrackets() {
+        assertEquals("<#123456>", ColorCodeUtils.formatHexColor(0x123456));
+    }
 }
