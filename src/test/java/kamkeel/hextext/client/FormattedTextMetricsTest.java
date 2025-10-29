@@ -28,4 +28,11 @@ public class FormattedTextMetricsTest {
         int breakIndex = FormattedTextMetrics.computeLineBreakIndex("AB CD", 12, false, widthFunction, 0.0f, 1.0f);
         assertEquals(3, breakIndex);
     }
+
+    @Test
+    public void formattingCodesDoNotIncreaseWidth() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        float width = FormattedTextMetrics.calculateMaxLineWidth("&hFlip&i&j", false, widthFunction, 0.0f, 1.0f);
+        assertEquals(20.0f, width, 0.0001f);
+    }
 }

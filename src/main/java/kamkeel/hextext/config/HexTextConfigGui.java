@@ -30,4 +30,17 @@ public class HexTextConfigGui extends GuiConfig {
         elements.add(new ConfigElement(config.getCategory(HexTextConfig.CATEGORY_EFFECTS)));
         return elements;
     }
+
+    @Override
+    public void onGuiClosed() {
+        super.onGuiClosed();
+        if (this.entryList != null) {
+            this.entryList.saveConfigElements();
+        }
+        Configuration configuration = HexTextConfig.getConfiguration();
+        if (configuration != null && configuration.hasChanged()) {
+            configuration.save();
+        }
+        HexTextConfig.sync();
+    }
 }

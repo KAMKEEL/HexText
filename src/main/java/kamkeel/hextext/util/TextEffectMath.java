@@ -42,4 +42,23 @@ public final class TextEffectMath {
         long safeFrame = frameWindow <= 0 ? 1L : frameWindow;
         return ((long) charIndex * 341873128712L) ^ (now / safeFrame);
     }
+
+    public static float computeShakeOffset(long seed, float range) {
+        float safeRange = range < 0.0f ? 0.0f : range;
+        if (safeRange == 0.0f) {
+            return 0.0f;
+        }
+        long mixed = mix(seed);
+        float normalized = ((mixed >>> 40) & 0xFFFFFF) / (float) 0xFFFFFF;
+        return (normalized * 2.0f - 1.0f) * safeRange;
+    }
+
+    private static long mix(long value) {
+        value ^= value >>> 33;
+        value *= 0xff51afd7ed558ccdL;
+        value ^= value >>> 33;
+        value *= 0xc4ceb9fe1a85ec53L;
+        value ^= value >>> 33;
+        return value;
+    }
 }

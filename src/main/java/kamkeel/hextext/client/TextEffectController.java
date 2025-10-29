@@ -7,18 +7,17 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import org.lwjgl.opengl.GL11;
 
-import java.util.Random;
-
 /**
  * Maintains the state for dynamic text effects (rainbow, dinnerbone, ignite and shake).
  */
 public final class TextEffectController {
 
     private static final float RAINBOW_SPREAD = 12.0f;
-    private static final float SHAKE_RANGE = 1.2f;
+    private static final float SHAKE_HORIZONTAL_RANGE = 0.35f;
+    private static final float SHAKE_VERTICAL_RANGE = 1.05f;
+    private static final long SHAKE_X_SALT = 0x9E3779B97F4A7C15L;
+    private static final long SHAKE_Y_SALT = 0xC6A4A7935BD1E995L;
     private static final float IGNITE_MIN_FACTOR = 0.35f;
-
-    private final Random random = new Random();
 
     private boolean rainbowActive;
     private boolean dinnerboneActive;
@@ -138,9 +137,8 @@ public final class TextEffectController {
         long now = currentTime();
         long frameWindow = Math.max(1L, HexTextConfig.getShakeInterval());
         long seed = TextEffectMath.computeShakeSeed(charIndex, now, frameWindow);
-        random.setSeed(seed);
-        float offsetX = (random.nextFloat() - 0.5f) * SHAKE_RANGE;
-        float offsetY = (random.nextFloat() - 0.5f) * SHAKE_RANGE;
+        float offsetX = TextEffectMath.computeShakeOffset(seed ^ SHAKE_X_SALT, SHAKE_HORIZONTAL_RANGE);
+        float offsetY = TextEffectMath.computeShakeOffset(seed ^ SHAKE_Y_SALT, SHAKE_VERTICAL_RANGE);
         GL11.glTranslatef(offsetX, offsetY, 0.0f);
     }
 

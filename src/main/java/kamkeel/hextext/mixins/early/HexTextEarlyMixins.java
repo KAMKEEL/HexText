@@ -40,6 +40,7 @@ public class HexTextEarlyMixins implements IMixinConfigPlugin {
         if (side == MixinEnvironment.Side.CLIENT) {
             mixins.add("client.MixinGuiTextField");
             mixins.add("client.MixinFontRenderer");
+            mixins.add("client.MixinGuiNewChat");
         }
         return mixins;
     }
