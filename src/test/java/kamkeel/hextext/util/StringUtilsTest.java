@@ -25,21 +25,21 @@ public class StringUtilsTest {
     public void extractFormatPreservesStyles() {
         String input = "&a&lBold";
         String prefix = StringUtils.extractFormatFromString(input);
-        assertEquals("&a&l", prefix);
+        assertEquals("§a§l", prefix);
     }
 
     @Test
     public void extractFormatIncludesEffects() {
         String input = "&e&o&jHello";
         String prefix = StringUtils.extractFormatFromString(input);
-        assertEquals("&e&o&j", prefix);
+        assertEquals("§e§o§j", prefix);
     }
 
     @Test
     public void extractFormatTreatsRainbowAsColour() {
         String input = "&g&iFlicker";
         String prefix = StringUtils.extractFormatFromString(input);
-        assertEquals("&g&i", prefix);
+        assertEquals("§g§i", prefix);
     }
 
     @Test

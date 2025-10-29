@@ -73,9 +73,10 @@ public final class StringUtils {
                     styleCodes.setLength(0);
                 } else if (codeLen == 2) {
                     char fmt = Character.toLowerCase(str.charAt(i + 1));
+                    String canonical = canonicalizeLegacyCode(str.charAt(i + 1));
 
                     if (ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g') {
-                        currentColorCode = code;
+                        currentColorCode = canonical;
                         colorStack.clear();
                         styleCodes.setLength(0);
                     } else if (ColorCodeUtils.isResetCode(fmt)) {
@@ -83,7 +84,7 @@ public final class StringUtils {
                         colorStack.clear();
                         styleCodes.setLength(0);
                     } else if (ColorCodeUtils.isStyleCode(fmt) || ColorCodeUtils.isEffectCode(fmt)) {
-                        styleCodes.append(code);
+                        styleCodes.append(canonical);
                     }
                 }
 
@@ -123,5 +124,9 @@ public final class StringUtils {
         }
 
         return builder.toString();
+    }
+
+    private static String canonicalizeLegacyCode(char codeChar) {
+        return new String(new char[] {'§', codeChar});
     }
 }
