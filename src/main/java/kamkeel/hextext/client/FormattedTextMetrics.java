@@ -33,11 +33,12 @@ public final class FormattedTextMetrics {
                         char fmt = Character.toLowerCase(text.charAt(index + 1));
                         if (fmt == 'l') {
                             isBold = true;
-                        } else if (fmt == 'r') {
-                            isBold = false;
-                        } else if ((fmt >= '0' && fmt <= '9') || (fmt >= 'a' && fmt <= 'f')) {
+                        } else if (fmt == 'r' || ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g') {
                             isBold = false;
                         }
+                    } else if ((codeLen == 7 && text.charAt(index) == '&')
+                        || (codeLen >= 8 && text.charAt(index) == '<')) {
+                        isBold = false;
                     }
                     index += codeLen;
                     continue;
@@ -86,11 +87,12 @@ public final class FormattedTextMetrics {
                         char fmt = Character.toLowerCase(text.charAt(index + 1));
                         if (fmt == 'l') {
                             isBold = true;
-                        } else if (fmt == 'r') {
-                            isBold = false;
-                        } else if ((fmt >= '0' && fmt <= '9') || (fmt >= 'a' && fmt <= 'f')) {
+                        } else if (fmt == 'r' || ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g') {
                             isBold = false;
                         }
+                    } else if ((codeLen == 7 && text.charAt(index) == '&')
+                        || (codeLen >= 8 && text.charAt(index) == '<')) {
+                        isBold = false;
                     }
                     index += codeLen;
                     lastSafePosition = index;

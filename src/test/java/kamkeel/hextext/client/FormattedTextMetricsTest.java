@@ -35,4 +35,18 @@ public class FormattedTextMetricsTest {
         float width = FormattedTextMetrics.calculateMaxLineWidth("&hFlip&i&j", false, widthFunction, 0.0f, 1.0f);
         assertEquals(20.0f, width, 0.0001f);
     }
+
+    @Test
+    public void rainbowCodeResetsBoldWidth() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        float width = FormattedTextMetrics.calculateMaxLineWidth("&lA&gBC", false, widthFunction, 0.0f, 1.0f);
+        assertEquals(16.0f, width, 0.0001f);
+    }
+
+    @Test
+    public void rgbPushResetsBoldWidth() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        float width = FormattedTextMetrics.calculateMaxLineWidth("&lA<123456>BC", false, widthFunction, 0.0f, 1.0f);
+        assertEquals(16.0f, width, 0.0001f);
+    }
 }

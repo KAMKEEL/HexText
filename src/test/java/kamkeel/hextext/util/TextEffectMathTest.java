@@ -42,10 +42,9 @@ public class TextEffectMathTest {
     @Test
     public void shakeOffsetsStayWithinRange() {
         long seed = TextEffectMath.computeShakeSeed(5, 250L, 50L);
-        float offset = TextEffectMath.computeShakeOffset(seed, 0.4f);
-        assertTrue(Math.abs(offset) <= 0.4f + 1e-6f);
-        float other = TextEffectMath.computeShakeOffset(seed ^ 0x9E3779B97F4A7C15L, 1.05f);
-        assertTrue(Math.abs(other) <= 1.05f + 1e-6f);
-        assertTrue("Expected offsets to differ for independent salts", Math.abs(offset - other) > 0.01f);
+        float offset = TextEffectMath.computeShakeOffset(seed ^ 0xC6A4A7935BD1E995L, 1.05f);
+        assertTrue(Math.abs(offset) <= 1.05f + 1e-6f);
+        float neutral = TextEffectMath.computeShakeOffset(seed, 0.0f);
+        assertEquals(0.0f, neutral, 0.0001f);
     }
 }

@@ -29,6 +29,20 @@ public class StringUtilsTest {
     }
 
     @Test
+    public void extractFormatPreservesCustomEffects() {
+        String input = "&e&o&jHello";
+        String prefix = StringUtils.extractFormatFromString(input);
+        assertEquals("&e&o&j", prefix);
+    }
+
+    @Test
+    public void extractFormatTreatsRainbowAsColour() {
+        String input = "&lBold&gRainbow";
+        String prefix = StringUtils.extractFormatFromString(input);
+        assertEquals("&g", prefix);
+    }
+
+    @Test
     public void normalizeForRawDisplayConvertsSectionSigns() {
         String normalized = StringUtils.normalizeForRawDisplay("§aHello §rWorld");
         assertEquals("&aHello &rWorld", normalized);
