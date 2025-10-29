@@ -111,4 +111,60 @@ public class RenderTextProcessorTest {
         }
         assertTrue("Expected PUSH_RGB instruction", foundPush);
     }
+
+    @Test
+    public void testRainbowInstructionNonRaw() {
+        RenderTextData data = RenderTextProcessor.prepare("&gRainbow", false);
+        assertTrue(data.shouldReplaceText());
+        assertEquals("Rainbow", data.getDisplayText());
+        assertTrue(data.hasInstructions());
+        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        assertNotNull(instructions);
+        assertFalse(instructions.isEmpty());
+        RenderInstruction instruction = instructions.get(0);
+        assertEquals(RenderInstruction.Type.SET_RAINBOW, instruction.getType());
+        assertTrue(instruction.isEnabled());
+        assertEquals(0, instruction.getParameter());
+    }
+
+    @Test
+    public void testNonRawVanillaColorProducesInstruction() {
+        RenderTextData data = RenderTextProcessor.prepare("&aGreen", false);
+        assertTrue(data.shouldReplaceText());
+        assertEquals("§aGreen", data.getDisplayText());
+        assertTrue(data.hasInstructions());
+        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        assertNotNull(instructions);
+        assertFalse(instructions.isEmpty());
+        assertEquals(RenderInstruction.Type.APPLY_VANILLA_COLOR, instructions.get(0).getType());
+        assertEquals(10, instructions.get(0).getParameter());
+    }
+
+    @Test
+    public void testSectionSignEffectInstruction() {
+        RenderTextData data = RenderTextProcessor.prepare("§gWave", false);
+        assertFalse(data.shouldReplaceText());
+        assertTrue(data.hasInstructions());
+        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        assertNotNull(instructions);
+        assertFalse(instructions.isEmpty());
+        assertEquals(RenderInstruction.Type.SET_RAINBOW, instructions.get(0).getType());
+    }
+
+    @Test
+    public void testDinnerboneInstructionRaw() {
+        RenderTextData data = RenderTextProcessor.prepare("&hFlip", true);
+        assertFalse(data.shouldReplaceText());
+        assertTrue(data.hasInstructions());
+        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        assertNotNull(instructions);
+        boolean found = false;
+        for (RenderInstruction instruction : instructions) {
+            if (instruction.getType() == RenderInstruction.Type.SET_DINNERBONE) {
+                assertTrue(instruction.isEnabled());
+                found = true;
+            }
+        }
+        assertTrue("Expected dinnerbone instruction", found);
+    }
 }
