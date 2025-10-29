@@ -212,14 +212,18 @@ public abstract class MixinFontRenderer {
         cir.setReturnValue(StringUtils.extractFormatFromString(text));
     }
 
-    @Redirect(method = "renderStringAtPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;renderDefaultChar(IZ)F"))
-    private float hextext$renderDefaultChar(FontRenderer fontRenderer, int character, boolean italic) {
-        return hextext$renderGlyphWithEffects(() -> hextext$invokeRenderDefaultChar(character, italic), (char) character);
+    @SuppressWarnings("unused")
+    @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;renderDefaultChar(IZ)F"))
+    private float hextext$renderDefaultChar(FontRenderer fontRenderer, int character, boolean italic,
+            int glyphIndex, char glyph, boolean italicFlag) {
+        return hextext$renderGlyphWithEffects(() -> hextext$invokeRenderDefaultChar(character, italic), glyph);
     }
 
-    @Redirect(method = "renderStringAtPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;renderUnicodeChar(CZ)F"))
-    private float hextext$renderUnicodeChar(FontRenderer fontRenderer, char character, boolean italic) {
-        return hextext$renderGlyphWithEffects(() -> hextext$invokeRenderUnicodeChar(character, italic), character);
+    @SuppressWarnings("unused")
+    @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;renderUnicodeChar(CZ)F"))
+    private float hextext$renderUnicodeChar(FontRenderer fontRenderer, char character, boolean italic,
+            int glyphIndex, char glyph, boolean italicFlag) {
+        return hextext$renderGlyphWithEffects(() -> hextext$invokeRenderUnicodeChar(character, italic), glyph);
     }
 
     @Unique
