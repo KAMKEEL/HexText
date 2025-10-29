@@ -23,7 +23,7 @@ public final class FontRendererRenderPipeline {
     private final TextEffectController effects = new TextEffectController();
     private final List<TokenHighlight> pendingHighlights = new ArrayList<>();
 
-    private static final int DEFAULT_OUTLINE_FALLBACK = 0x2E2E2E;
+    private static final int DEFAULT_OUTLINE_FALLBACK = 0x6F6F6F;
 
     private RenderTextData renderData;
     private boolean shadowPass;
@@ -32,6 +32,7 @@ public final class FontRendererRenderPipeline {
     private int visibleGlyphIndex;
     private int pendingRenderColor;
     private boolean hasPendingRenderColor;
+    private boolean outlineRenderedForGlyph;
 
     public FontRendererRenderPipeline(FontRendererBridge bridge) {
         this.bridge = bridge;
@@ -47,6 +48,7 @@ public final class FontRendererRenderPipeline {
         renderData = RenderTextProcessor.prepare(text, rawMode);
         shadowPass = shadow;
         renderingShadow = shadow;
+        outlineRenderedForGlyph = false;
 
         int initialColor = resolveInitialColor();
         colorState.begin(initialColor, shadow);
@@ -173,11 +175,16 @@ public final class FontRendererRenderPipeline {
 
     public void advanceGlyphIndex() {
         visibleGlyphIndex++;
+        outlineRenderedForGlyph = false;
     }
 
     private float renderGlyphWithColor(int color, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
             GlyphRenderer glyphRenderer) {
         if (!renderingShadow && GlowingTextRenderer.isOutlineEnabled()) {
+            if (outlineRenderedForGlyph) {
+                return renderGlyphInternal(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
+            }
+            outlineRenderedForGlyph = true;
             return renderGlyphWithOutline(color, italic, unicode, defaultIndex, unicodeChar, glyphRenderer);
         }
         return renderGlyphInternal(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
