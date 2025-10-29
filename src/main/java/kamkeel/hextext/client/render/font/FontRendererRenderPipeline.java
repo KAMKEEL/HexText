@@ -30,6 +30,7 @@ public final class FontRendererRenderPipeline {
     private boolean renderingShadow;
     private int rawTokenSkip;
     private int visibleGlyphIndex;
+    private int outlineIncrementsToSkip;
     private int pendingRenderColor;
     private boolean hasPendingRenderColor;
 
@@ -65,6 +66,7 @@ public final class FontRendererRenderPipeline {
 
         rawTokenSkip = 0;
         visibleGlyphIndex = 0;
+        outlineIncrementsToSkip = 0;
     }
 
     public String adjustRenderText(String text) {
@@ -172,6 +174,10 @@ public final class FontRendererRenderPipeline {
     }
 
     public void advanceGlyphIndex() {
+        if (outlineIncrementsToSkip > 0) {
+            outlineIncrementsToSkip--;
+            return;
+        }
         visibleGlyphIndex++;
     }
 
@@ -187,7 +193,9 @@ public final class FontRendererRenderPipeline {
             char unicodeChar, GlyphRenderer glyphRenderer) {
         int outlineColor = resolveOutlineColor(baseColor);
         applyTemporaryColor(outlineColor);
-        for (float[] offset : GlowingTextRenderer.getOutlineOffsets()) {
+        float[][] outlineOffsets = GlowingTextRenderer.getOutlineOffsets();
+        outlineIncrementsToSkip += outlineOffsets.length;
+        for (float[] offset : outlineOffsets) {
             GL11.glPushMatrix();
             GL11.glTranslatef(offset[0], offset[1], 0.0f);
             renderGlyphInternal(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);

@@ -39,10 +39,21 @@ public final class GlowingTextRenderer {
     }
 
     public static int computeOutlineColor(int baseColor) {
-        int darkened = ColorMath.scaleBrightness(baseColor, OUTLINE_DARKEN_FACTOR);
-        if ((darkened & 0xFFFFFF) == 0 && (baseColor & 0xFFFFFF) != 0) {
-            return ColorMath.scaleBrightness(baseColor, OUTLINE_RECOVERY_FACTOR);
+        int maskedBase = baseColor & 0xFFFFFF;
+        if (maskedBase == 0) {
+            return 0xFFFFFF;
         }
+
+        int darkened = ColorMath.scaleBrightness(maskedBase, OUTLINE_DARKEN_FACTOR);
+        if ((darkened & 0xFFFFFF) != 0) {
+            return darkened;
+        }
+
+        int recovered = ColorMath.scaleBrightness(maskedBase, OUTLINE_RECOVERY_FACTOR);
+        if ((recovered & 0xFFFFFF) != 0) {
+            return recovered;
+        }
+
         return darkened;
     }
 }
