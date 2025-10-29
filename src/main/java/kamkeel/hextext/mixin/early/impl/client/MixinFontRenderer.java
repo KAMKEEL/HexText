@@ -205,6 +205,12 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
     }
 
     @Override
+    public void setPos(float x, float y) {
+        this.posX = x;
+        this.posY = y;
+    }
+
+    @Override
     public int getFontHeight() {
         return this.FONT_HEIGHT;
     }

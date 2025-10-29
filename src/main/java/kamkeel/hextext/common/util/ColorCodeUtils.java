@@ -142,6 +142,25 @@ public final class ColorCodeUtils {
         return (rgb & 0xFCFCFC) >> 2;
     }
 
+    public static int calculateOutlineColor(int rgb) {
+        int red = (rgb >> 16) & 0xFF;
+        int green = (rgb >> 8) & 0xFF;
+        int blue = rgb & 0xFF;
+
+        double luminance = red * 0.299 + green * 0.587 + blue * 0.114;
+        int outline = luminance >= 128.0 ? 0x000000 : 0xFFFFFF;
+
+        if (outline == (rgb & 0xFFFFFF)) {
+            if (outline == 0x000000) {
+                outline = 0x141414;
+            } else {
+                outline = 0xE0E0E0;
+            }
+        }
+
+        return outline;
+    }
+
     public static int hsvToRgb(float hue, float saturation, float value) {
         hue = hue % 360.0f;
         if (hue < 0) {

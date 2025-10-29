@@ -34,6 +34,8 @@ public interface FontRendererBridge {
 
     float getPosY();
 
+    void setPos(float x, float y);
+
     int getFontHeight();
 
     void applyColorComponents(float red, float green, float blue, float alpha);
