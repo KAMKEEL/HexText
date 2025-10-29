@@ -32,6 +32,8 @@ public final class FontRendererRenderPipeline {
     private int visibleGlyphIndex;
     private int pendingRenderColor;
     private boolean hasPendingRenderColor;
+    private int outlineGlyphIndex;
+    private boolean outlineRenderedForGlyph;
 
     public FontRendererRenderPipeline(FontRendererBridge bridge) {
         this.bridge = bridge;
@@ -65,6 +67,8 @@ public final class FontRendererRenderPipeline {
 
         rawTokenSkip = 0;
         visibleGlyphIndex = 0;
+        outlineGlyphIndex = -1;
+        outlineRenderedForGlyph = false;
     }
 
     public String adjustRenderText(String text) {
@@ -177,9 +181,12 @@ public final class FontRendererRenderPipeline {
 
     private float renderGlyphWithColor(int color, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
             GlyphRenderer glyphRenderer) {
-        if (!renderingShadow && GlowingTextRenderer.isOutlineEnabled()) {
+        if (!renderingShadow && GlowingTextRenderer.isOutlineEnabled()
+            && shouldRenderOutlineForCurrentGlyph()) {
             return renderGlyphWithOutline(color, italic, unicode, defaultIndex, unicodeChar, glyphRenderer);
         }
+
+        applyTemporaryColor(color);
         return renderGlyphInternal(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
     }
 
@@ -196,6 +203,20 @@ public final class FontRendererRenderPipeline {
 
         applyTemporaryColor(baseColor);
         return renderGlyphInternal(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
+    }
+
+    private boolean shouldRenderOutlineForCurrentGlyph() {
+        if (visibleGlyphIndex != outlineGlyphIndex) {
+            outlineGlyphIndex = visibleGlyphIndex;
+            outlineRenderedForGlyph = false;
+        }
+
+        if (!outlineRenderedForGlyph) {
+            outlineRenderedForGlyph = true;
+            return true;
+        }
+
+        return false;
     }
 
     private float renderGlyphInternal(boolean unicode, int defaultIndex, char unicodeChar, boolean italic,
