@@ -11,6 +11,7 @@ import kamkeel.hextext.client.render.TokenHighlight;
 import kamkeel.hextext.client.render.TokenHighlightUtils;
 import kamkeel.hextext.common.util.ColorCodeUtils;
 import kamkeel.hextext.common.util.StringUtils;
+import org.lwjgl.opengl.GL11;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,8 @@ public final class FontRendererRenderPipeline {
     private final ColorStateTracker colorState = new ColorStateTracker();
     private final TextEffectController effects = new TextEffectController();
     private final List<TokenHighlight> pendingHighlights = new ArrayList<>();
+
+    private static final int DEFAULT_OUTLINE_FALLBACK = 0x2E2E2E;
 
     private RenderTextData renderData;
     private boolean shadowPass;
@@ -154,27 +157,67 @@ public final class FontRendererRenderPipeline {
 
     public float renderGlyph(char glyph, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
             GlyphRenderer glyphRenderer) {
-        float width;
+        int baseColor = bridge.getTextColor();
         if (effects.hasActiveEffects()) {
             int targetColor = effects.computeColor(visibleGlyphIndex);
             int appliedColor = shadowPass ? ColorCodeUtils.calculateShadowColor(targetColor) : targetColor;
             setColorFromInt(appliedColor);
             effects.beforeGlyph(bridge.getFontRenderer(), glyph, visibleGlyphIndex, bridge.getPosX(), bridge.getPosY(),
                 bridge.getFontHeight());
-            width = unicode
-                ? glyphRenderer.renderUnicode(unicodeChar, italic)
-                : glyphRenderer.renderDefault(defaultIndex, italic);
+            float width = renderGlyphWithColor(appliedColor, italic, unicode, defaultIndex, unicodeChar, glyphRenderer);
             effects.afterGlyph();
-        } else {
-            width = unicode
-                ? glyphRenderer.renderUnicode(unicodeChar, italic)
-                : glyphRenderer.renderDefault(defaultIndex, italic);
+            return width;
         }
-        return width;
+        return renderGlyphWithColor(baseColor, italic, unicode, defaultIndex, unicodeChar, glyphRenderer);
     }
 
     public void advanceGlyphIndex() {
         visibleGlyphIndex++;
+    }
+
+    private float renderGlyphWithColor(int color, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
+            GlyphRenderer glyphRenderer) {
+        if (!renderingShadow && GlowingTextRenderer.isOutlineEnabled()) {
+            return renderGlyphWithOutline(color, italic, unicode, defaultIndex, unicodeChar, glyphRenderer);
+        }
+        return renderGlyphInternal(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
+    }
+
+    private float renderGlyphWithOutline(int baseColor, boolean italic, boolean unicode, int defaultIndex,
+            char unicodeChar, GlyphRenderer glyphRenderer) {
+        int outlineColor = resolveOutlineColor(baseColor);
+        applyTemporaryColor(outlineColor);
+        for (float[] offset : GlowingTextRenderer.getOutlineOffsets()) {
+            GL11.glPushMatrix();
+            GL11.glTranslatef(offset[0], offset[1], 0.0f);
+            renderGlyphInternal(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
+            GL11.glPopMatrix();
+        }
+
+        applyTemporaryColor(baseColor);
+        return renderGlyphInternal(unicode, defaultIndex, unicodeChar, italic, glyphRenderer);
+    }
+
+    private float renderGlyphInternal(boolean unicode, int defaultIndex, char unicodeChar, boolean italic,
+            GlyphRenderer glyphRenderer) {
+        return unicode
+            ? glyphRenderer.renderUnicode(unicodeChar, italic)
+            : glyphRenderer.renderDefault(defaultIndex, italic);
+    }
+
+    private void applyTemporaryColor(int rgb) {
+        float red = (float) ((rgb >> 16) & 255) / 255.0f;
+        float green = (float) ((rgb >> 8) & 255) / 255.0f;
+        float blue = (float) (rgb & 255) / 255.0f;
+        bridge.applyColorComponents(red, green, blue, bridge.getAlpha());
+    }
+
+    private int resolveOutlineColor(int baseColor) {
+        int outlineColor = GlowingTextRenderer.computeOutlineColor(baseColor);
+        if ((outlineColor & 0xFFFFFF) == 0) {
+            return DEFAULT_OUTLINE_FALLBACK;
+        }
+        return outlineColor;
     }
 
     private void executeInstruction(RenderInstruction instruction) {
