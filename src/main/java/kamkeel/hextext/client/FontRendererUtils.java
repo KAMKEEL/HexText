@@ -30,7 +30,7 @@ public final class FontRendererUtils {
 
     public static String trimStringFromEnd(FontRenderer renderer, String text, int width, boolean rawMode) {
         if (text == null || text.isEmpty()) {
-            return "";
+            return finalizeResult("", rawMode);
         }
 
         float currentWidth = 0.0f;
@@ -92,7 +92,7 @@ public final class FontRendererUtils {
             }
 
             if (chr == '\n') {
-                return text.substring(index + 1);
+                return finalizeResult(text.substring(index + 1), rawMode);
             }
 
             float glyphWidth = getCharWidth(renderer, chr, rawMode);
@@ -106,7 +106,7 @@ public final class FontRendererUtils {
             }
 
             if (nextWidth > width) {
-                return text.substring(firstSafePosition);
+                return finalizeResult(text.substring(firstSafePosition), rawMode);
             }
 
             currentWidth = nextWidth;
@@ -114,17 +114,17 @@ public final class FontRendererUtils {
             index--;
         }
 
-        return text;
+        return finalizeResult(text, rawMode);
     }
 
     public static String wrapFormattedString(FontRenderer renderer, String text, int wrapWidth, boolean rawMode) {
         if (text == null || text.isEmpty()) {
-            return "";
+            return finalizeResult("", rawMode);
         }
 
         int breakPoint = computeLineBreakIndex(renderer, text, wrapWidth, rawMode);
         if (breakPoint >= text.length()) {
-            return text;
+            return finalizeResult(text, rawMode);
         }
 
         String firstPart = text.substring(0, breakPoint);
@@ -135,9 +135,59 @@ public final class FontRendererUtils {
             + text.substring(breakPoint + (skipChar ? 1 : 0));
 
         if (remainder.length() == text.length()) {
-            return firstPart + "\n" + remainder;
+            return finalizeResult(firstPart + "\n" + remainder, rawMode);
         }
 
-        return firstPart + "\n" + wrapFormattedString(renderer, remainder, wrapWidth, rawMode);
+        String result = firstPart + "\n" + wrapFormattedString(renderer, remainder, wrapWidth, rawMode);
+        return finalizeResult(result, rawMode);
+    }
+
+    public static String convertLegacyFormattingCodes(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+
+        StringBuilder builder = null;
+        int length = text.length();
+
+        for (int index = 0; index < length; index++) {
+            char current = text.charAt(index);
+
+            if (current == '&') {
+                if (index + 7 <= length && ColorCodeUtils.isValidHexString(text, index + 1)) {
+                    if (builder != null) {
+                        builder.append(text, index, index + 7);
+                    }
+                    index += 6;
+                    continue;
+                }
+
+                if (index + 1 < length) {
+                    char next = text.charAt(index + 1);
+                    if (ColorCodeUtils.isFormattingCode(next)) {
+                        if (builder == null) {
+                            builder = new StringBuilder(length);
+                            builder.append(text, 0, index);
+                        }
+                        builder.append('§').append(next);
+                        index++;
+                        continue;
+                    }
+                }
+            }
+
+            if (builder != null) {
+                builder.append(current);
+            }
+        }
+
+        return builder == null ? text : builder.toString();
+    }
+
+    private static String finalizeResult(String result, boolean rawMode) {
+        if (result == null || result.isEmpty() || rawMode) {
+            return result;
+        }
+        return convertLegacyFormattingCodes(result);
     }
 }

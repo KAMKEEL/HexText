@@ -193,7 +193,11 @@ public abstract class MixinFontRenderer {
         if (!reverse) {
             boolean rawMode = FontRenderContext.isRawTextRendering();
             int endIndex = FontRendererUtils.computeLineBreakIndex((FontRenderer) (Object) this, text, width, rawMode);
-            cir.setReturnValue(text.substring(0, Math.min(endIndex, text.length())));
+            String result = text.substring(0, Math.min(endIndex, text.length()));
+            if (!rawMode) {
+                result = FontRendererUtils.convertLegacyFormattingCodes(result);
+            }
+            cir.setReturnValue(result);
             return;
         }
 
