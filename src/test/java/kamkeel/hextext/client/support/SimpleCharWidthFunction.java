@@ -3,7 +3,7 @@ package kamkeel.hextext.client.support;
 import java.util.HashMap;
 import java.util.Map;
 
-import kamkeel.hextext.client.FormattedTextMetrics;
+import kamkeel.hextext.client.render.FormattedTextMetrics;
 
 public final class SimpleCharWidthFunction implements FormattedTextMetrics.CharWidthFunction {
 

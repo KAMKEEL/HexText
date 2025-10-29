@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.7.11",
-  "package": "kamkeel.hextext.mixins.late.impl",
+  "package": "kamkeel.hextext.mixin.client",
   "refmap": "mixins.hextext.refmap.json",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
