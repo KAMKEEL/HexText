@@ -42,4 +42,39 @@ public class FormattedTextMetricsTest {
         float width = FormattedTextMetrics.calculateMaxLineWidth("&lA&jB", false, widthFunction, 0.0f, 1.0f);
         assertEquals(12.0f, width, 0.0001f);
     }
+
+    @Test
+    public void boldResetsAfterHexAmpersandColour() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        float width = FormattedTextMetrics.calculateMaxLineWidth("&lA&123456B", false, widthFunction, 0.0f, 1.0f);
+        assertEquals(11.0f, width, 0.0001f);
+    }
+
+    @Test
+    public void boldResetsAfterAngleBracketColour() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        float width = FormattedTextMetrics.calculateMaxLineWidth("&lA<123456>B", false, widthFunction, 0.0f, 1.0f);
+        assertEquals(11.0f, width, 0.0001f);
+    }
+
+    @Test
+    public void boldResetsAfterClosingAngleBracketColour() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        float width = FormattedTextMetrics.calculateMaxLineWidth("&lA</123456>B", false, widthFunction, 0.0f, 1.0f);
+        assertEquals(11.0f, width, 0.0001f);
+    }
+
+    @Test
+    public void lineBreakKeepsCharactersAfterHexColour() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        int breakIndex = FormattedTextMetrics.computeLineBreakIndex("&lA&123456BC", 11, false, widthFunction, 0.0f, 1.0f);
+        assertEquals(11, breakIndex);
+    }
+
+    @Test
+    public void lineBreakKeepsCharactersAfterAngleColour() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        int breakIndex = FormattedTextMetrics.computeLineBreakIndex("&lA<123456>BC", 11, false, widthFunction, 0.0f, 1.0f);
+        assertEquals(12, breakIndex);
+    }
 }

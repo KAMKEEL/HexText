@@ -29,16 +29,7 @@ public final class FormattedTextMetrics {
             if (!rawMode) {
                 int codeLen = ColorCodeUtils.detectColorCodeLength(text, index);
                 if (codeLen > 0) {
-                    if (codeLen == 2 && index + 1 < length) {
-                        char fmt = Character.toLowerCase(text.charAt(index + 1));
-                        if (fmt == 'l') {
-                            isBold = true;
-                        } else if (fmt == 'r') {
-                            isBold = false;
-                        } else if ((fmt >= '0' && fmt <= '9') || (fmt >= 'a' && fmt <= 'f')) {
-                            isBold = false;
-                        }
-                    }
+                    isBold = updateBoldFlag(text, index, codeLen, isBold);
                     index += codeLen;
                     continue;
                 }
@@ -82,16 +73,7 @@ public final class FormattedTextMetrics {
             if (!rawMode) {
                 int codeLen = ColorCodeUtils.detectColorCodeLength(text, index);
                 if (codeLen > 0) {
-                    if (codeLen == 2 && index + 1 < length) {
-                        char fmt = Character.toLowerCase(text.charAt(index + 1));
-                        if (fmt == 'l') {
-                            isBold = true;
-                        } else if (fmt == 'r') {
-                            isBold = false;
-                        } else if ((fmt >= '0' && fmt <= '9') || (fmt >= 'a' && fmt <= 'f')) {
-                            isBold = false;
-                        }
-                    }
+                    isBold = updateBoldFlag(text, index, codeLen, isBold);
                     index += codeLen;
                     lastSafePosition = index;
                     continue;
@@ -127,5 +109,22 @@ public final class FormattedTextMetrics {
         }
 
         return length;
+    }
+
+    private static boolean updateBoldFlag(CharSequence text, int index, int codeLen, boolean currentBold) {
+        if (codeLen == 2 && index + 1 < text.length()) {
+            char fmt = Character.toLowerCase(text.charAt(index + 1));
+            if (fmt == 'l') {
+                return true;
+            }
+            if (fmt == 'r' || ColorCodeUtils.isMinecraftColorCode(fmt)) {
+                return false;
+            }
+            return currentBold;
+        }
+        if (codeLen > 2) {
+            return false;
+        }
+        return currentBold;
     }
 }
