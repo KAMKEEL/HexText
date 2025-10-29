@@ -80,7 +80,7 @@ public final class RenderInstruction {
     }
 
     public static RenderInstruction setRainbow(boolean enabled, int anchorIndex) {
-        return new RenderInstruction(Type.SET_RAINBOW, 0, false, anchorIndex, enabled, false);
+        return new RenderInstruction(Type.SET_RAINBOW, 0, true, anchorIndex, enabled, false);
     }
 
     public static RenderInstruction setDinnerbone(boolean enabled) {

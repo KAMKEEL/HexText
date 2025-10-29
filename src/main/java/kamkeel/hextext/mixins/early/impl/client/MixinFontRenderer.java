@@ -27,6 +27,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 
 @Mixin(value = FontRenderer.class)
 public abstract class MixinFontRenderer {
@@ -143,7 +144,14 @@ public abstract class MixinFontRenderer {
             return;
         }
 
-        List<RenderInstruction> instructions = hextext$renderData.getInstructions().remove(index);
+        Map<Integer, List<RenderInstruction>> instructionMap = hextext$renderData.getInstructions();
+        if (instructionMap == null || instructionMap.isEmpty()) {
+            return;
+        }
+
+        List<RenderInstruction> instructions = hextext$renderingShadow
+            ? instructionMap.get(index)
+            : instructionMap.remove(index);
         if (instructions == null) {
             return;
         }
@@ -245,6 +253,8 @@ public abstract class MixinFontRenderer {
 
     @Unique
     private void hextext$executeInstruction(RenderInstruction instruction) {
+        boolean handledFormattingReset = false;
+
         switch (instruction.getType()) {
             case APPLY_RGB:
                 if (instruction.shouldClearStack() && hextext$colorStack != null) {
@@ -333,9 +343,21 @@ public abstract class MixinFontRenderer {
                 this.italicStyle = instruction.isEnabled();
                 break;
             case SET_RAINBOW:
-                if (hextext$effects != null) {
-                    hextext$effects.setRainbow(instruction.isEnabled(), instruction.getParameter());
+                if (instruction.shouldClearStack()) {
+                    if (hextext$colorStack != null) {
+                        hextext$colorStack.clear();
+                    }
+                    if (hextext$baseColorStack != null) {
+                        hextext$baseColorStack.clear();
+                    }
                 }
+                hextext$resetFormattingStyles();
+                if (hextext$effects != null) {
+                    hextext$effects.resetDynamicEffects();
+                    hextext$effects.setRainbow(instruction.isEnabled(), instruction.getParameter());
+                    hextext$effects.updateBaseColor(this.textColor);
+                }
+                handledFormattingReset = true;
                 break;
             case SET_DINNERBONE:
                 if (hextext$effects != null) {
@@ -354,7 +376,7 @@ public abstract class MixinFontRenderer {
                 break;
         }
 
-        if (instruction.resetsFormatting()) {
+        if (instruction.resetsFormatting() && !handledFormattingReset) {
             hextext$resetFormattingStyles();
             if (hextext$effects != null) {
                 hextext$effects.resetDynamicEffects();

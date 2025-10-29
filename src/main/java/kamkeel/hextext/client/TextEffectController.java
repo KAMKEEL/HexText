@@ -15,7 +15,7 @@ public final class TextEffectController {
 
     private static final float RAINBOW_SPREAD = 12.0f;
     private static final float SHAKE_RANGE = 1.2f;
-    private static final float IGNITE_FACTOR = 0.35f;
+    private static final float IGNITE_MIN_BRIGHTNESS = 0.35f;
 
     private final Random random = new Random();
 
@@ -99,10 +99,17 @@ public final class TextEffectController {
         if (igniteActive) {
             long elapsed = Minecraft.getSystemTime() - igniteStartTime;
             long interval = Math.max(1L, HexTextConfig.getIgniteInterval());
-            boolean brightPhase = ((elapsed / interval) & 1L) == 0L;
-            if (!brightPhase) {
-                color = darken(color, IGNITE_FACTOR);
+            long fullCycle = Math.max(2L, interval * 2L);
+            long cyclePosition = elapsed % fullCycle;
+            float progress;
+            if (cyclePosition <= interval) {
+                progress = cyclePosition / (float) interval;
+            } else {
+                progress = 1.0f - ((cyclePosition - interval) / (float) interval);
             }
+            float brightness = IGNITE_MIN_BRIGHTNESS
+                + (1.0f - IGNITE_MIN_BRIGHTNESS) * Math.max(0.0f, Math.min(1.0f, progress));
+            color = scaleBrightness(color, brightness);
         }
 
         return color;
@@ -148,7 +155,7 @@ public final class TextEffectController {
         GL11.glTranslatef(offsetX, offsetY, 0.0f);
     }
 
-    private static int darken(int color, float factor) {
+    private static int scaleBrightness(int color, float factor) {
         int r = (int) (((color >> 16) & 0xFF) * factor);
         int g = (int) (((color >> 8) & 0xFF) * factor);
         int b = (int) ((color & 0xFF) * factor);
