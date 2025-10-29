@@ -124,7 +124,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
         return hextext$pipeline.renderGlyph(glyph, italic, true, 0, character, hextext$glyphRenderer);
     }
 
-    @Inject(method = "doDraw", at = @At("TAIL"))
+    @Inject(method = "doDraw", at = @At("TAIL"), remap = false)
     private void hextext$advanceVisibleGlyphIndex(float width, CallbackInfo ci) {
         hextext$pipeline.advanceGlyphIndex();
     }
