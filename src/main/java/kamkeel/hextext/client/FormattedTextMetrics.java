@@ -20,11 +20,11 @@ public final class FormattedTextMetrics {
         LegacyFormattingState state = new LegacyFormattingState();
         final int length = text.length();
 
-        for (int index = 0; index < length; ) {
+        for (int index = 0; index < length; index++) {
             if (!rawMode) {
                 int consumed = consumeFormatting(text, length, index, state);
-                if (consumed != index) {
-                    index = consumed;
+                if (consumed > 0) {
+                    index += consumed - 1;
                     continue;
                 }
             }
@@ -34,7 +34,6 @@ public final class FormattedTextMetrics {
                 maxWidth = Math.max(maxWidth, currentLineWidth);
                 currentLineWidth = 0.0f;
                 state.setExpectingLegacyCode(false);
-                index++;
                 continue;
             }
 
@@ -47,7 +46,6 @@ public final class FormattedTextMetrics {
                 currentLineWidth += glyphSpacing;
                 maxWidth = Math.max(maxWidth, currentLineWidth);
             }
-            index++;
         }
 
         return Math.max(maxWidth, currentLineWidth);
@@ -64,11 +62,11 @@ public final class FormattedTextMetrics {
         LegacyFormattingState state = new LegacyFormattingState();
         final int length = text.length();
 
-        for (int index = 0; index < length; ) {
+        for (int index = 0; index < length; index++) {
             if (!rawMode) {
                 int consumed = consumeFormatting(text, length, index, state);
-                if (consumed != index) {
-                    index = consumed;
+                if (consumed > 0) {
+                    index += consumed - 1;
                     continue;
                 }
             }
@@ -104,7 +102,6 @@ public final class FormattedTextMetrics {
             }
 
             currentWidth = nextWidth;
-            index++;
         }
 
         return length;
@@ -112,13 +109,13 @@ public final class FormattedTextMetrics {
 
     private static int consumeFormatting(CharSequence text, int length, int index, LegacyFormattingState state) {
         if (index >= length) {
-            return index;
+            return 0;
         }
 
         if (state.isExpectingLegacyCode()) {
             state.setExpectingLegacyCode(false);
             applyLegacyCode(text.charAt(index), state);
-            return index + 1;
+            return 1;
         }
 
         char current = text.charAt(index);
@@ -126,31 +123,31 @@ public final class FormattedTextMetrics {
         if (current == 167 || current == '&') {
             if (current == '&' && index + 7 <= length && ColorCodeUtils.isValidHexString(text, index + 1)) {
                 state.setBold(false);
-                return index + 7;
+                return 7;
             }
 
             if (current == '&' && (index + 1 >= length || !ColorCodeUtils.isFormattingCode(text.charAt(index + 1)))) {
-                return index;
+                return 0;
             }
 
             state.setExpectingLegacyCode(true);
-            return index + 1;
+            return 1;
         }
 
         if (current == '<') {
             if (index + 8 <= length && text.charAt(index + 7) == '>' && ColorCodeUtils.isValidHexString(text, index + 1)) {
                 state.setBold(false);
-                return index + 8;
+                return 8;
             }
 
             if (index + 9 <= length && text.charAt(index + 1) == '/' && text.charAt(index + 8) == '>'
                 && ColorCodeUtils.isValidHexString(text, index + 2)) {
                 state.setBold(false);
-                return index + 9;
+                return 9;
             }
         }
 
-        return index;
+        return 0;
     }
 
     private static void applyLegacyCode(char formatChar, LegacyFormattingState state) {

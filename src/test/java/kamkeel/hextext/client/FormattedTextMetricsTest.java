@@ -77,6 +77,17 @@ public class FormattedTextMetricsTest {
     }
 
     @Test
+    public void computeLineBreakCountsSectionSignFormattingBytes() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(6.0f);
+        String text = "\u00A7lAB";
+
+        int expected = vanillaSizeStringToWidth(text, 5, widthFunction);
+        int actual = FormattedTextMetrics.computeLineBreakIndex(text, 5, false, widthFunction, 0.0f, 1.0f);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void computeLineBreakHandlesAmpersandFormatting() {
         SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
         widthFunction.setWidth(' ', 4.0f);
@@ -85,6 +96,46 @@ public class FormattedTextMetricsTest {
         int breakIndex = FormattedTextMetrics.computeLineBreakIndex(text, 12, false, widthFunction, 0.0f, 1.0f);
 
         assertEquals(4, breakIndex);
+    }
+
+    @Test
+    public void computeLineBreakIncludesHexColorLength() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        String text = "&123456AB";
+
+        int breakIndex = FormattedTextMetrics.computeLineBreakIndex(text, 4, false, widthFunction, 0.0f, 1.0f);
+
+        assertEquals(7, breakIndex);
+    }
+
+    @Test
+    public void computeLineBreakIncludesAngleBracketRgbLength() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        String text = "<123456>AB";
+
+        int breakIndex = FormattedTextMetrics.computeLineBreakIndex(text, 4, false, widthFunction, 0.0f, 1.0f);
+
+        assertEquals(8, breakIndex);
+    }
+
+    @Test
+    public void computeLineBreakCountsClosingAngleBracketRgbLength() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        String text = "<123456>AB</123456>C";
+
+        int breakIndex = FormattedTextMetrics.computeLineBreakIndex(text, 12, false, widthFunction, 0.0f, 1.0f);
+
+        assertEquals(19, breakIndex);
+    }
+
+    @Test
+    public void computeLineBreakIgnoresFormattingInRawMode() {
+        SimpleCharWidthFunction widthFunction = new SimpleCharWidthFunction(5.0f);
+        String text = "&lAB";
+
+        int breakIndex = FormattedTextMetrics.computeLineBreakIndex(text, 5, true, widthFunction, 0.0f, 1.0f);
+
+        assertEquals(1, breakIndex);
     }
 
     @Test
