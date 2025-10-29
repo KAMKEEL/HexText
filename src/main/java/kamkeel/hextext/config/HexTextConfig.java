@@ -10,6 +10,7 @@ import java.io.File;
 public final class HexTextConfig {
 
     public static final String CATEGORY_EFFECTS = "effects";
+    public static final String CATEGORY_RENDERING = "rendering";
 
     private static final float DEFAULT_RAINBOW_SPEED = 3000.0f;
     private static final int DEFAULT_SHAKE_INTERVAL = 100;
@@ -23,11 +24,14 @@ public final class HexTextConfig {
     private static final int MAX_IGNITE_INTERVAL = 1000;
     private static final float MAX_RAINBOW_SPEED = 5000.0f;
 
+    private static final boolean DEFAULT_TEXT_OUTLINE_ENABLED = true;
+
     private static Configuration configuration;
 
     private static float rainbowSpeed = DEFAULT_RAINBOW_SPEED;
     private static int shakeInterval = DEFAULT_SHAKE_INTERVAL;
     private static int igniteInterval = DEFAULT_IGNITE_INTERVAL;
+    private static boolean textOutlineEnabled = DEFAULT_TEXT_OUTLINE_ENABLED;
 
     private HexTextConfig() {
     }
@@ -48,6 +52,9 @@ public final class HexTextConfig {
 
         configuration.addCustomCategoryComment(CATEGORY_EFFECTS,
             "Timing controls for HexText's dynamic formatting effects.");
+
+        configuration.addCustomCategoryComment(CATEGORY_RENDERING,
+            "Rendering tweaks for HexText's font pipeline.");
 
         rainbowSpeed = clamp(configuration.getFloat(
             "rainbowCycleDurationMs",
@@ -76,6 +83,13 @@ public final class HexTextConfig {
             "Milliseconds for ignite to fade from bright to dim and back again. Lower values animate faster."
         ), MIN_IGNITE_INTERVAL, MAX_IGNITE_INTERVAL);
 
+        textOutlineEnabled = configuration.getBoolean(
+            "textOutlines",
+            CATEGORY_RENDERING,
+            DEFAULT_TEXT_OUTLINE_ENABLED,
+            "Draws an outline around every rendered glyph similar to glowing sign text."
+        );
+
         if (configuration.hasChanged()) {
             configuration.save();
         }
@@ -91,6 +105,14 @@ public final class HexTextConfig {
 
     public static int getIgniteInterval() {
         return igniteInterval;
+    }
+
+    public static boolean isTextOutlineEnabled() {
+        return textOutlineEnabled;
+    }
+
+    public static void setTextOutlineEnabled(boolean enabled) {
+        textOutlineEnabled = enabled;
     }
 
     public static Configuration getConfiguration() {

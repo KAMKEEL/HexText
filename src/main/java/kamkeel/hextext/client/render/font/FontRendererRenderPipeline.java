@@ -10,12 +10,16 @@ import kamkeel.hextext.client.render.TextEffectController;
 import kamkeel.hextext.client.render.TokenHighlight;
 import kamkeel.hextext.client.render.TokenHighlightUtils;
 import kamkeel.hextext.common.util.ColorCodeUtils;
+import kamkeel.hextext.common.util.ColorMath;
 import kamkeel.hextext.common.util.StringUtils;
+import kamkeel.hextext.config.HexTextConfig;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public final class FontRendererRenderPipeline {
+
+    private static final float OUTLINE_OFFSET = 0.75f;
 
     private final FontRendererBridge bridge;
     private final ColorStateTracker colorState = new ColorStateTracker();
@@ -154,23 +158,84 @@ public final class FontRendererRenderPipeline {
 
     public float renderGlyph(char glyph, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
             GlyphRenderer glyphRenderer) {
-        float width;
         if (effects.hasActiveEffects()) {
             int targetColor = effects.computeColor(visibleGlyphIndex);
             int appliedColor = shadowPass ? ColorCodeUtils.calculateShadowColor(targetColor) : targetColor;
             setColorFromInt(appliedColor);
             effects.beforeGlyph(bridge.getFontRenderer(), glyph, visibleGlyphIndex, bridge.getPosX(), bridge.getPosY(),
                 bridge.getFontHeight());
-            width = unicode
-                ? glyphRenderer.renderUnicode(unicodeChar, italic)
-                : glyphRenderer.renderDefault(defaultIndex, italic);
+            float width = renderGlyphWithOutline(glyph, italic, unicode, defaultIndex, unicodeChar, glyphRenderer,
+                appliedColor);
             effects.afterGlyph();
-        } else {
-            width = unicode
-                ? glyphRenderer.renderUnicode(unicodeChar, italic)
-                : glyphRenderer.renderDefault(defaultIndex, italic);
+            return width;
         }
-        return width;
+
+        return renderGlyphWithOutline(glyph, italic, unicode, defaultIndex, unicodeChar, glyphRenderer,
+            bridge.getTextColor());
+    }
+
+    private float renderGlyphWithOutline(char glyph, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
+            GlyphRenderer glyphRenderer, int glyphColor) {
+        if (shouldRenderOutline(glyphColor)) {
+            renderOutline(glyph, italic, unicode, defaultIndex, unicodeChar, glyphRenderer, glyphColor);
+        }
+        return drawGlyph(glyph, italic, unicode, defaultIndex, unicodeChar, glyphRenderer);
+    }
+
+    private void renderOutline(char glyph, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
+            GlyphRenderer glyphRenderer, int glyphColor) {
+        int outlineColor = computeOutlineColor(glyphColor);
+        if ((outlineColor & 0xFFFFFF) == 0) {
+            return;
+        }
+
+        float originX = bridge.getPosX();
+        float originY = bridge.getPosY();
+        float alpha = bridge.getAlpha();
+        float red = (float) ((outlineColor >> 16) & 255) / 255.0f;
+        float green = (float) ((outlineColor >> 8) & 255) / 255.0f;
+        float blue = (float) (outlineColor & 255) / 255.0f;
+
+        bridge.applyColorComponents(red, green, blue, alpha);
+
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx == 0 && dy == 0) {
+                    continue;
+                }
+                bridge.setPos(originX + dx * OUTLINE_OFFSET, originY + dy * OUTLINE_OFFSET);
+                drawGlyph(glyph, italic, unicode, defaultIndex, unicodeChar, glyphRenderer);
+            }
+        }
+
+        bridge.setPos(originX, originY);
+        applyColorComponents(glyphColor);
+    }
+
+    private float drawGlyph(char glyph, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
+            GlyphRenderer glyphRenderer) {
+        return unicode
+            ? glyphRenderer.renderUnicode(unicodeChar, italic)
+            : glyphRenderer.renderDefault(defaultIndex, italic);
+    }
+
+    private boolean shouldRenderOutline(int glyphColor) {
+        return HexTextConfig.isTextOutlineEnabled() && !renderingShadow && (glyphColor & 0xFFFFFF) != 0;
+    }
+
+    private int computeOutlineColor(int glyphColor) {
+        int base = glyphColor & 0xFFFFFF;
+        int brightened = ColorMath.scaleBrightness(base, 1.35f);
+        int combined = ColorMath.blend(brightened, base, 0.35f);
+        return ColorMath.blend(combined, 0xFFFFFF, 0.25f);
+    }
+
+    private void applyColorComponents(int rgb) {
+        int masked = rgb & 0xFFFFFF;
+        float red = (float) ((masked >> 16) & 255) / 255.0f;
+        float green = (float) ((masked >> 8) & 255) / 255.0f;
+        float blue = (float) (masked & 255) / 255.0f;
+        bridge.applyColorComponents(red, green, blue, bridge.getAlpha());
     }
 
     public void advanceGlyphIndex() {
