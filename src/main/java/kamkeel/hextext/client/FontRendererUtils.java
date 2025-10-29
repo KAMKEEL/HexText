@@ -19,12 +19,14 @@ public final class FontRendererUtils {
     }
 
     public static float calculateMaxLineWidth(FontRenderer renderer, String text, boolean rawMode) {
-        return FormattedTextMetrics.calculateMaxLineWidth(text, rawMode,
+        String normalized = normalizeTextForMetrics(text, rawMode);
+        return FormattedTextMetrics.calculateMaxLineWidth(normalized, rawMode,
             character -> getCharWidth(renderer, character, rawMode), 0.0f, 1.0f);
     }
 
     public static int computeLineBreakIndex(FontRenderer renderer, String text, int maxWidth, boolean rawMode) {
-        return FormattedTextMetrics.computeLineBreakIndex(text, maxWidth, rawMode,
+        String normalized = normalizeTextForMetrics(text, rawMode);
+        return FormattedTextMetrics.computeLineBreakIndex(normalized, maxWidth, rawMode,
             character -> getCharWidth(renderer, character, rawMode), 0.0f, 1.0f);
     }
 
@@ -33,22 +35,23 @@ public final class FontRendererUtils {
             return "";
         }
 
+        String normalized = normalizeTextForMetrics(text, rawMode);
         float currentWidth = 0.0f;
         int firstSafePosition = text.length();
         boolean bold = false;
 
         for (int index = text.length() - 1; index >= 0; ) {
-            char chr = text.charAt(index);
+            char chr = normalized.charAt(index);
 
             if (!rawMode) {
-                if (index >= 6 && text.charAt(index - 6) == '&' && ColorCodeUtils.isValidHexString(text, index - 5)) {
+                if (index >= 6 && normalized.charAt(index - 6) == '&' && ColorCodeUtils.isValidHexString(normalized, index - 5)) {
                     index -= 7;
                     firstSafePosition = index + 1;
                     bold = false;
                     continue;
                 }
 
-                if (index >= 1 && text.charAt(index - 1) == 167) {
+                if (index >= 1 && normalized.charAt(index - 1) == 167) {
                     char fmt = Character.toLowerCase(chr);
                     if (fmt == 'l') {
                         bold = true;
@@ -60,23 +63,23 @@ public final class FontRendererUtils {
                     continue;
                 }
 
-                if (index >= 7 && text.charAt(index - 7) == '<' && text.charAt(index) == '>'
-                    && ColorCodeUtils.isValidHexString(text, index - 6)) {
+                if (index >= 7 && normalized.charAt(index - 7) == '<' && normalized.charAt(index) == '>'
+                    && ColorCodeUtils.isValidHexString(normalized, index - 6)) {
                     index -= 8;
                     firstSafePosition = index + 1;
                     bold = false;
                     continue;
                 }
 
-                if (index >= 8 && text.charAt(index - 8) == '<' && text.charAt(index - 7) == '/'
-                    && text.charAt(index) == '>' && ColorCodeUtils.isValidHexString(text, index - 6)) {
+                if (index >= 8 && normalized.charAt(index - 8) == '<' && normalized.charAt(index - 7) == '/'
+                    && normalized.charAt(index) == '>' && ColorCodeUtils.isValidHexString(normalized, index - 6)) {
                     index -= 9;
                     firstSafePosition = index + 1;
                     bold = false;
                     continue;
                 }
 
-                if (index >= 1 && text.charAt(index - 1) == '&') {
+                if (index >= 1 && normalized.charAt(index - 1) == '&') {
                     char fmt = Character.toLowerCase(chr);
                     if (ColorCodeUtils.isFormattingCode(fmt)) {
                         if (fmt == 'l') {
@@ -127,8 +130,9 @@ public final class FontRendererUtils {
             return text;
         }
 
+        String normalized = normalizeTextForMetrics(text, rawMode);
         String firstPart = text.substring(0, breakPoint);
-        char breakChar = text.charAt(breakPoint);
+        char breakChar = normalized.charAt(breakPoint);
         boolean skipChar = breakChar == ' ' || breakChar == '\n';
 
         String remainder = StringUtils.extractFormatFromString(firstPart)
@@ -139,5 +143,12 @@ public final class FontRendererUtils {
         }
 
         return firstPart + "\n" + wrapFormattedString(renderer, remainder, wrapWidth, rawMode);
+    }
+
+    private static String normalizeTextForMetrics(String text, boolean rawMode) {
+        if (text == null || rawMode) {
+            return text;
+        }
+        return StringUtils.normalizeLegacyFormattingCodes(text);
     }
 }

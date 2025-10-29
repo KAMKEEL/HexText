@@ -105,6 +105,38 @@ public final class StringUtils {
         return result.toString();
     }
 
+    public static String normalizeLegacyFormattingCodes(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+
+        StringBuilder builder = null;
+        final int length = text.length();
+
+        for (int index = 0; index < length - 1; index++) {
+            if (text.charAt(index) != '&') {
+                continue;
+            }
+
+            if (ColorCodeUtils.isValidHexString(text, index + 1)) {
+                index += 6;
+                continue;
+            }
+
+            char next = text.charAt(index + 1);
+            if (!ColorCodeUtils.isFormattingCode(next)) {
+                continue;
+            }
+
+            if (builder == null) {
+                builder = new StringBuilder(text);
+            }
+            builder.setCharAt(index, '\u00a7');
+        }
+
+        return builder == null ? text : builder.toString();
+    }
+
     public static String stripColorCodes(CharSequence input) {
         if (input == null) {
             return null;
