@@ -20,28 +20,16 @@ public final class FormattedTextMetrics {
             return 0.0f;
         }
 
+        FormattingTracker tracker = new FormattingTracker();
         float maxWidth = 0.0f;
         float currentLineWidth = 0.0f;
-        boolean isBold = false;
         final int length = text.length();
 
         for (int index = 0; index < length; ) {
-            if (!rawMode) {
-                int codeLen = ColorCodeUtils.detectColorCodeLength(text, index);
-                if (codeLen > 0) {
-                    if (codeLen == 2 && index + 1 < length) {
-                        char fmt = Character.toLowerCase(text.charAt(index + 1));
-                        if (fmt == 'l') {
-                            isBold = true;
-                        } else if (fmt == 'r') {
-                            isBold = false;
-                        } else if ((fmt >= '0' && fmt <= '9') || (fmt >= 'a' && fmt <= 'f')) {
-                            isBold = false;
-                        }
-                    }
-                    index += codeLen;
-                    continue;
-                }
+            int consumed = tracker.consumeFormatting(text, index, rawMode);
+            if (consumed > 0) {
+                index += consumed;
+                continue;
             }
 
             char character = text.charAt(index);
@@ -55,7 +43,7 @@ public final class FormattedTextMetrics {
             float charWidth = charWidthFunc.getWidth(character);
             if (charWidth > 0.0f) {
                 currentLineWidth += charWidth;
-                if (isBold) {
+                if (tracker.isBold) {
                     currentLineWidth += boldExtra;
                 }
                 currentLineWidth += glyphSpacing;
@@ -73,34 +61,25 @@ public final class FormattedTextMetrics {
             return 0;
         }
 
-        int lastSafePosition = 0;
+        FormattingTracker tracker = new FormattingTracker();
+        int lastSpaceIndex = -1;
         float currentWidth = 0.0f;
-        boolean isBold = false;
         final int length = text.length();
 
         for (int index = 0; index < length; ) {
-            if (!rawMode) {
-                int codeLen = ColorCodeUtils.detectColorCodeLength(text, index);
-                if (codeLen > 0) {
-                    if (codeLen == 2 && index + 1 < length) {
-                        char fmt = Character.toLowerCase(text.charAt(index + 1));
-                        if (fmt == 'l') {
-                            isBold = true;
-                        } else if (fmt == 'r') {
-                            isBold = false;
-                        } else if ((fmt >= '0' && fmt <= '9') || (fmt >= 'a' && fmt <= 'f')) {
-                            isBold = false;
-                        }
-                    }
-                    index += codeLen;
-                    lastSafePosition = index;
-                    continue;
-                }
+            int consumed = tracker.consumeFormatting(text, index, rawMode);
+            if (consumed > 0) {
+                index += consumed;
+                continue;
             }
 
             char character = text.charAt(index);
             if (character == '\n') {
                 return index;
+            }
+
+            if (character == ' ') {
+                lastSpaceIndex = index;
             }
 
             float charWidth = charWidthFunc.getWidth(character);
@@ -111,21 +90,85 @@ public final class FormattedTextMetrics {
             float nextWidth = currentWidth;
             if (charWidth > 0.0f) {
                 nextWidth += charWidth;
-                if (isBold) {
+                if (tracker.isBold) {
                     nextWidth += boldExtra;
                 }
                 nextWidth += glyphSpacing;
             }
 
             if (nextWidth > maxWidth) {
-                return Math.min(lastSafePosition, length);
+                if (lastSpaceIndex != -1 && lastSpaceIndex < index) {
+                    return lastSpaceIndex;
+                }
+                return index;
             }
 
             currentWidth = nextWidth;
             index++;
-            lastSafePosition = index;
         }
 
         return length;
+    }
+
+    private static final class FormattingTracker {
+
+        boolean isBold;
+
+        int consumeFormatting(CharSequence text, int index, boolean rawMode) {
+            if (rawMode || index < 0 || index >= text.length()) {
+                return 0;
+            }
+
+            char first = text.charAt(index);
+            if (first == 167) {
+                if (index + 1 >= text.length()) {
+                    return 0;
+                }
+                char fmt = Character.toLowerCase(text.charAt(index + 1));
+                if (fmt == 'l') {
+                    isBold = true;
+                } else if (fmt == 'r' || ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g') {
+                    isBold = false;
+                }
+                return 2;
+            }
+
+            if (first == '&') {
+                if (index + 7 <= text.length() && ColorCodeUtils.isValidHexString(text, index + 1)) {
+                    isBold = false;
+                    return 7;
+                }
+
+                if (index + 1 < text.length()) {
+                    char fmt = Character.toLowerCase(text.charAt(index + 1));
+                    if (ColorCodeUtils.isFormattingCode(fmt)) {
+                        if (fmt == 'l') {
+                            isBold = true;
+                        } else if (ColorCodeUtils.isResetCode(fmt)
+                            || ColorCodeUtils.isMinecraftColorCode(fmt)
+                            || fmt == 'g') {
+                            isBold = false;
+                        }
+                        return 2;
+                    }
+                }
+            }
+
+            if (first == '<') {
+                if (index + 8 <= text.length() && text.charAt(index + 7) == '>'
+                    && ColorCodeUtils.isValidHexString(text, index + 1)) {
+                    isBold = false;
+                    return 8;
+                }
+
+                if (index + 9 <= text.length() && text.charAt(index + 1) == '/'
+                    && text.charAt(index + 8) == '>' && ColorCodeUtils.isValidHexString(text, index + 2)) {
+                    isBold = false;
+                    return 9;
+                }
+            }
+
+            return 0;
+        }
     }
 }
