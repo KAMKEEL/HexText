@@ -76,6 +76,7 @@ public final class FormattedTextMetrics {
         int lastSafePosition = 0;
         float currentWidth = 0.0f;
         boolean isBold = false;
+        boolean hasVisibleGlyph = false;
         final int length = text.length();
 
         for (int index = 0; index < length; ) {
@@ -108,8 +109,9 @@ public final class FormattedTextMetrics {
                 charWidth = 0.0f;
             }
 
+            boolean visibleGlyph = charWidth > 0.0f;
             float nextWidth = currentWidth;
-            if (charWidth > 0.0f) {
+            if (visibleGlyph) {
                 nextWidth += charWidth;
                 if (isBold) {
                     nextWidth += boldExtra;
@@ -118,10 +120,13 @@ public final class FormattedTextMetrics {
             }
 
             if (nextWidth > maxWidth) {
-                return Math.min(lastSafePosition, length);
+                return hasVisibleGlyph ? Math.min(lastSafePosition, length) : 0;
             }
 
             currentWidth = nextWidth;
+            if (visibleGlyph) {
+                hasVisibleGlyph = true;
+            }
             index++;
             lastSafePosition = index;
         }
