@@ -14,8 +14,14 @@ import java.util.Random;
 public final class TextEffectController {
 
     private static final float RAINBOW_SPREAD = 12.0f;
+    private static final float RAINBOW_SATURATION = 0.92f;
+    private static final float RAINBOW_BRIGHTNESS = 0.96f;
+    private static final float RAINBOW_LUMINANCE_SOFT = 0.42f;
+    private static final float RAINBOW_LUMINANCE_STRONG = 0.26f;
+    private static final float RAINBOW_SOFTEN_LIGHT = 0.18f;
+    private static final float RAINBOW_SOFTEN_STRONG = 0.32f;
     private static final float SHAKE_RANGE = 1.2f;
-    private static final float IGNITE_FACTOR = 0.35f;
+    private static final float IGNITE_MIN_FACTOR = 0.35f;
 
     private final Random random = new Random();
 
@@ -77,21 +83,19 @@ public final class TextEffectController {
     public int computeColor(int charIndex) {
         int color = baseColor;
 
+        long now = getCurrentTime();
+
         if (rainbowActive) {
-            long now = Minecraft.getSystemTime();
             double rainbowSpeed = Math.max(1.0, HexTextConfig.getRainbowSpeed());
             double timeDegrees = (now / rainbowSpeed) * 360.0;
             float hueDegrees = (float) ((charIndex - rainbowAnchorIndex) * RAINBOW_SPREAD + timeDegrees);
-            color = ColorCodeUtils.hsvToRgb(hueDegrees, 1.0f, 1.0f);
+            color = softenRainbowColor(ColorCodeUtils.hsvToRgb(hueDegrees, RAINBOW_SATURATION, RAINBOW_BRIGHTNESS));
         }
 
         if (igniteActive) {
-            long now = Minecraft.getSystemTime();
             long interval = Math.max(1L, HexTextConfig.getIgniteInterval());
-            boolean brightPhase = ((now / interval) & 1L) == 0L;
-            if (!brightPhase) {
-                color = darken(color, IGNITE_FACTOR);
-            }
+            float brightness = computeIgniteBrightness(now, interval);
+            color = scaleBrightness(color, brightness);
         }
 
         return color;
@@ -139,7 +143,7 @@ public final class TextEffectController {
     }
 
     private void applyShake(int charIndex) {
-        long now = Minecraft.getSystemTime();
+        long now = getCurrentTime();
         long frameWindow = Math.max(1L, HexTextConfig.getShakeInterval());
         long seed = ((long) charIndex * 341873128712L) ^ (now / frameWindow);
         random.setSeed(seed);
@@ -148,13 +152,49 @@ public final class TextEffectController {
         GL11.glTranslatef(offsetX, offsetY, 0.0f);
     }
 
-    private static int darken(int color, float factor) {
-        int r = (int) (((color >> 16) & 0xFF) * factor);
-        int g = (int) (((color >> 8) & 0xFF) * factor);
-        int b = (int) ((color & 0xFF) * factor);
-        r = Math.max(0, Math.min(255, r));
-        g = Math.max(0, Math.min(255, g));
-        b = Math.max(0, Math.min(255, b));
+    static float computeIgniteBrightness(long now, long interval) {
+        long adjustedInterval = Math.max(1L, interval);
+        long period = Math.max(1L, adjustedInterval * 2L);
+        long timeInPeriod = now % period;
+        float phase = (float) timeInPeriod / (float) period;
+        float triangle = Math.abs((phase * 2.0f) - 1.0f);
+        return IGNITE_MIN_FACTOR + (1.0f - IGNITE_MIN_FACTOR) * triangle;
+    }
+
+    static int softenRainbowColor(int color) {
+        float luminance = computeLuminance(color);
+        if (luminance <= RAINBOW_LUMINANCE_STRONG) {
+            return blendWithWhite(color, RAINBOW_SOFTEN_STRONG);
+        }
+        if (luminance <= RAINBOW_LUMINANCE_SOFT) {
+            return blendWithWhite(color, RAINBOW_SOFTEN_LIGHT);
+        }
+        return color;
+    }
+
+    static int scaleBrightness(int color, float factor) {
+        int r = Math.max(0, Math.min(255, Math.round(((color >> 16) & 0xFF) * factor)));
+        int g = Math.max(0, Math.min(255, Math.round(((color >> 8) & 0xFF) * factor)));
+        int b = Math.max(0, Math.min(255, Math.round((color & 0xFF) * factor)));
+        return (r << 16) | (g << 8) | b;
+    }
+
+    private static long getCurrentTime() {
+        return Minecraft.getSystemTime();
+    }
+
+    private static float computeLuminance(int color) {
+        float r = ((color >> 16) & 0xFF) / 255.0f;
+        float g = ((color >> 8) & 0xFF) / 255.0f;
+        float b = (color & 0xFF) / 255.0f;
+        return 0.2126f * r + 0.7152f * g + 0.0722f * b;
+    }
+
+    private static int blendWithWhite(int color, float mix) {
+        float clamped = Math.max(0.0f, Math.min(1.0f, mix));
+        int r = (int) (((color >> 16) & 0xFF) * (1.0f - clamped) + 255.0f * clamped);
+        int g = (int) (((color >> 8) & 0xFF) * (1.0f - clamped) + 255.0f * clamped);
+        int b = (int) ((color & 0xFF) * (1.0f - clamped) + 255.0f * clamped);
         return (r << 16) | (g << 8) | b;
     }
 }

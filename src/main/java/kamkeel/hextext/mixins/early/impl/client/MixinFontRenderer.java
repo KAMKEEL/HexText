@@ -74,6 +74,12 @@ public abstract class MixinFontRenderer {
     @Unique
     private int hextext$visibleGlyphIndex;
     @Unique
+    private int hextext$currentGlyphIndex;
+    @Unique
+    private int hextext$currentGlyphExtraRenders;
+    @Unique
+    private boolean hextext$glyphInProgress;
+    @Unique
     private int hextext$pendingRenderColor;
     @Unique
     private boolean hextext$hasPendingRenderColor;
@@ -115,6 +121,9 @@ public abstract class MixinFontRenderer {
         }
         hextext$rawTokenSkip = 0;
         hextext$visibleGlyphIndex = 0;
+        hextext$currentGlyphIndex = 0;
+        hextext$currentGlyphExtraRenders = 0;
+        hextext$glyphInProgress = false;
     }
 
     @ModifyVariable(method = "renderStringAtPos", at = @At("HEAD"), argsOnly = true)
@@ -157,6 +166,12 @@ public abstract class MixinFontRenderer {
 
         for (RenderInstruction instruction : instructions) {
             hextext$executeInstruction(instruction);
+        }
+
+        if (current != 167 && current != '\n') {
+            hextext$currentGlyphIndex = hextext$visibleGlyphIndex;
+            hextext$currentGlyphExtraRenders = this.boldStyle ? 1 : 0;
+            hextext$glyphInProgress = true;
         }
     }
 
@@ -233,12 +248,13 @@ public abstract class MixinFontRenderer {
 
     @Unique
     private float hextext$renderGlyphWithEffects(char glyph, boolean italic, boolean unicode, int defaultIndex, char unicodeChar) {
+        int glyphIndexForEffects = hextext$glyphInProgress ? hextext$currentGlyphIndex : hextext$visibleGlyphIndex;
         float width;
         if (hextext$effects != null && hextext$effects.hasActiveEffects()) {
-            int targetColor = hextext$effects.computeColor(hextext$visibleGlyphIndex);
+            int targetColor = hextext$effects.computeColor(glyphIndexForEffects);
             int appliedColor = hextext$shadow ? ColorCodeUtils.calculateShadowColor(targetColor) : targetColor;
             hextext$setColorFromInt(appliedColor);
-            hextext$effects.beforeGlyph((FontRenderer) (Object) this, glyph, hextext$visibleGlyphIndex, this.posX, this.posY, this.FONT_HEIGHT);
+            hextext$effects.beforeGlyph((FontRenderer) (Object) this, glyph, glyphIndexForEffects, this.posX, this.posY, this.FONT_HEIGHT);
             width = unicode
                 ? hextext$invokeRenderUnicodeChar(unicodeChar, italic)
                 : hextext$invokeRenderDefaultChar(defaultIndex, italic);
@@ -248,7 +264,16 @@ public abstract class MixinFontRenderer {
                 ? hextext$invokeRenderUnicodeChar(unicodeChar, italic)
                 : hextext$invokeRenderDefaultChar(defaultIndex, italic);
         }
-        hextext$visibleGlyphIndex++;
+        if (hextext$glyphInProgress) {
+            if (hextext$currentGlyphExtraRenders > 0) {
+                hextext$currentGlyphExtraRenders--;
+            } else {
+                hextext$glyphInProgress = false;
+                hextext$visibleGlyphIndex++;
+            }
+        } else {
+            hextext$visibleGlyphIndex++;
+        }
         return width;
     }
 

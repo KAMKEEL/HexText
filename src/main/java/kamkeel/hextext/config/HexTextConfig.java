@@ -11,9 +11,9 @@ public final class HexTextConfig {
 
     public static final String CATEGORY_EFFECTS = "effects";
 
-    private static final float DEFAULT_RAINBOW_SPEED = 55.0f;
-    private static final int DEFAULT_SHAKE_INTERVAL = 16;
-    private static final int DEFAULT_IGNITE_INTERVAL = 120;
+    private static final float DEFAULT_RAINBOW_SPEED = 3000.0f;
+    private static final int DEFAULT_SHAKE_INTERVAL = 100;
+    private static final int DEFAULT_IGNITE_INTERVAL = 100;
 
     private static final float MIN_RAINBOW_SPEED = 1.0f;
     private static final int MIN_SHAKE_INTERVAL = 1;
