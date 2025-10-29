@@ -14,7 +14,8 @@ import cpw.mods.fml.relauncher.Side;
 @Mod(
     modid = HexText.ID,
     name = HexText.NAME,
-    version = HexText.VERSION
+    version = HexText.VERSION,
+    guiFactory = "kamkeel.hextext.config.HexTextGuiFactory"
 )
 public class HexText {
 
