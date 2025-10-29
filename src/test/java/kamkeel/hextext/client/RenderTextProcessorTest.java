@@ -111,4 +111,99 @@ public class RenderTextProcessorTest {
         }
         assertTrue("Expected PUSH_RGB instruction", foundPush);
     }
+
+    @Test
+    public void testRainbowInstructionNonRaw() {
+        RenderTextData data = RenderTextProcessor.prepare("&gRainbow", false);
+        assertTrue(data.shouldReplaceText());
+        assertEquals("Rainbow", data.getDisplayText());
+        assertTrue(data.hasInstructions());
+        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        assertNotNull(instructions);
+        assertFalse(instructions.isEmpty());
+        RenderInstruction instruction = instructions.get(0);
+        assertEquals(RenderInstruction.Type.SET_RAINBOW, instruction.getType());
+        assertTrue(instruction.isEnabled());
+        assertEquals(0, instruction.getParameter());
+        assertTrue(instruction.resetsFormatting());
+    }
+
+    @Test
+    public void testNonRawVanillaColorProducesInstruction() {
+        RenderTextData data = RenderTextProcessor.prepare("&aGreen", false);
+        assertTrue(data.shouldReplaceText());
+        assertEquals("§aGreen", data.getDisplayText());
+        assertTrue(data.hasInstructions());
+        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        assertNotNull(instructions);
+        assertFalse(instructions.isEmpty());
+        assertEquals(RenderInstruction.Type.APPLY_VANILLA_COLOR, instructions.get(0).getType());
+        assertEquals(10, instructions.get(0).getParameter());
+    }
+
+    @Test
+    public void testSectionSignEffectInstruction() {
+        RenderTextData data = RenderTextProcessor.prepare("§gWave", false);
+        assertFalse(data.shouldReplaceText());
+        assertTrue(data.hasInstructions());
+        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        assertNotNull(instructions);
+        assertFalse(instructions.isEmpty());
+        assertEquals(RenderInstruction.Type.SET_RAINBOW, instructions.get(0).getType());
+    }
+
+    @Test
+    public void testDinnerboneInstructionRaw() {
+        RenderTextData data = RenderTextProcessor.prepare("&hFlip", true);
+        assertFalse(data.shouldReplaceText());
+        assertTrue(data.hasInstructions());
+        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        assertNotNull(instructions);
+        boolean found = false;
+        for (RenderInstruction instruction : instructions) {
+            if (instruction.getType() == RenderInstruction.Type.SET_DINNERBONE) {
+                assertTrue(instruction.isEnabled());
+                found = true;
+            }
+        }
+        assertTrue("Expected dinnerbone instruction", found);
+    }
+
+    @Test
+    public void testRawResetInstructionProducesInstruction() {
+        RenderTextData data = RenderTextProcessor.prepare("&rTest", true);
+        assertFalse(data.shouldReplaceText());
+        assertTrue(data.hasInstructions());
+        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        assertNotNull(instructions);
+        assertFalse(instructions.isEmpty());
+        RenderInstruction instruction = instructions.get(0);
+        assertEquals(RenderInstruction.Type.RESET_TO_BASE, instruction.getType());
+        assertTrue(instruction.resetsFormatting());
+    }
+
+    @Test
+    public void testIgniteAndShakeInstructionsExist() {
+        RenderTextData data = RenderTextProcessor.prepare("&iFire &jShake", false);
+        assertTrue(data.shouldReplaceText());
+        assertEquals("Fire Shake", data.getDisplayText());
+        assertTrue(data.hasInstructions());
+        assertTrue(data.getInstructions().containsKey(0));
+        boolean sawIgnite = false;
+        for (RenderInstruction instruction : data.getInstructions().get(0)) {
+            if (instruction.getType() == RenderInstruction.Type.SET_IGNITE) {
+                sawIgnite = true;
+            }
+        }
+        assertTrue("Expected ignite instruction", sawIgnite);
+        int shakeIndex = data.getDisplayText().indexOf('S');
+        assertTrue(data.getInstructions().containsKey(shakeIndex));
+        boolean sawShake = false;
+        for (RenderInstruction instruction : data.getInstructions().get(shakeIndex)) {
+            if (instruction.getType() == RenderInstruction.Type.SET_SHAKE) {
+                sawShake = true;
+            }
+        }
+        assertTrue("Expected shake instruction", sawShake);
+    }
 }
