@@ -1,8 +1,9 @@
-package kamkeel.hextext.config;
+package kamkeel.hextext.client.config;
 
 import cpw.mods.fml.client.event.ConfigChangedEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import kamkeel.hextext.HexText;
+import kamkeel.hextext.config.HexTextConfig;
 
 /**
  * Listens for configuration changes and resynchronizes HexText settings.

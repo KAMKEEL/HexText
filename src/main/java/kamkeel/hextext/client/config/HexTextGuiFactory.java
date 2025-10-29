@@ -1,4 +1,4 @@
-package kamkeel.hextext.config;
+package kamkeel.hextext.client.config;
 
 import cpw.mods.fml.client.IModGuiFactory;
 import cpw.mods.fml.relauncher.Side;

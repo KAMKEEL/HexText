@@ -1,4 +1,4 @@
-package kamkeel.hextext.mixin.client;
+package kamkeel.hextext.mixin.early.impl.client;
 
 import kamkeel.hextext.client.render.FontRenderContext;
 import net.minecraft.client.gui.GuiTextField;
@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GuiTextField.class)
-public abstract class GuiTextFieldMixin {
+public abstract class MixinGuiTextField {
 
     @Unique
     private boolean hextext$legacy$rawPushed;

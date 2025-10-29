@@ -1,4 +1,4 @@
-package kamkeel.hextext.mixin.config;
+package kamkeel.hextext.mixin.late;
 
 import com.gtnewhorizon.gtnhmixins.ILateMixinLoader;
 import com.gtnewhorizon.gtnhmixins.LateMixin;
@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 @LateMixin
-public final class HexTextLateMixinLoader implements ILateMixinLoader {
+public final class HexTextLateMixins implements ILateMixinLoader {
 
     private static final MixinEnvironment.Side SIDE = MixinEnvironment.getCurrentEnvironment().getSide();
 

@@ -1,4 +1,4 @@
-package kamkeel.hextext.mixin.config;
+package kamkeel.hextext.mixin.early;
 
 import org.spongepowered.asm.lib.tree.ClassNode;
 import org.spongepowered.asm.mixin.MixinEnvironment;
@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public final class HexTextMixinPlugin implements IMixinConfigPlugin {
+public final class HexTextEarlyMixins implements IMixinConfigPlugin {
 
     private static final MixinEnvironment.Side SIDE = MixinEnvironment.getCurrentEnvironment().getSide();
 
@@ -37,9 +37,9 @@ public final class HexTextMixinPlugin implements IMixinConfigPlugin {
     public List<String> getMixins() {
         List<String> mixins = new ArrayList<>();
         if (SIDE == MixinEnvironment.Side.CLIENT) {
-            mixins.add("FontRendererMixin");
-            mixins.add("GuiNewChatMixin");
-            mixins.add("GuiTextFieldMixin");
+            mixins.add("client.MixinFontRenderer");
+            mixins.add("client.MixinGuiNewChat");
+            mixins.add("client.MixinGuiTextField");
         }
         return mixins;
     }

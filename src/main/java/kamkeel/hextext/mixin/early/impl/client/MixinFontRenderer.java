@@ -1,6 +1,5 @@
-package kamkeel.hextext.mixin.client;
+package kamkeel.hextext.mixin.early.impl.client;
 
-import kamkeel.hextext.client.render.FontRenderContext;
 import kamkeel.hextext.client.render.font.FontRendererBridge;
 import kamkeel.hextext.client.render.font.FontRendererRenderPipeline;
 import kamkeel.hextext.client.render.font.GlyphRenderer;
@@ -19,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(FontRenderer.class)
-public abstract class FontRendererMixin implements FontRendererBridge {
+public abstract class MixinFontRenderer implements FontRendererBridge {
 
     @Shadow private boolean randomStyle;
     @Shadow private boolean boldStyle;
