@@ -1,5 +1,6 @@
 package kamkeel.hextext.client;
 
+import kamkeel.hextext.config.HexTextConfig;
 import kamkeel.hextext.util.ColorCodeUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -13,7 +14,6 @@ import java.util.Random;
 public final class TextEffectController {
 
     private static final float RAINBOW_SPREAD = 12.0f;
-    private static final float RAINBOW_SPEED = 55.0f;
     private static final float SHAKE_RANGE = 1.2f;
     private static final float IGNITE_FACTOR = 0.35f;
 
@@ -90,14 +90,16 @@ public final class TextEffectController {
 
         if (rainbowActive) {
             long now = Minecraft.getSystemTime();
-            float timeShift = (now - rainbowStartTime) / RAINBOW_SPEED;
+            float rainbowSpeed = Math.max(1.0f, HexTextConfig.getRainbowSpeed());
+            float timeShift = (now - rainbowStartTime) / rainbowSpeed;
             float hueDegrees = (charIndex - rainbowAnchorIndex) * RAINBOW_SPREAD + timeShift * 360.0f;
             color = ColorCodeUtils.hsvToRgb(hueDegrees, 1.0f, 1.0f);
         }
 
         if (igniteActive) {
             long elapsed = Minecraft.getSystemTime() - igniteStartTime;
-            boolean brightPhase = ((elapsed / 120L) & 1L) == 0L;
+            long interval = Math.max(1L, HexTextConfig.getIgniteInterval());
+            boolean brightPhase = ((elapsed / interval) & 1L) == 0L;
             if (!brightPhase) {
                 color = darken(color, IGNITE_FACTOR);
             }
@@ -138,7 +140,8 @@ public final class TextEffectController {
 
     private void applyShake(int charIndex) {
         long now = Minecraft.getSystemTime();
-        long seed = ((long) charIndex * 341873128712L) ^ (now / 16L);
+        long frameWindow = Math.max(1L, HexTextConfig.getShakeInterval());
+        long seed = ((long) charIndex * 341873128712L) ^ (now / frameWindow);
         random.setSeed(seed);
         float offsetX = (random.nextFloat() - 0.5f) * SHAKE_RANGE;
         float offsetY = (random.nextFloat() - 0.5f) * SHAKE_RANGE;
