@@ -1,5 +1,6 @@
 package kamkeel.hextext.mixins.early.impl.client;
 
+import kamkeel.hextext.client.ColorStateTracker;
 import kamkeel.hextext.client.FontRenderContext;
 import kamkeel.hextext.client.FontRendererUtils;
 import kamkeel.hextext.client.RenderInstruction;
@@ -23,9 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 
 @Mixin(value = FontRenderer.class)
@@ -61,11 +60,7 @@ public abstract class MixinFontRenderer {
     @Unique
     private RenderTextData hextext$renderData;
     @Unique
-    private Deque<Integer> hextext$colorStack;
-    @Unique
-    private Deque<Integer> hextext$baseColorStack;
-    @Unique
-    private int hextext$baseColor;
+    private ColorStateTracker hextext$colorState;
     @Unique
     private boolean hextext$shadow;
     @Unique
@@ -78,20 +73,34 @@ public abstract class MixinFontRenderer {
     private TextEffectController hextext$effects;
     @Unique
     private int hextext$visibleGlyphIndex;
+    @Unique
+    private int hextext$pendingRenderColor;
+    @Unique
+    private boolean hextext$hasPendingRenderColor;
+
+    @Inject(method = "renderString", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;setColor(FFFF)V", shift = At.Shift.AFTER, remap = false), locals = LocalCapture.CAPTURE_FAILHARD)
+    private void hextext$capturePreparedColor(String text, int x, int y, int color, boolean dropShadow,
+            CallbackInfoReturnable<Integer> cir) {
+        hextext$pendingRenderColor = color & 0xFFFFFF;
+        hextext$hasPendingRenderColor = true;
+    }
 
     @Inject(method = "renderStringAtPos", at = @At("HEAD"))
     private void hextext$begin(String text, boolean shadow, CallbackInfo ci) {
         boolean rawMode = FontRenderContext.isRawTextRendering();
         hextext$renderData = RenderTextProcessor.prepare(text, rawMode);
-        hextext$colorStack = null;
-        hextext$baseColorStack = null;
-        hextext$baseColor = this.textColor;
+        if (hextext$colorState == null) {
+            hextext$colorState = new ColorStateTracker();
+        }
         hextext$shadow = shadow;
         hextext$renderingShadow = shadow;
         if (hextext$effects == null) {
             hextext$effects = new TextEffectController();
         }
-        hextext$effects.begin(this.textColor);
+        int initialColor = hextext$resolveInitialColor();
+        hextext$colorState.begin(initialColor, shadow);
+        this.textColor = initialColor;
+        hextext$effects.begin(initialColor);
         if (rawMode) {
             hextext$resetFormattingStyles();
         }
@@ -154,8 +163,6 @@ public abstract class MixinFontRenderer {
     @Inject(method = "renderStringAtPos", at = @At("TAIL"))
     private void hextext$end(String text, boolean shadow, CallbackInfo ci) {
         hextext$renderData = null;
-        hextext$colorStack = null;
-        hextext$baseColorStack = null;
         if (!hextext$renderingShadow && hextext$pendingHighlights != null && !hextext$pendingHighlights.isEmpty()) {
             TokenHighlightUtils.drawHighlights(hextext$pendingHighlights, this.FONT_HEIGHT);
             hextext$pendingHighlights.clear();
@@ -229,7 +236,8 @@ public abstract class MixinFontRenderer {
         float width;
         if (hextext$effects != null && hextext$effects.hasActiveEffects()) {
             int targetColor = hextext$effects.computeColor(hextext$visibleGlyphIndex);
-            hextext$applyRgbColor(targetColor, hextext$renderingShadow);
+            int appliedColor = hextext$shadow ? ColorCodeUtils.calculateShadowColor(targetColor) : targetColor;
+            hextext$setColorFromInt(appliedColor);
             hextext$effects.beforeGlyph((FontRenderer) (Object) this, glyph, hextext$visibleGlyphIndex, this.posX, this.posY, this.FONT_HEIGHT);
             width = unicode
                 ? hextext$invokeRenderUnicodeChar(unicodeChar, italic)
@@ -250,87 +258,26 @@ public abstract class MixinFontRenderer {
 
         switch (instruction.getType()) {
             case APPLY_RGB:
-                if (instruction.shouldClearStack() && hextext$colorStack != null) {
-                    hextext$colorStack.clear();
-                }
-                if (instruction.shouldClearStack() && hextext$baseColorStack != null) {
-                    hextext$baseColorStack.clear();
-                }
-                hextext$applyRgbColor(instruction.getRgb(), hextext$shadow);
-                if (hextext$effects != null) {
-                    hextext$effects.resetDynamicEffects();
-                    if (!hextext$renderingShadow) {
-                        hextext$effects.updateBaseColor(this.textColor);
-                    }
-                }
+                int appliedRgb = hextext$colorState.applyRgb(instruction.getRgb(), instruction.shouldClearStack(),
+                    hextext$effects, hextext$renderingShadow);
+                hextext$setColorFromInt(appliedRgb);
                 break;
             case APPLY_VANILLA_COLOR:
-                if (instruction.shouldClearStack() && hextext$colorStack != null) {
-                    hextext$colorStack.clear();
-                }
-                if (instruction.shouldClearStack() && hextext$baseColorStack != null) {
-                    hextext$baseColorStack.clear();
-                }
-                hextext$applyVanillaColor(instruction.getParameter());
-                if (hextext$effects != null) {
-                    hextext$effects.resetDynamicEffects();
-                    if (!hextext$renderingShadow) {
-                        hextext$effects.updateBaseColor(this.textColor);
-                    }
-                }
+                int vanillaColor = hextext$colorState.applyVanillaColor(instruction.getParameter(), colorCode,
+                    instruction.shouldClearStack(), hextext$effects, hextext$renderingShadow);
+                hextext$setColorFromInt(vanillaColor);
                 break;
             case PUSH_RGB:
-                if (hextext$colorStack == null) {
-                    hextext$colorStack = new ArrayDeque<>();
-                }
-                hextext$colorStack.push(this.textColor);
-                if (hextext$baseColorStack == null) {
-                    hextext$baseColorStack = new ArrayDeque<>();
-                }
-                if (hextext$effects != null) {
-                    hextext$baseColorStack.push(hextext$effects.getBaseColor());
-                    hextext$effects.resetDynamicEffects();
-                } else {
-                    hextext$baseColorStack.push(this.textColor);
-                }
-                hextext$applyRgbColor(instruction.getRgb(), hextext$shadow);
-                if (hextext$effects != null && !hextext$renderingShadow) {
-                    hextext$effects.updateBaseColor(this.textColor);
-                }
+                int pushedColor = hextext$colorState.push(instruction.getRgb(), hextext$effects, hextext$renderingShadow);
+                hextext$setColorFromInt(pushedColor);
                 break;
             case POP_COLOR:
-                int restoredColor;
-                if (hextext$colorStack != null && !hextext$colorStack.isEmpty()) {
-                    restoredColor = hextext$colorStack.pop();
-                } else {
-                    restoredColor = hextext$baseColor;
-                }
+                int restoredColor = hextext$colorState.pop(hextext$effects, hextext$renderingShadow);
                 hextext$setColorFromInt(restoredColor);
-                if (hextext$effects != null) {
-                    hextext$effects.resetDynamicEffects();
-                    int restoredBase = hextext$baseColor;
-                    if (hextext$baseColorStack != null && !hextext$baseColorStack.isEmpty()) {
-                        restoredBase = hextext$baseColorStack.pop();
-                    }
-                    if (!hextext$renderingShadow) {
-                        hextext$effects.updateBaseColor(restoredBase);
-                    }
-                }
                 break;
             case RESET_TO_BASE:
-                if (hextext$colorStack != null) {
-                    hextext$colorStack.clear();
-                }
-                if (hextext$baseColorStack != null) {
-                    hextext$baseColorStack.clear();
-                }
-                hextext$setColorFromInt(hextext$baseColor);
-                if (hextext$effects != null) {
-                    hextext$effects.resetDynamicEffects();
-                    if (!hextext$renderingShadow) {
-                        hextext$effects.updateBaseColor(hextext$baseColor);
-                    }
-                }
+                int baseColor = hextext$colorState.resetToBase(hextext$effects, hextext$renderingShadow);
+                hextext$setColorFromInt(baseColor);
                 break;
             case SET_RANDOM:
                 this.randomStyle = instruction.isEnabled();
@@ -349,12 +296,7 @@ public abstract class MixinFontRenderer {
                 break;
             case SET_RAINBOW:
                 if (instruction.shouldClearStack()) {
-                    if (hextext$colorStack != null) {
-                        hextext$colorStack.clear();
-                    }
-                    if (hextext$baseColorStack != null) {
-                        hextext$baseColorStack.clear();
-                    }
+                    hextext$colorState.clearStacks();
                 }
                 if (hextext$effects != null) {
                     hextext$effects.resetDynamicEffects();
@@ -392,7 +334,11 @@ public abstract class MixinFontRenderer {
 
     @Unique
     private void hextext$setColorFromInt(int rgb) {
-        this.textColor = rgb;
+        int masked = rgb & 0xFFFFFF;
+        this.textColor = masked;
+        if (hextext$colorState != null) {
+            hextext$colorState.setCurrentColor(masked);
+        }
         setColor((float) (rgb >> 16 & 255) / 255.0F,
             (float) (rgb >> 8 & 255) / 255.0F,
             (float) (rgb & 255) / 255.0F,
@@ -400,20 +346,15 @@ public abstract class MixinFontRenderer {
     }
 
     @Unique
-    private void hextext$applyRgbColor(int rgb, boolean shadow) {
-        int effective = shadow ? ColorCodeUtils.calculateShadowColor(rgb) : rgb;
-        hextext$setColorFromInt(effective);
-    }
-
-    @Unique
-    private void hextext$applyVanillaColor(int colorIndex) {
-        int index = Math.max(0, Math.min(colorIndex, 15));
-        int paletteIndex = hextext$shadow ? index + 16 : index;
-        if (colorCode != null && paletteIndex >= 0 && paletteIndex < colorCode.length) {
-            hextext$setColorFromInt(colorCode[paletteIndex]);
-        } else {
-            hextext$setColorFromInt(hextext$baseColor);
+    private int hextext$resolveInitialColor() {
+        if (hextext$hasPendingRenderColor) {
+            hextext$hasPendingRenderColor = false;
+            return hextext$pendingRenderColor & 0xFFFFFF;
         }
+        int r = Math.round(this.red * 255.0f);
+        int g = Math.round(this.blue * 255.0f);
+        int b = Math.round(this.green * 255.0f);
+        return (r << 16) | (g << 8) | b;
     }
 
     @Unique

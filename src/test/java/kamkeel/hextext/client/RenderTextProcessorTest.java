@@ -125,6 +125,7 @@ public class RenderTextProcessorTest {
         assertEquals(RenderInstruction.Type.SET_RAINBOW, instruction.getType());
         assertTrue(instruction.isEnabled());
         assertEquals(0, instruction.getParameter());
+        assertTrue(instruction.resetsFormatting());
     }
 
     @Test
@@ -166,5 +167,43 @@ public class RenderTextProcessorTest {
             }
         }
         assertTrue("Expected dinnerbone instruction", found);
+    }
+
+    @Test
+    public void testRawResetInstructionProducesInstruction() {
+        RenderTextData data = RenderTextProcessor.prepare("&rTest", true);
+        assertFalse(data.shouldReplaceText());
+        assertTrue(data.hasInstructions());
+        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        assertNotNull(instructions);
+        assertFalse(instructions.isEmpty());
+        RenderInstruction instruction = instructions.get(0);
+        assertEquals(RenderInstruction.Type.RESET_TO_BASE, instruction.getType());
+        assertTrue(instruction.resetsFormatting());
+    }
+
+    @Test
+    public void testIgniteAndShakeInstructionsExist() {
+        RenderTextData data = RenderTextProcessor.prepare("&iFire &jShake", false);
+        assertTrue(data.shouldReplaceText());
+        assertEquals("Fire Shake", data.getDisplayText());
+        assertTrue(data.hasInstructions());
+        assertTrue(data.getInstructions().containsKey(0));
+        boolean sawIgnite = false;
+        for (RenderInstruction instruction : data.getInstructions().get(0)) {
+            if (instruction.getType() == RenderInstruction.Type.SET_IGNITE) {
+                sawIgnite = true;
+            }
+        }
+        assertTrue("Expected ignite instruction", sawIgnite);
+        int shakeIndex = data.getDisplayText().indexOf('S');
+        assertTrue(data.getInstructions().containsKey(shakeIndex));
+        boolean sawShake = false;
+        for (RenderInstruction instruction : data.getInstructions().get(shakeIndex)) {
+            if (instruction.getType() == RenderInstruction.Type.SET_SHAKE) {
+                sawShake = true;
+            }
+        }
+        assertTrue("Expected shake instruction", sawShake);
     }
 }

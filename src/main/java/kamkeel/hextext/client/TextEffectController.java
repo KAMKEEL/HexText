@@ -117,11 +117,13 @@ public final class TextEffectController {
                 cullFaceTemporarilyDisabled = true;
             }
             float width = Math.max(1.0f, fontRenderer.getCharWidth(glyph));
+            float glyphHeight = Math.max(1.0f, fontHeight - 1.0f);
             float pivotX = posX + width * 0.5f;
-            float pivotY = posY + fontHeight * 0.5f;
+            float pivotY = posY + glyphHeight * 0.5f;
+            float baselineOffset = Math.max(0.0f, fontHeight - glyphHeight);
             GL11.glTranslatef(pivotX, pivotY, 0.0f);
             GL11.glScalef(1.0f, -1.0f, 1.0f);
-            GL11.glTranslatef(-pivotX, -pivotY, 0.0f);
+            GL11.glTranslatef(-pivotX, -pivotY + baselineOffset, 0.0f);
         }
     }
 
