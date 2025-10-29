@@ -40,6 +40,8 @@ public final class ColorCodeUtils {
         return isMinecraftColorCode(lower)
             || lower == 'g'
             || lower == 'h'
+            || lower == 'i'
+            || lower == 'j'
             || isStyleCode(lower)
             || isResetCode(lower);
     }
@@ -63,6 +65,11 @@ public final class ColorCodeUtils {
     public static boolean isStyleCode(char c) {
         char lower = Character.toLowerCase(c);
         return lower == 'k' || lower == 'l' || lower == 'm' || lower == 'n' || lower == 'o';
+    }
+
+    public static boolean isEffectCode(char c) {
+        char lower = Character.toLowerCase(c);
+        return lower == 'g' || lower == 'h' || lower == 'i' || lower == 'j';
     }
 
     public static boolean isResetCode(char c) {

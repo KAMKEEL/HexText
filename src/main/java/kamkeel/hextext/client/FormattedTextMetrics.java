@@ -9,11 +9,6 @@ public final class FormattedTextMetrics {
 
     private FormattedTextMetrics() {}
 
-    @FunctionalInterface
-    public interface CharWidthFunction {
-        float getWidth(char character);
-    }
-
     public static float calculateMaxLineWidth(CharSequence text, boolean rawMode,
             CharWidthFunction charWidthFunc, float glyphSpacing, float boldExtra) {
         if (text == null || text.length() == 0) {
@@ -22,24 +17,14 @@ public final class FormattedTextMetrics {
 
         float maxWidth = 0.0f;
         float currentLineWidth = 0.0f;
-        boolean isBold = false;
+        LegacyFormattingState state = new LegacyFormattingState();
         final int length = text.length();
 
         for (int index = 0; index < length; ) {
             if (!rawMode) {
-                int codeLen = ColorCodeUtils.detectColorCodeLength(text, index);
-                if (codeLen > 0) {
-                    if (codeLen == 2 && index + 1 < length) {
-                        char fmt = Character.toLowerCase(text.charAt(index + 1));
-                        if (fmt == 'l') {
-                            isBold = true;
-                        } else if (fmt == 'r') {
-                            isBold = false;
-                        } else if ((fmt >= '0' && fmt <= '9') || (fmt >= 'a' && fmt <= 'f')) {
-                            isBold = false;
-                        }
-                    }
-                    index += codeLen;
+                int consumed = consumeFormatting(text, length, index, state);
+                if (consumed != index) {
+                    index = consumed;
                     continue;
                 }
             }
@@ -48,6 +33,7 @@ public final class FormattedTextMetrics {
             if (character == '\n') {
                 maxWidth = Math.max(maxWidth, currentLineWidth);
                 currentLineWidth = 0.0f;
+                state.setExpectingLegacyCode(false);
                 index++;
                 continue;
             }
@@ -55,7 +41,7 @@ public final class FormattedTextMetrics {
             float charWidth = charWidthFunc.getWidth(character);
             if (charWidth > 0.0f) {
                 currentLineWidth += charWidth;
-                if (isBold) {
+                if (state.isBold()) {
                     currentLineWidth += boldExtra;
                 }
                 currentLineWidth += glyphSpacing;
@@ -73,27 +59,18 @@ public final class FormattedTextMetrics {
             return 0;
         }
 
-        int lastSafePosition = 0;
+        int lastSpaceIndex = -1;
+        int lastSafeIndex = 0;
         float currentWidth = 0.0f;
-        boolean isBold = false;
+        LegacyFormattingState state = new LegacyFormattingState();
         final int length = text.length();
 
         for (int index = 0; index < length; ) {
             if (!rawMode) {
-                int codeLen = ColorCodeUtils.detectColorCodeLength(text, index);
-                if (codeLen > 0) {
-                    if (codeLen == 2 && index + 1 < length) {
-                        char fmt = Character.toLowerCase(text.charAt(index + 1));
-                        if (fmt == 'l') {
-                            isBold = true;
-                        } else if (fmt == 'r') {
-                            isBold = false;
-                        } else if ((fmt >= '0' && fmt <= '9') || (fmt >= 'a' && fmt <= 'f')) {
-                            isBold = false;
-                        }
-                    }
-                    index += codeLen;
-                    lastSafePosition = index;
+                int consumed = consumeFormatting(text, length, index, state);
+                if (consumed != index) {
+                    index = consumed;
+                    lastSafeIndex = index;
                     continue;
                 }
             }
@@ -101,6 +78,10 @@ public final class FormattedTextMetrics {
             char character = text.charAt(index);
             if (character == '\n') {
                 return index;
+            }
+
+            if (character == ' ') {
+                lastSpaceIndex = index;
             }
 
             float charWidth = charWidthFunc.getWidth(character);
@@ -111,21 +92,79 @@ public final class FormattedTextMetrics {
             float nextWidth = currentWidth;
             if (charWidth > 0.0f) {
                 nextWidth += charWidth;
-                if (isBold) {
+                if (state.isBold()) {
                     nextWidth += boldExtra;
                 }
                 nextWidth += glyphSpacing;
             }
 
             if (nextWidth > maxWidth) {
-                return Math.min(lastSafePosition, length);
+                if (lastSpaceIndex != -1 && lastSpaceIndex < index) {
+                    return lastSpaceIndex;
+                }
+                return Math.max(lastSafeIndex, index);
             }
 
             currentWidth = nextWidth;
             index++;
-            lastSafePosition = index;
+            lastSafeIndex = index;
         }
 
         return length;
+    }
+
+    private static int consumeFormatting(CharSequence text, int length, int index, LegacyFormattingState state) {
+        if (index >= length) {
+            return index;
+        }
+
+        if (state.isExpectingLegacyCode()) {
+            state.setExpectingLegacyCode(false);
+            applyLegacyCode(text.charAt(index), state);
+            return index + 1;
+        }
+
+        char current = text.charAt(index);
+
+        if (current == 167 || current == '&') {
+            if (current == '&' && index + 7 <= length && ColorCodeUtils.isValidHexString(text, index + 1)) {
+                state.setBold(false);
+                return index + 7;
+            }
+
+            if (current == '&' && (index + 1 >= length || !ColorCodeUtils.isFormattingCode(text.charAt(index + 1)))) {
+                return index;
+            }
+
+            state.setExpectingLegacyCode(true);
+            return index + 1;
+        }
+
+        if (current == '<') {
+            if (index + 8 <= length && text.charAt(index + 7) == '>' && ColorCodeUtils.isValidHexString(text, index + 1)) {
+                state.setBold(false);
+                return index + 8;
+            }
+
+            if (index + 9 <= length && text.charAt(index + 1) == '/' && text.charAt(index + 8) == '>'
+                && ColorCodeUtils.isValidHexString(text, index + 2)) {
+                state.setBold(false);
+                return index + 9;
+            }
+        }
+
+        return index;
+    }
+
+    private static void applyLegacyCode(char formatChar, LegacyFormattingState state) {
+        char fmt = Character.toLowerCase(formatChar);
+        if (fmt == 'l') {
+            state.setBold(true);
+            return;
+        }
+
+        if (fmt == 'r' || ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g') {
+            state.setBold(false);
+        }
     }
 }

@@ -28,11 +28,14 @@ public final class RenderTextProcessor {
         for (int i = 0; i < processed.length(); i++) {
             char current = processed.charAt(i);
 
-            if (current == '&' && i + 1 < processed.length()) {
+            boolean formatIndicator = current == '&' || current == 167;
+            if (formatIndicator && i + 1 < processed.length()) {
                 char next = processed.charAt(i + 1);
+                char lower = Character.toLowerCase(next);
                 int instructionIndex = sanitized.length();
+                boolean usingSectionSign = current == 167;
 
-                if (ColorCodeUtils.isValidHexString(processed, i + 1)) {
+                if (!usingSectionSign && ColorCodeUtils.isValidHexString(processed, i + 1)) {
                     int rgb = ColorCodeUtils.parseHexColor(processed, i + 1);
                     if (rgb != -1) {
                         instructions = ensureInstructionMap(instructions);
@@ -41,55 +44,94 @@ public final class RenderTextProcessor {
                         if (rawMode) {
                             sanitized.append('&');
                             sanitized.append(processed, i + 1, i + 7);
+                        } else {
+                            modified = true;
                         }
                         i += 6;
                         continue;
                     }
                 }
 
-                if (ColorCodeUtils.isFormattingCode(next)) {
-                    boolean isReset = ColorCodeUtils.isResetCode(next);
-                    if (rawMode) {
+                if (ColorCodeUtils.isFormattingCode(lower)) {
+                    if (ColorCodeUtils.isEffectCode(lower)) {
                         instructions = ensureInstructionMap(instructions);
                         List<RenderInstruction> bucket =
                             instructions.computeIfAbsent(instructionIndex, key -> new ArrayList<>());
-                        char lower = Character.toLowerCase(next);
-                        if (ColorCodeUtils.isMinecraftColorCode(lower)) {
-                            int colorIndex = ColorCodeUtils.getMinecraftColorIndex(lower);
-                            if (colorIndex >= 0) {
-                                bucket.add(RenderInstruction.applyVanillaColor(colorIndex));
-                            }
-                        } else if (isReset) {
-                            bucket.add(RenderInstruction.resetToBase());
-                        } else if (ColorCodeUtils.isStyleCode(lower)) {
-                            switch (lower) {
-                                case 'k':
-                                    bucket.add(RenderInstruction.setRandom(true));
-                                    break;
-                                case 'l':
-                                    bucket.add(RenderInstruction.setBold(true));
-                                    break;
-                                case 'm':
-                                    bucket.add(RenderInstruction.setStrikethrough(true));
-                                    break;
-                                case 'n':
-                                    bucket.add(RenderInstruction.setUnderline(true));
-                                    break;
-                                case 'o':
-                                    bucket.add(RenderInstruction.setItalic(true));
-                                    break;
-                                default:
-                                    break;
-                            }
+                        switch (lower) {
+                            case 'g':
+                                bucket.add(RenderInstruction.setRainbow(true, instructionIndex));
+                                break;
+                            case 'h':
+                                bucket.add(RenderInstruction.setDinnerbone(true));
+                                break;
+                            case 'i':
+                                bucket.add(RenderInstruction.setIgnite(true));
+                                break;
+                            case 'j':
+                                bucket.add(RenderInstruction.setShake(true));
+                                break;
+                            default:
+                                break;
                         }
-                        sanitized.append('&').append(next);
+                        if (rawMode || usingSectionSign) {
+                            sanitized.append(current).append(next);
+                        } else {
+                            modified = true;
+                        }
                         i++;
                         continue;
+                    }
+
+                    boolean isReset = ColorCodeUtils.isResetCode(lower);
+                    boolean isColor = ColorCodeUtils.isMinecraftColorCode(lower);
+                    boolean isStyle = ColorCodeUtils.isStyleCode(lower);
+
+                    instructions = ensureInstructionMap(instructions);
+                    List<RenderInstruction> bucket =
+                        instructions.computeIfAbsent(instructionIndex, key -> new ArrayList<>());
+
+                    if (isColor) {
+                        int colorIndex = ColorCodeUtils.getMinecraftColorIndex(lower);
+                        if (colorIndex >= 0) {
+                            bucket.add(RenderInstruction.applyVanillaColor(colorIndex));
+                        }
+                    } else if (isReset) {
+                        bucket.add(RenderInstruction.resetToBase());
+                    } else if (isStyle) {
+                        switch (lower) {
+                            case 'k':
+                                bucket.add(RenderInstruction.setRandom(true));
+                                break;
+                            case 'l':
+                                bucket.add(RenderInstruction.setBold(true));
+                                break;
+                            case 'm':
+                                bucket.add(RenderInstruction.setStrikethrough(true));
+                                break;
+                            case 'n':
+                                bucket.add(RenderInstruction.setUnderline(true));
+                                break;
+                            case 'o':
+                                bucket.add(RenderInstruction.setItalic(true));
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    if (rawMode) {
+                        sanitized.append(current).append(next);
+                        i++;
+                        continue;
+                    }
+
+                    if (usingSectionSign) {
+                        sanitized.append(current);
                     } else {
                         sanitized.append('§');
                         modified = true;
-                        continue;
                     }
+                    continue;
                 }
             }
 
