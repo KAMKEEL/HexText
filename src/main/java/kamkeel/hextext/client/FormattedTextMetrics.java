@@ -74,7 +74,7 @@ public final class FormattedTextMetrics {
             return 0;
         }
 
-        int lastSafePosition = 0;
+        int lastSpaceIndex = -1;
         float currentWidth = 0.0f;
         boolean isBold = false;
         final int length = text.length();
@@ -95,7 +95,6 @@ public final class FormattedTextMetrics {
                         isBold = false;
                     }
                     index += codeLen;
-                    lastSafePosition = index;
                     continue;
                 }
             }
@@ -103,6 +102,10 @@ public final class FormattedTextMetrics {
             char character = text.charAt(index);
             if (character == '\n') {
                 return index;
+            }
+
+            if (character == ' ') {
+                lastSpaceIndex = index;
             }
 
             float charWidth = charWidthFunc.getWidth(character);
@@ -120,12 +123,14 @@ public final class FormattedTextMetrics {
             }
 
             if (nextWidth > maxWidth) {
-                return Math.min(lastSafePosition, length);
+                if (lastSpaceIndex != -1 && lastSpaceIndex < index) {
+                    return lastSpaceIndex;
+                }
+                return index;
             }
 
             currentWidth = nextWidth;
             index++;
-            lastSafePosition = index;
         }
 
         return length;
