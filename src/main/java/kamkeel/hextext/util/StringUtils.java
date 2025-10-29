@@ -48,7 +48,7 @@ public final class StringUtils {
         }
 
         String currentColorCode = null;
-        StringBuilder styleCodes = new StringBuilder();
+        StringBuilder formatCodes = new StringBuilder();
         ArrayDeque<String> colorStack = new ArrayDeque<>();
 
         for (int i = 0; i < str.length(); ) {
@@ -61,29 +61,29 @@ public final class StringUtils {
                 if (codeLen == 7 && firstChar == '&') {
                     currentColorCode = code;
                     colorStack.clear();
-                    styleCodes.setLength(0);
+                    formatCodes.setLength(0);
                 } else if (codeLen == 8 && firstChar == '<') {
                     if (currentColorCode != null) {
                         colorStack.push(currentColorCode);
                     }
                     currentColorCode = code;
-                    styleCodes.setLength(0);
+                    formatCodes.setLength(0);
                 } else if (codeLen == 9 && firstChar == '<') {
                     currentColorCode = colorStack.isEmpty() ? null : colorStack.pop();
-                    styleCodes.setLength(0);
+                    formatCodes.setLength(0);
                 } else if (codeLen == 2) {
                     char fmt = Character.toLowerCase(str.charAt(i + 1));
 
-                    if (ColorCodeUtils.isMinecraftColorCode(fmt)) {
+                    if (ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g') {
                         currentColorCode = code;
                         colorStack.clear();
-                        styleCodes.setLength(0);
+                        formatCodes.setLength(0);
                     } else if (ColorCodeUtils.isResetCode(fmt)) {
                         currentColorCode = null;
                         colorStack.clear();
-                        styleCodes.setLength(0);
-                    } else if (ColorCodeUtils.isStyleCode(fmt)) {
-                        styleCodes.append(code);
+                        formatCodes.setLength(0);
+                    } else if (ColorCodeUtils.isStyleCode(fmt) || (ColorCodeUtils.isEffectCode(fmt) && fmt != 'g')) {
+                        formatCodes.append(code);
                     }
                 }
 
@@ -98,8 +98,8 @@ public final class StringUtils {
         if (currentColorCode != null) {
             result.append(currentColorCode);
         }
-        if (styleCodes.length() > 0) {
-            result.append(styleCodes);
+        if (formatCodes.length() > 0) {
+            result.append(formatCodes);
         }
 
         return result.toString();
