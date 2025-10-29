@@ -1,6 +1,9 @@
 package kamkeel.hextext.mixin.early.impl.client;
 
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import kamkeel.hextext.common.util.StringUtils;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiNewChat;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -9,8 +12,9 @@ import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
+@SideOnly(Side.CLIENT)
 @Mixin(GuiNewChat.class)
-public abstract class MixinGuiNewChat {
+public abstract class MixinGuiNewChat extends Gui {
 
     @Unique
     private String hextext$wrappedFormatPrefix = "";
