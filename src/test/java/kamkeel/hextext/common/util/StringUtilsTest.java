@@ -2,8 +2,7 @@ package kamkeel.hextext.common.util;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class StringUtilsTest {
 
@@ -46,5 +45,29 @@ public class StringUtilsTest {
     public void normalizeForRawDisplayConvertsSectionSigns() {
         String normalized = StringUtils.normalizeForRawDisplay("§aHello §rWorld");
         assertEquals("&aHello &rWorld", normalized);
+    }
+
+    @Test
+    public void stripExtrasRemovesAllFormatting() {
+        String input = "&a&lBold <123456>Text&n";
+        assertEquals("Bold Text", StringUtils.stripExtras(input));
+    }
+
+    @Test
+    public void stripHexColorsPreservesStyles() {
+        String input = "&a&lHello <123456>World</123456>";
+        assertEquals("&lHello World", StringUtils.stripHexColors(input));
+    }
+
+    @Test
+    public void stripStylesKeepsColours() {
+        String input = "&a&lBold&o Text";
+        assertEquals("&aBold Text", StringUtils.stripStyles(input));
+    }
+
+    @Test
+    public void containsFormattingCodesDetectsTokens() {
+        assertTrue(StringUtils.containsFormattingCodes("Plain &aColour"));
+        assertFalse(StringUtils.containsFormattingCodes("Plain text"));
     }
 }

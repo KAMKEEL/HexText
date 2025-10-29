@@ -42,4 +42,17 @@ public class ColorCodeUtilsTest {
     public void testCalculateShadowColor() {
         assertEquals(0x1E1E1E, ColorCodeUtils.calculateShadowColor(0x7A7A7A));
     }
+
+    @Test
+    public void testContainsFormattingCodes() {
+        assertTrue(ColorCodeUtils.containsFormattingCodes("Hello &aWorld"));
+        assertFalse(ColorCodeUtils.containsFormattingCodes("Plain text"));
+    }
+
+    @Test
+    public void testIndexOfNextFormattingCode() {
+        assertEquals(6, ColorCodeUtils.indexOfNextFormattingCode("Hello &aWorld", 0));
+        assertEquals(-1, ColorCodeUtils.indexOfNextFormattingCode("Plain", 0));
+        assertEquals(-1, ColorCodeUtils.indexOfNextFormattingCode("Hello &aWorld", 20));
+    }
 }
