@@ -216,27 +216,31 @@ public abstract class MixinFontRenderer {
     @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;renderDefaultChar(IZ)F"))
     private float hextext$renderDefaultChar(FontRenderer fontRenderer, int character, boolean italic,
             int glyphIndex, char glyph, boolean italicFlag) {
-        return hextext$renderGlyphWithEffects(() -> hextext$invokeRenderDefaultChar(character, italic), glyph);
+        return hextext$renderGlyphWithEffects(glyph, italic, false, character, glyph);
     }
 
     @SuppressWarnings("unused")
     @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;renderUnicodeChar(CZ)F"))
     private float hextext$renderUnicodeChar(FontRenderer fontRenderer, char character, boolean italic,
             int glyphIndex, char glyph, boolean italicFlag) {
-        return hextext$renderGlyphWithEffects(() -> hextext$invokeRenderUnicodeChar(character, italic), glyph);
+        return hextext$renderGlyphWithEffects(glyph, italic, true, 0, character);
     }
 
     @Unique
-    private float hextext$renderGlyphWithEffects(GlyphRenderer renderer, char glyph) {
+    private float hextext$renderGlyphWithEffects(char glyph, boolean italic, boolean unicode, int defaultIndex, char unicodeChar) {
         if (hextext$effects != null && hextext$effects.hasActiveEffects()) {
             int targetColor = hextext$effects.computeColor(hextext$currentGlyphIndex);
             hextext$applyRgbColor(targetColor, hextext$renderingShadow);
             hextext$effects.beforeGlyph((FontRenderer) (Object) this, glyph, hextext$currentGlyphIndex, this.posX, this.posY, this.FONT_HEIGHT);
-            float width = renderer.render();
+            float width = unicode
+                ? hextext$invokeRenderUnicodeChar(unicodeChar, italic)
+                : hextext$invokeRenderDefaultChar(defaultIndex, italic);
             hextext$effects.afterGlyph();
             return width;
         }
-        return renderer.render();
+        return unicode
+            ? hextext$invokeRenderUnicodeChar(unicodeChar, italic)
+            : hextext$invokeRenderDefaultChar(defaultIndex, italic);
     }
 
     @Unique
