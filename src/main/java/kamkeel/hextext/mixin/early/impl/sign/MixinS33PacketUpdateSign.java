@@ -5,19 +5,19 @@ import kamkeel.hextext.common.sign.SignSyncPacket;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.server.S33PacketUpdateSign;
-
-import java.io.IOException;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.io.IOException;
+
 @Mixin(S33PacketUpdateSign.class)
 public abstract class MixinS33PacketUpdateSign extends Packet implements SignSyncPacket {
 
     @Unique
-    private String[] hextext$backLines = new String[] {"", "", "", ""};
+    private String[] hextext$backLines = new String[]{"", "", "", ""};
 
     @Unique
     private boolean hextext$glowFront;
@@ -70,7 +70,7 @@ public abstract class MixinS33PacketUpdateSign extends Packet implements SignSyn
     @Override
     public void setBackText(String[] lines) {
         if (lines == null) {
-            hextext$backLines = new String[] {"", "", "", ""};
+            hextext$backLines = new String[]{"", "", "", ""};
         } else {
             hextext$backLines = lines.clone();
         }

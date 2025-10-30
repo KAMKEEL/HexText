@@ -1,7 +1,7 @@
 package kamkeel.hextext.mixin.early.impl.client.sign;
 
-import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.sign.IHexTextSign;
+import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.sign.SignSyncPacket;
 import kamkeel.hextext.common.util.SignTextHelper;
 import net.minecraft.client.Minecraft;
@@ -33,11 +33,8 @@ public abstract class MixinNetHandlerPlayClient {
         IHexTextSign state = (IHexTextSign) sign;
         SignSyncPacket sync = (SignSyncPacket) packet;
 
-        String[] backLines = sync.getBackText();
-        String[] dest = state.getLines(SignSide.BACK);
-        for (int i = 0; i < dest.length && i < backLines.length; i++) {
-            dest[i] = SignTextHelper.clampToVisibleLimit(backLines[i]);
-        }
+        // copy back lines safely
+        SignTextHelper.copyTextClamped(sync.getBackText(), state.getLines(SignSide.BACK));
 
         state.setGlowing(SignSide.FRONT, sync.isGlowing(SignSide.FRONT));
         state.setGlowing(SignSide.BACK, sync.isGlowing(SignSide.BACK));

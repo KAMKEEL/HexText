@@ -1,24 +1,24 @@
 package kamkeel.hextext.mixin.early.impl.client.sign;
 
 import kamkeel.hextext.client.render.font.GlowingTextRenderer;
-import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.sign.IHexTextSign;
+import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.util.StringUtils;
 import net.minecraft.block.Block;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.model.ModelSign;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.tileentity.TileEntitySignRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.client.model.ModelSign;
 import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntitySign;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -27,10 +27,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRenderer {
 
     @Final
-    @Shadow private static ResourceLocation field_147513_b;
+    @Shadow
+    private static ResourceLocation field_147513_b;
 
     @Final
-    @Shadow private ModelSign field_147514_c;
+    @Shadow
+    private ModelSign field_147514_c;
 
     @Inject(method = "renderTileEntityAt(Lnet/minecraft/tileentity/TileEntitySign;DDDF)V", at = @At("HEAD"), cancellable = true)
     private void hextext$renderSign(TileEntitySign sign, double x, double y, double z, float partialTicks, CallbackInfo ci) {
@@ -121,7 +123,7 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         for (int i = 0; i < lines.length; ++i) {
             String line = lines[i];
             if (i == sign.lineBeingEdited) {
-                line = StringUtils.SECTION_SIGN +  "r> " + line + " " + StringUtils.SECTION_SIGN + "r<";
+                line = StringUtils.SECTION_SIGN + "r> " + line + " " + StringUtils.SECTION_SIGN + "r<";
             }
             fontRenderer.drawString(line, -fontRenderer.getStringWidth(line) / 2, i * 10 + baseY, 0);
         }

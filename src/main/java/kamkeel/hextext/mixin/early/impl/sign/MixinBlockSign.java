@@ -3,9 +3,9 @@ package kamkeel.hextext.mixin.early.impl.sign;
 import kamkeel.hextext.HexText;
 import kamkeel.hextext.api.sign.HexTextSignInteractions;
 import kamkeel.hextext.api.sign.SignInteractionType;
+import kamkeel.hextext.common.sign.IHexTextSign;
 import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.sign.SignSideHelper;
-import kamkeel.hextext.common.sign.IHexTextSign;
 import kamkeel.hextext.common.util.ItemHelper;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.BlockSign;
@@ -16,7 +16,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntitySign;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 
 import java.util.Set;
 
@@ -29,8 +28,7 @@ public abstract class MixinBlockSign extends BlockContainer {
         super(p_i45386_1_);
     }
 
-    public boolean onBlockActivated(World worldIn, int x, int y, int z, EntityPlayer player, int side, float subX, float subY, float subZ)
-    {
+    public boolean onBlockActivated(World worldIn, int x, int y, int z, EntityPlayer player, int side, float subX, float subY, float subZ) {
         if (player == null || player.isSneaking()) {
             return false;
         }

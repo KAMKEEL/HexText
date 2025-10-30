@@ -20,20 +20,34 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 @Mixin(FontRenderer.class)
 public abstract class MixinFontRenderer implements FontRendererBridge {
 
-    @Shadow private boolean randomStyle;
-    @Shadow private boolean boldStyle;
-    @Shadow private boolean strikethroughStyle;
-    @Shadow private boolean underlineStyle;
-    @Shadow private boolean italicStyle;
-    @Shadow private int textColor;
-    @Shadow private float alpha;
-    @Shadow private float red;
-    @Shadow private float blue;
-    @Shadow private float green;
-    @Shadow protected float posX;
-    @Shadow protected float posY;
-    @Shadow public int FONT_HEIGHT;
-    @Shadow private int[] colorCode;
+    @Shadow
+    private boolean randomStyle;
+    @Shadow
+    private boolean boldStyle;
+    @Shadow
+    private boolean strikethroughStyle;
+    @Shadow
+    private boolean underlineStyle;
+    @Shadow
+    private boolean italicStyle;
+    @Shadow
+    private int textColor;
+    @Shadow
+    private float alpha;
+    @Shadow
+    private float red;
+    @Shadow
+    private float blue;
+    @Shadow
+    private float green;
+    @Shadow
+    protected float posX;
+    @Shadow
+    protected float posY;
+    @Shadow
+    public int FONT_HEIGHT;
+    @Shadow
+    private int[] colorCode;
 
     @Shadow
     protected abstract void setColor(float r, float g, float b, float a);
@@ -62,7 +76,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
 
     @Inject(method = "renderString", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;setColor(FFFF)V", shift = At.Shift.AFTER), locals = LocalCapture.CAPTURE_FAILHARD)
     private void hextext$capturePreparedColor(String text, int x, int y, int color, boolean dropShadow,
-            CallbackInfoReturnable<Integer> cir) {
+                                              CallbackInfoReturnable<Integer> cir) {
         hextext$pipeline.capturePreparedColor(color);
     }
 
@@ -114,13 +128,13 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
 
     @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;renderDefaultChar(IZ)F"))
     private float hextext$renderDefaultChar(FontRenderer fontRenderer, int character, boolean italic,
-            int glyphIndex, char glyph, boolean italicFlag) {
+                                            int glyphIndex, char glyph, boolean italicFlag) {
         return hextext$pipeline.renderGlyph(glyph, italic, false, character, glyph, hextext$glyphRenderer);
     }
 
     @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;renderUnicodeChar(CZ)F"))
     private float hextext$renderUnicodeChar(FontRenderer fontRenderer, char character, boolean italic,
-            int glyphIndex, char glyph, boolean italicFlag) {
+                                            int glyphIndex, char glyph, boolean italicFlag) {
         return hextext$pipeline.renderGlyph(glyph, italic, true, 0, character, hextext$glyphRenderer);
     }
 

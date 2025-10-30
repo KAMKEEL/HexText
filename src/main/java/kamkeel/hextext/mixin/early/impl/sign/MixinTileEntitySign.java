@@ -1,12 +1,12 @@
 package kamkeel.hextext.mixin.early.impl.sign;
 
-import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.sign.IHexTextSign;
+import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.sign.SignSyncPacket;
 import kamkeel.hextext.common.util.SignTextHelper;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.S33PacketUpdateSign;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntitySign;
 import org.spongepowered.asm.mixin.Mixin;
@@ -38,9 +38,10 @@ public abstract class MixinTileEntitySign extends TileEntity implements IHexText
     private boolean[] outlineStates = new boolean[SignSide.values().length];
 
     @Unique
-    private String[] backSignText = new String[] {"", "", "", ""};
+    private String[] backSignText = new String[]{"", "", "", ""};
 
-    @Unique SignSide editSide = SignSide.FRONT;
+    @Unique
+    SignSide editSide = SignSide.FRONT;
 
     @Inject(method = "readFromNBT", at = @At("RETURN"))
     private void hextext$clampLoadedLines(NBTTagCompound compound, CallbackInfo ci) {
@@ -128,13 +129,13 @@ public abstract class MixinTileEntitySign extends TileEntity implements IHexText
 
     @Override
     @Unique
-    public void setEditSide(SignSide side){
+    public void setEditSide(SignSide side) {
         this.editSide = side;
     }
 
     @Override
     @Unique
-    public SignSide getEditSide(){
+    public SignSide getEditSide() {
         return this.editSide;
     }
 

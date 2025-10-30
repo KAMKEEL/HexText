@@ -1,7 +1,6 @@
 package kamkeel.hextext.mixin.early.impl.sign;
 
 import kamkeel.hextext.common.sign.SignSide;
-import kamkeel.hextext.common.sign.SignSyncPacket;
 import kamkeel.hextext.common.sign.SignUpdatePacket;
 import kamkeel.hextext.common.util.SignTextHelper;
 import net.minecraft.network.Packet;
@@ -15,6 +14,8 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.io.IOException;
 
 @Mixin(C12PacketUpdateSign.class)
 public abstract class MixinC12PacketUpdateSign extends Packet implements SignUpdatePacket {
@@ -54,16 +55,33 @@ public abstract class MixinC12PacketUpdateSign extends Packet implements SignUpd
         this.field_149592_c = data.readInt();
         this.field_149590_d = new String[4];
 
-        for (int i = 0; i < 4; ++i)
-        {
-            field_149590_d[i] = SignTextHelper.clampToVisibleLimit(field_149590_d[i]);
+        for (int i = 0; i < 4; ++i) {
+            try {
+                String raw = data.readStringFromBuffer(SignTextHelper.SIGN_LINE_VISIBLE_LIMIT * 2);
+                this.field_149590_d[i] = SignTextHelper.clampToVisibleLimit(raw);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
 
-        this.side = SignSide.fromBoolean(data.readByte() == 0);
+        int b;
+        try {
+            b = data.readByte();              // we wrote ordinal()
+        } catch (IndexOutOfBoundsException e) {
+            b = 0;                            // compatibility: default FRONT if byte absent
+        }
+        this.side = (b == SignSide.BACK.ordinal()) ? SignSide.BACK : SignSide.FRONT;
+
         ci.cancel();
     }
 
-    public void setSide(SignSide side){
+    @Override
+    public void setSide(SignSide side) {
         this.side = side;
+    }
+
+    @Override
+    public SignSide getSide() {
+        return this.side;
     }
 }

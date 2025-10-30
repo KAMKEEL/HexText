@@ -76,7 +76,32 @@ public final class SignTextHelper {
         return builder.toString();
     }
 
-    public void copyText(String[] in, String[] out, int srcPos, int desPos, int length){
-        System.arraycopy(in, srcPos, out, desPos, length);
+    /** Raw copy, no transform. Handles nulls/short arrays. */
+    public static void copyText(String[] src, String[] dst) {
+        if (dst == null) return;
+        for (int i = 0; i < 4; i++) {
+            String s = (src != null && i < src.length) ? src[i] : "";
+            dst[i] = (s == null) ? "" : s;
+        }
+    }
+
+    /** Copy + clamp to visible limit. */
+    public static void copyTextClamped(String[] src, String[] dst) {
+        if (dst == null) return;
+        for (int i = 0; i < 4; i++) {
+            String s = (src != null && i < src.length) ? src[i] : "";
+            dst[i] = clampToVisibleLimit(s == null ? "" : s);
+        }
+    }
+
+    /** Server-side: sanitize + clamp. */
+    public static void copyTextSanitizedClamped(String[] src, String[] dst) {
+        if (dst == null) return;
+        for (int i = 0; i < 4; i++) {
+            String s = (src != null && i < src.length) ? src[i] : "";
+            if (s == null) s = "";
+            s = net.minecraft.util.ChatAllowedCharacters.filerAllowedCharacters(s);
+            dst[i] = clampToVisibleLimit(s);
+        }
     }
 }
