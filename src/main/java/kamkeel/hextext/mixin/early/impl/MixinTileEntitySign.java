@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(TileEntitySign.class)
 public abstract class MixinTileEntitySign extends TileEntity implements SignState {
@@ -173,6 +174,22 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     @Unique
     public String[] hextext$getLines(SignSide side) {
         return side == SignSide.FRONT ? signText : hextext$backSignText;
+    }
+
+    @Inject(method = "getDescriptionPacket", at = @At("RETURN"))
+    private void hextext$appendCustomSyncData(CallbackInfoReturnable<Packet> cir) {
+        Packet packet = cir.getReturnValue();
+        if (!(packet instanceof S33PacketUpdateSign)) {
+            return;
+        }
+
+        SignSyncPacket sync = (SignSyncPacket) packet;
+        sync.hextext$setBackText(hextext$backSignText);
+        sync.hextext$setGlowing(SignSide.FRONT, hextext$glowStates[SignSide.FRONT.ordinal()]);
+        sync.hextext$setGlowing(SignSide.BACK, hextext$glowStates[SignSide.BACK.ordinal()]);
+        sync.hextext$setOutlined(SignSide.FRONT, hextext$outlineStates[SignSide.FRONT.ordinal()]);
+        sync.hextext$setOutlined(SignSide.BACK, hextext$outlineStates[SignSide.BACK.ordinal()]);
+        sync.hextext$setWaxed(hextext$isWaxed);
     }
 
     @Unique
