@@ -12,8 +12,8 @@ public class SignSideHelperTest {
     public void determinesFrontForStandingSignUsingHitCoordinates() {
         TestSign sign = new TestSign(Blocks.standing_sign, 0, 10, 10);
 
-        SignSide frontHit = SignSideHelper.determineSide(sign, 10.5D, 12.0D, 0.0F, 0.5F, 0.9F);
-        SignSide backHit = SignSideHelper.determineSide(sign, 10.5D, 12.0D, 0.0F, 0.5F, 0.1F);
+        SignSide frontHit = SignSideHelper.determineSide(sign, 10.5D, 12.0D, 0.5F, 0.9F);
+        SignSide backHit = SignSideHelper.determineSide(sign, 10.5D, 12.0D, 0.5F, 0.1F);
 
         Assert.assertNotEquals(frontHit, backHit);
     }
@@ -22,8 +22,8 @@ public class SignSideHelperTest {
     public void fallsBackToPlayerPositionWhenHitIsCentered() {
         TestSign sign = new TestSign(Blocks.standing_sign, 8, 5, 5);
 
-        SignSide fromSouth = SignSideHelper.determineSide(sign, 4.0D, 4.0D, 180.0F, 0.5F, 0.5F);
-        SignSide fromNorth = SignSideHelper.determineSide(sign, 6.0D, 6.0D, 0.0F, 0.5F, 0.5F);
+        SignSide fromSouth = SignSideHelper.determineSide(sign, 4.0D, 4.0D, 0.5F, 0.5F);
+        SignSide fromNorth = SignSideHelper.determineSide(sign, 6.0D, 6.0D, 0.5F, 0.5F);
 
         Assert.assertNotEquals(fromSouth, fromNorth);
     }
@@ -32,20 +32,10 @@ public class SignSideHelperTest {
     public void wallSignsContinueToUsePlayerPosition() {
         TestSign sign = new TestSign(Blocks.wall_sign, 2, 3, 3);
 
-        SignSide wallFront = SignSideHelper.determineSide(sign, 3.5D, 1.0D, 0.0F, 0.5F, 0.5F);
-        SignSide wallBack = SignSideHelper.determineSide(sign, 3.5D, 5.0D, 180.0F, 0.5F, 0.5F);
+        SignSide wallFront = SignSideHelper.determineSide(sign, 3.5D, 1.0D, 0.5F, 0.5F);
+        SignSide wallBack = SignSideHelper.determineSide(sign, 3.5D, 5.0D, 0.5F, 0.5F);
 
         Assert.assertNotEquals(wallFront, wallBack);
-    }
-
-    @Test
-    public void usesPlayerFacingWhenStandingInsideSign() {
-        TestSign sign = new TestSign(Blocks.standing_sign, 4, 5, 5);
-
-        SignSide facingFront = SignSideHelper.determineSide(sign, 5.5D, 5.5D, 90.0F, 0.5F, 0.5F);
-        SignSide facingBack = SignSideHelper.determineSide(sign, 5.5D, 5.5D, -90.0F, 0.5F, 0.5F);
-
-        Assert.assertNotEquals(facingFront, facingBack);
     }
 
     private static final class TestSign extends TileEntitySign {
