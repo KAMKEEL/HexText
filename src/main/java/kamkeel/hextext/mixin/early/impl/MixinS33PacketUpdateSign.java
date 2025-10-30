@@ -17,10 +17,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(S33PacketUpdateSign.class)
 public abstract class MixinS33PacketUpdateSign extends Packet implements SignSyncPacket {
 
-    @Shadow private int field_149352_a;
-    @Shadow private int field_149350_b;
-    @Shadow private int field_149351_c;
-
     @Unique
     private String[] hextext$backLines = new String[] {"", "", "", ""};
 

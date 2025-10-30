@@ -130,91 +130,109 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
     }
 
     @Override
+    @Unique
     public FontRenderer getFontRenderer() {
         return (FontRenderer) (Object) this;
     }
 
     @Override
+    @Unique
     public void setRandomStyle(boolean enabled) {
         this.randomStyle = enabled;
     }
 
     @Override
+    @Unique
     public void setBoldStyle(boolean enabled) {
         this.boldStyle = enabled;
     }
 
     @Override
+    @Unique
     public void setStrikethroughStyle(boolean enabled) {
         this.strikethroughStyle = enabled;
     }
 
     @Override
+    @Unique
     public void setUnderlineStyle(boolean enabled) {
         this.underlineStyle = enabled;
     }
 
     @Override
+    @Unique
     public void setItalicStyle(boolean enabled) {
         this.italicStyle = enabled;
     }
 
     @Override
+    @Unique
     public void setTextColor(int color) {
         this.textColor = color;
     }
 
     @Override
+    @Unique
     public int getTextColor() {
         return this.textColor;
     }
 
     @Override
+    @Unique
     public float getAlpha() {
         return this.alpha;
     }
 
     @Override
+    @Unique
     public float getRedComponent() {
         return this.red;
     }
 
     @Override
+    @Unique
     public float getBlueComponent() {
         return this.blue;
     }
 
     @Override
+    @Unique
     public float getGreenComponent() {
         return this.green;
     }
 
     @Override
+    @Unique
     public int[] getColorCodePalette() {
         return this.colorCode;
     }
 
     @Override
+    @Unique
     public float getPosX() {
         return this.posX;
     }
 
     @Override
+    @Unique
     public float getPosY() {
         return this.posY;
     }
 
     @Override
+    @Unique
     public int getFontHeight() {
         return this.FONT_HEIGHT;
     }
 
     @Override
+    @Unique
     public void applyColorComponents(float r, float g, float b, float a) {
         setColor(r, g, b, a);
     }
 
     @Override
+    @Unique
     public void resetFormattingStyles() {
         this.randomStyle = false;
         this.boldStyle = false;

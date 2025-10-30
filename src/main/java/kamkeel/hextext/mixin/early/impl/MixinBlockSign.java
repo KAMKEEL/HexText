@@ -30,7 +30,6 @@ public abstract class MixinBlockSign extends BlockContainer {
         super(p_i45386_1_);
     }
 
-    @Unique
     public boolean onBlockActivated(World worldIn, int x, int y, int z, EntityPlayer player, int side, float subX, float subY, float subZ)
     {
         if (player == null || player.isSneaking()) {

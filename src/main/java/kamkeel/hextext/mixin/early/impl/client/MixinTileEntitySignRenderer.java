@@ -12,6 +12,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntitySign;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.Shadow;
@@ -22,7 +23,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(TileEntitySignRenderer.class)
 public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRenderer {
 
+    @Final
     @Shadow private static ResourceLocation field_147513_b;
+
+    @Final
     @Shadow private ModelSign field_147514_c;
 
     @Inject(method = "renderTileEntityAt(Lnet/minecraft/tileentity/TileEntitySign;DDDF)V", at = @At("HEAD"), cancellable = true)

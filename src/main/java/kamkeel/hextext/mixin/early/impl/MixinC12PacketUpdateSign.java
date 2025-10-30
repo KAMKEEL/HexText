@@ -58,11 +58,13 @@ public abstract class MixinC12PacketUpdateSign extends Packet implements SignUpd
     }
 
     @Override
+    @Unique
     public void hextext$setEditingSide(SignSide side) {
         this.hextext$editingSide = side == null ? SignSide.FRONT : side;
     }
 
     @Override
+    @Unique
     public SignSide hextext$getEditingSide() {
         return hextext$editingSide;
     }

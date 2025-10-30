@@ -9,7 +9,6 @@ import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.network.play.server.S33PacketUpdateSign;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntitySign;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,7 +18,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(NetHandlerPlayClient.class)
 public abstract class MixinNetHandlerPlayClient {
 
-    @Shadow @Final private Minecraft gameController;
+    @Shadow
+    private Minecraft gameController;
 
     @Inject(method = "handleUpdateSign", at = @At("TAIL"))
     private void hextext$applySyncData(S33PacketUpdateSign packet, CallbackInfo ci) {

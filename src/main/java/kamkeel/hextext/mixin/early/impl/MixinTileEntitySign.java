@@ -78,16 +78,19 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     }
 
     @Override
+    @Unique
     public SignSide hextext$getEditingSide() {
         return hextext$editingSide;
     }
 
     @Override
+    @Unique
     public void hextext$setEditingSide(SignSide side) {
         this.hextext$editingSide = side == null ? SignSide.FRONT : side;
     }
 
     @Override
+    @Unique
     public void hextext$prepareForEdit(SignSide side) {
         hextext$editingSide = side;
         if (side == SignSide.BACK) {
@@ -99,6 +102,7 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     }
 
     @Override
+    @Unique
     public void hextext$finishEdit() {
         if (hextext$editingSide == SignSide.BACK) {
             hextext$clampLines(signText);
@@ -115,11 +119,13 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     }
 
     @Override
+    @Unique
     public boolean hextext$isWaxed() {
         return hextext$isWaxed;
     }
 
     @Override
+    @Unique
     public void hextext$setWaxed(boolean waxed) {
         if (hextext$isWaxed != waxed) {
             hextext$isWaxed = waxed;
@@ -128,11 +134,13 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     }
 
     @Override
+    @Unique
     public boolean hextext$isGlowing(SignSide side) {
         return hextext$glowStates[side.ordinal()];
     }
 
     @Override
+    @Unique
     public boolean hextext$setGlowing(SignSide side, boolean glowing) {
         int index = side.ordinal();
         boolean changed = hextext$glowStates[index] != glowing;
@@ -144,11 +152,13 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     }
 
     @Override
+    @Unique
     public boolean hextext$isOutlined(SignSide side) {
         return hextext$outlineStates[side.ordinal()];
     }
 
     @Override
+    @Unique
     public boolean hextext$setOutlined(SignSide side, boolean outlined) {
         int index = side.ordinal();
         boolean changed = hextext$outlineStates[index] != outlined;
@@ -160,23 +170,9 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     }
 
     @Override
+    @Unique
     public String[] hextext$getLines(SignSide side) {
         return side == SignSide.FRONT ? signText : hextext$backSignText;
-    }
-
-    @Override
-    public Packet getDescriptionPacket() {
-        String[] copy = new String[signText.length];
-        System.arraycopy(signText, 0, copy, 0, signText.length);
-        S33PacketUpdateSign packet = new S33PacketUpdateSign(xCoord, yCoord, zCoord, copy);
-        SignSyncPacket syncPacket = (SignSyncPacket) packet;
-        syncPacket.hextext$setBackText(hextext$backSignText.clone());
-        for (SignSide side : SignSide.values()) {
-            syncPacket.hextext$setGlowing(side, hextext$glowStates[side.ordinal()]);
-            syncPacket.hextext$setOutlined(side, hextext$outlineStates[side.ordinal()]);
-        }
-        syncPacket.hextext$setWaxed(hextext$isWaxed);
-        return packet;
     }
 
     @Unique
