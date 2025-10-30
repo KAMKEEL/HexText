@@ -24,6 +24,9 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     private boolean hextext$isWaxed = false;
 
     @Shadow
+    public abstract void setEditable(boolean p_145913_1_);
+
+    @Shadow
     public String[] signText;
 
     @Unique
@@ -57,6 +60,9 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
             }
         }
         hextext$clampLines(hextext$backSignText);
+
+        // Allows Client to Edit Sign
+        setEditable(!hextext$isWaxed);
     }
 
     @Inject(method = "writeToNBT", at = @At("RETURN"))
