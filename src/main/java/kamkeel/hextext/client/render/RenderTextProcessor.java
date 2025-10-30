@@ -14,7 +14,8 @@ import java.util.Map;
  */
 public final class RenderTextProcessor {
 
-    private RenderTextProcessor() {}
+    private RenderTextProcessor() {
+    }
 
     public static RenderTextData prepare(String text, boolean rawMode) {
         if (text == null || text.isEmpty()) {
@@ -194,12 +195,12 @@ public final class RenderTextProcessor {
     }
 
     private static Map<Integer, List<RenderInstruction>> ensureInstructionMap(
-            Map<Integer, List<RenderInstruction>> instructions) {
+        Map<Integer, List<RenderInstruction>> instructions) {
         return instructions != null ? instructions : new HashMap<>();
     }
 
     private static Map<Integer, List<RenderInstruction>> normalizeInstructions(
-            Map<Integer, List<RenderInstruction>> instructions) {
+        Map<Integer, List<RenderInstruction>> instructions) {
         return (instructions == null || instructions.isEmpty()) ? null : instructions;
     }
 }

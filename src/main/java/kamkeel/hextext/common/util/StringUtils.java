@@ -11,7 +11,8 @@ public final class StringUtils {
 
     public static String SECTION_SIGN = "§";
 
-    private StringUtils() {}
+    private StringUtils() {
+    }
 
     public static String normalizeForRawDisplay(String text) {
         if (text == null || text.isEmpty()) {

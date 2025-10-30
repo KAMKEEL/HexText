@@ -30,7 +30,7 @@ public final class RenderInstruction {
     private final boolean resetFormatting;
 
     private RenderInstruction(Type type, int rgb, boolean clearStack, int parameter, boolean enabled,
-            boolean resetFormatting) {
+                              boolean resetFormatting) {
         this.type = type;
         this.rgb = rgb;
         this.clearStack = clearStack;

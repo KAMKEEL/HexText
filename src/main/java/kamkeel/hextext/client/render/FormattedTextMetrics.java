@@ -7,7 +7,8 @@ import kamkeel.hextext.common.util.ColorCodeUtils;
  */
 public final class FormattedTextMetrics {
 
-    private FormattedTextMetrics() {}
+    private FormattedTextMetrics() {
+    }
 
     @FunctionalInterface
     public interface CharWidthFunction {
@@ -15,7 +16,7 @@ public final class FormattedTextMetrics {
     }
 
     public static float calculateMaxLineWidth(CharSequence text, boolean rawMode,
-            CharWidthFunction charWidthFunc, float glyphSpacing, float boldExtra) {
+                                              CharWidthFunction charWidthFunc, float glyphSpacing, float boldExtra) {
         if (text == null || text.length() == 0) {
             return 0.0f;
         }
@@ -68,7 +69,7 @@ public final class FormattedTextMetrics {
     }
 
     public static int computeLineBreakIndex(CharSequence text, int maxWidth, boolean rawMode,
-            CharWidthFunction charWidthFunc, float glyphSpacing, float boldExtra) {
+                                            CharWidthFunction charWidthFunc, float glyphSpacing, float boldExtra) {
         if (text == null || text.length() == 0 || maxWidth <= 0) {
             return 0;
         }

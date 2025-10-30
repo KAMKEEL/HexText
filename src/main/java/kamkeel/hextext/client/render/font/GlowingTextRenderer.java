@@ -7,7 +7,7 @@ import kamkeel.hextext.common.util.ColorMath;
  */
 public final class GlowingTextRenderer {
 
-    private static final float[][] OUTLINE_OFFSETS = new float[][] {
+    private static final float[][] OUTLINE_OFFSETS = new float[][]{
         {-1.0f, 0.0f},
         {1.0f, 0.0f},
         {0.0f, -1.0f},

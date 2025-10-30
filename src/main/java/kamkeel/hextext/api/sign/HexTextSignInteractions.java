@@ -1,5 +1,10 @@
 package kamkeel.hextext.api.sign;
 
+import net.minecraft.init.Items;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.oredict.OreDictionary;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -7,11 +12,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.oredict.OreDictionary;
 
 /**
  * Public API for configuring the items that interact with HexText signs.
@@ -21,7 +21,9 @@ import net.minecraftforge.oredict.OreDictionary;
  */
 public final class HexTextSignInteractions {
 
-    /** Metadata value that matches every sub-type of the registered item. */
+    /**
+     * Metadata value that matches every sub-type of the registered item.
+     */
     public static final int ANY_META = OreDictionary.WILDCARD_VALUE;
 
     private static final Map<Item, List<InteractionEntry>> REGISTRY = new IdentityHashMap<>();
