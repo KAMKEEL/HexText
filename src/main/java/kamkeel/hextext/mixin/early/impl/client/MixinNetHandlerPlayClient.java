@@ -44,6 +44,8 @@ public abstract class MixinNetHandlerPlayClient {
         state.hextext$setOutlined(SignSide.FRONT, sync.hextext$isOutlined(SignSide.FRONT));
         state.hextext$setOutlined(SignSide.BACK, sync.hextext$isOutlined(SignSide.BACK));
         state.hextext$setWaxed(sync.hextext$isWaxed());
-        state.hextext$setEditingSide(SignSide.FRONT);
+        if (sign.lineBeingEdited < 0) {
+            state.hextext$setEditingSide(SignSide.FRONT);
+        }
     }
 }

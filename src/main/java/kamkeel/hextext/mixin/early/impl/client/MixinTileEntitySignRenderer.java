@@ -71,8 +71,8 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         FontRenderer fontRenderer = this.func_147498_b();
         SignState state = (SignState) sign;
 
-        renderTextForSide(sign, state, fontRenderer, SignSide.FRONT, scale, true);
-        renderTextForSide(sign, state, fontRenderer, SignSide.BACK, scale, false);
+        renderTextForSide(sign, state, fontRenderer, SignSide.FRONT, scale);
+        renderTextForSide(sign, state, fontRenderer, SignSide.BACK, scale);
 
         GL11.glPopMatrix();
         ci.cancel();
@@ -80,12 +80,12 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
 
     @Unique
     private void renderTextForSide(TileEntitySign sign, SignState state, FontRenderer fontRenderer,
-            SignSide side, float scale, boolean front) {
+            SignSide side, float scale) {
 
         GL11.glPushMatrix();
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-        GL11.glTranslatef(0.0F, 0.5F * scale, front ? 0.07F * scale : -0.07F * scale);
-        if (!front) {
+        GL11.glTranslatef(0.0F, 0.5F * scale, side == SignSide.FRONT ? 0.07F * scale : -0.07F * scale);
+        if (side == SignSide.BACK) {
             GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
         }
 
@@ -119,10 +119,9 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         GlowingTextRenderer.setOutlineEnabled(outlined);
         String[] lines = state.hextext$getLines(side);
         int baseY = -lines.length * 5;
-        SignSide editingSide = state.hextext$getEditingSide();
         for (int i = 0; i < lines.length; ++i) {
             String line = lines[i];
-            if (editingSide == side && i == sign.lineBeingEdited) {
+            if (i == sign.lineBeingEdited) {
                 line = StringUtils.SECTION_SIGN +  "r> " + line + " " + StringUtils.SECTION_SIGN + "r<";
             }
             fontRenderer.drawString(line, -fontRenderer.getStringWidth(line) / 2, i * 10 + baseY, 0);
