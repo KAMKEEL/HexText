@@ -10,7 +10,7 @@ public final class SignSideHelper {
     }
 
     public static SignSide determineSide(TileEntitySign sign, double playerX, double playerZ,
-            float hitX, float hitZ) {
+                                         float hitX, float hitZ) {
         double centerX = sign.xCoord + 0.5D;
         double centerZ = sign.zCoord + 0.5D;
 
@@ -60,15 +60,15 @@ public final class SignSideHelper {
     private static double[] computeWallFrontNormal(int metadata) {
         switch (metadata) {
             case 2:
-                return new double[] {0.0D, -1.0D};
+                return new double[]{0.0D, -1.0D};
             case 3:
-                return new double[] {0.0D, 1.0D};
+                return new double[]{0.0D, 1.0D};
             case 4:
-                return new double[] {-1.0D, 0.0D};
+                return new double[]{-1.0D, 0.0D};
             case 5:
-                return new double[] {1.0D, 0.0D};
+                return new double[]{1.0D, 0.0D};
             default:
-                return new double[] {0.0D, 1.0D};
+                return new double[]{0.0D, 1.0D};
         }
     }
 

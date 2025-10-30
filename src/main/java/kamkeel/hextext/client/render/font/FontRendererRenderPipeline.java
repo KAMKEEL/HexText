@@ -12,6 +12,7 @@ import kamkeel.hextext.client.render.TokenHighlightUtils;
 import kamkeel.hextext.common.util.ColorCodeUtils;
 import kamkeel.hextext.common.util.StringUtils;
 import org.lwjgl.opengl.GL11;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -160,7 +161,7 @@ public final class FontRendererRenderPipeline {
     }
 
     public float renderGlyph(char glyph, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
-            GlyphRenderer glyphRenderer) {
+                             GlyphRenderer glyphRenderer) {
         updateOutlineTracking();
         int baseColor = bridge.getTextColor();
         if (effects.hasActiveEffects()) {
@@ -181,7 +182,7 @@ public final class FontRendererRenderPipeline {
     }
 
     private float renderGlyphWithColor(int color, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
-            GlyphRenderer glyphRenderer) {
+                                       GlyphRenderer glyphRenderer) {
         if (!renderingShadow && GlowingTextRenderer.isOutlineEnabled()) {
             if (!outlineDrawnForCurrentGlyph) {
                 drawGlyphOutline(color, italic, unicode, defaultIndex, unicodeChar, glyphRenderer);
@@ -194,7 +195,7 @@ public final class FontRendererRenderPipeline {
     }
 
     private void drawGlyphOutline(int baseColor, boolean italic, boolean unicode, int defaultIndex,
-            char unicodeChar, GlyphRenderer glyphRenderer) {
+                                  char unicodeChar, GlyphRenderer glyphRenderer) {
         int outlineColor = resolveOutlineColor(baseColor);
         applyTemporaryColor(outlineColor);
         for (float[] offset : GlowingTextRenderer.getOutlineOffsets()) {
@@ -206,7 +207,7 @@ public final class FontRendererRenderPipeline {
     }
 
     private float renderGlyphInternal(boolean unicode, int defaultIndex, char unicodeChar, boolean italic,
-            GlyphRenderer glyphRenderer) {
+                                      GlyphRenderer glyphRenderer) {
         return unicode
             ? glyphRenderer.renderUnicode(unicodeChar, italic)
             : glyphRenderer.renderDefault(defaultIndex, italic);

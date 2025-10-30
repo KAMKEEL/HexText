@@ -7,7 +7,8 @@ public final class FontRenderContext {
 
     private static final ThreadLocal<Integer> RAW_TEXT_DEPTH = ThreadLocal.withInitial(() -> 0);
 
-    private FontRenderContext() {}
+    private FontRenderContext() {
+    }
 
     public static void pushRawTextRendering() {
         RAW_TEXT_DEPTH.set(RAW_TEXT_DEPTH.get() + 1);

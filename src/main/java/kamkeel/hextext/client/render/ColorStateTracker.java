@@ -48,7 +48,7 @@ public final class ColorStateTracker {
     }
 
     public int applyVanillaColor(int colorIndex, int[] palette, boolean clearStacks, TextEffectController effects,
-            boolean renderingShadow) {
+                                 boolean renderingShadow) {
         if (clearStacks) {
             wipeStacks();
         }

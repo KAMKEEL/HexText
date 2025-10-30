@@ -7,7 +7,8 @@ import kamkeel.hextext.HexText;
  */
 public final class ColorCodeUtils {
 
-    private ColorCodeUtils() {}
+    private ColorCodeUtils() {
+    }
 
     public static boolean isValidHexChar(char c) {
         return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
@@ -183,12 +184,36 @@ public final class ColorCodeUtils {
         float g;
         float b;
         switch (sector) {
-            case 0:  r = value; g = t;     b = p;     break;
-            case 1:  r = q;     g = value; b = p;     break;
-            case 2:  r = p;     g = value; b = t;     break;
-            case 3:  r = p;     g = q;     b = value; break;
-            case 4:  r = t;     g = p;     b = value; break;
-            default: r = value; g = p;     b = q;     break;
+            case 0:
+                r = value;
+                g = t;
+                b = p;
+                break;
+            case 1:
+                r = q;
+                g = value;
+                b = p;
+                break;
+            case 2:
+                r = p;
+                g = value;
+                b = t;
+                break;
+            case 3:
+                r = p;
+                g = q;
+                b = value;
+                break;
+            case 4:
+                r = t;
+                g = p;
+                b = value;
+                break;
+            default:
+                r = value;
+                g = p;
+                b = q;
+                break;
         }
 
         int red = (int) (r * 255);

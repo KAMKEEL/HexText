@@ -9,7 +9,8 @@ import net.minecraft.client.gui.FontRenderer;
  */
 public final class FontRendererUtils {
 
-    private FontRendererUtils() {}
+    private FontRendererUtils() {
+    }
 
     public static float getCharWidth(FontRenderer renderer, char chr, boolean rawMode) {
         if (chr == 167) {

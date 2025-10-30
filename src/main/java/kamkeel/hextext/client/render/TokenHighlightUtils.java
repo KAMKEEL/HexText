@@ -12,7 +12,8 @@ import java.util.List;
  */
 public final class TokenHighlightUtils {
 
-    private TokenHighlightUtils() {}
+    private TokenHighlightUtils() {
+    }
 
     public static float measureLiteralWidth(FontRenderer renderer, CharSequence text, int start, int length) {
         if (renderer == null || text == null || length <= 0 || start < 0 || start >= text.length()) {

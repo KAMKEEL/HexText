@@ -6,7 +6,8 @@ package kamkeel.hextext.common.util;
  */
 public final class SignTextHelper {
 
-    private SignTextHelper() {}
+    private SignTextHelper() {
+    }
 
     /**
      * Maximum number of rendered characters permitted on a single sign line.
@@ -76,7 +77,9 @@ public final class SignTextHelper {
         return builder.toString();
     }
 
-    /** Raw copy, no transform. Handles nulls/short arrays. */
+    /**
+     * Raw copy, no transform. Handles nulls/short arrays.
+     */
     public static void copyText(String[] src, String[] dst) {
         if (dst == null) return;
         for (int i = 0; i < 4; i++) {
@@ -85,7 +88,9 @@ public final class SignTextHelper {
         }
     }
 
-    /** Copy + clamp to visible limit. */
+    /**
+     * Copy + clamp to visible limit.
+     */
     public static void copyTextClamped(String[] src, String[] dst) {
         if (dst == null) return;
         for (int i = 0; i < 4; i++) {
@@ -94,7 +99,9 @@ public final class SignTextHelper {
         }
     }
 
-    /** Server-side: sanitize + clamp. */
+    /**
+     * Server-side: sanitize + clamp.
+     */
     public static void copyTextSanitizedClamped(String[] src, String[] dst) {
         if (dst == null) return;
         for (int i = 0; i < 4; i++) {
