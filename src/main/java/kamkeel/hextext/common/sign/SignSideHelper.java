@@ -11,26 +11,29 @@ public final class SignSideHelper {
     }
 
     public static SignSide determineSide(TileEntitySign sign, double playerX, double playerZ,
-            float hitX, float hitZ) {
+            float playerYaw, float hitX, float hitZ) {
         double centerX = sign.xCoord + 0.5D;
         double centerZ = sign.zCoord + 0.5D;
 
-        double[] normal = computeFrontNormal(sign.getBlockType(), sign.getBlockMetadata());
+        Block block = sign.getBlockType();
+        double[] normal = computeFrontNormal(block, sign.getBlockMetadata());
 
-        double vecX;
-        double vecZ;
+        if (block == Blocks.standing_sign) {
+            double hitVecX = hitX - 0.5D;
+            double hitVecZ = hitZ - 0.5D;
+            double hitDot = hitVecX * normal[0] + hitVecZ * normal[1];
 
-        if (sign.getBlockType() == Blocks.standing_sign) {
-            vecX = hitX - 0.5D;
-            vecZ = hitZ - 0.5D;
-
-            if (Math.abs(vecX) < 1.0E-6D && Math.abs(vecZ) < 1.0E-6D) {
-                vecX = playerX - centerX;
-                vecZ = playerZ - centerZ;
+            if (Math.abs(hitDot) > 1.0E-3D) {
+                return hitDot >= 0.0D ? SignSide.FRONT : SignSide.BACK;
             }
-        } else {
-            vecX = playerX - centerX;
-            vecZ = playerZ - centerZ;
+        }
+
+        double vecX = playerX - centerX;
+        double vecZ = playerZ - centerZ;
+
+        double magnitudeSq = vecX * vecX + vecZ * vecZ;
+        if (block == Blocks.standing_sign && magnitudeSq < 1.0E-4D) {
+            return determineFromFacing(normal, playerYaw);
         }
 
         if (vecX == 0.0D && vecZ == 0.0D) {
@@ -60,5 +63,11 @@ public final class SignSideHelper {
         float wrapped = MathHelper.wrapAngleTo180_float((float) (metadata * 360) / 16.0F);
         double radians = Math.toRadians(wrapped);
         return new double[] {MathHelper.sin((float) radians), MathHelper.cos((float) radians)};
+    }
+
+    private static SignSide determineFromFacing(double[] normal, float playerYaw) {
+        double frontYaw = Math.toDegrees(Math.atan2(normal[0], normal[1]));
+        float relative = MathHelper.wrapAngleTo180_float(playerYaw - (float) frontYaw);
+        return Math.abs(relative) <= 90.0F ? SignSide.FRONT : SignSide.BACK;
     }
 }

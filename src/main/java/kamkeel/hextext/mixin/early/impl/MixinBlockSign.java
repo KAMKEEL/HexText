@@ -49,7 +49,7 @@ public abstract class MixinBlockSign extends BlockContainer {
             return true;
         }
 
-        SignSide clickedSide = SignSideHelper.determineSide(sign, player.posX, player.posZ, subX, subZ);
+        SignSide clickedSide = SignSideHelper.determineSide(sign, player.posX, player.posZ, player.rotationYaw, subX, subZ);
         ItemStack stack = player.getCurrentEquippedItem();
 
         if (stack != null) {
