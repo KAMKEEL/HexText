@@ -175,6 +175,45 @@ public final class StringUtils {
     }
 
     /**
+     * Removes standard Minecraft-style colour codes (e.g. {@code &a}, {@code §c}) while leaving
+     * hex colour tokens and style/effect markers untouched.
+     */
+    public static String stripColors(CharSequence input) {
+        if (input == null) {
+            return null;
+        }
+
+        StringBuilder builder = null;
+        int index = 0;
+        while (index < input.length()) {
+            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index);
+            if (codeLen > 0) {
+                if (isStandardColorToken(input, index, codeLen)) {
+                    if (builder == null) {
+                        builder = new StringBuilder(input.length());
+                        builder.append(input, 0, index);
+                    }
+                    index += codeLen;
+                    continue;
+                }
+
+                if (builder != null) {
+                    builder.append(input, index, index + codeLen);
+                }
+                index += codeLen;
+                continue;
+            }
+
+            if (builder != null) {
+                builder.append(input.charAt(index));
+            }
+            index++;
+        }
+
+        return builder == null ? input.toString() : builder.toString();
+    }
+
+    /**
      * Removes style/effect formatting codes (bold, italic, rainbow etc.) while leaving colours
      * untouched.
      */
@@ -248,6 +287,18 @@ public final class StringUtils {
             if ((start == '&' && HexText.getActiveProxy().allowAmpersand()) || start == 167) {
                 char fmt = Character.toLowerCase(input.charAt(index + 1));
                 return ColorCodeUtils.isStyleCode(fmt) || ColorCodeUtils.isEffectCode(fmt);
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean isStandardColorToken(CharSequence input, int index, int codeLen) {
+        if (codeLen == 2) {
+            char start = input.charAt(index);
+            if ((start == '&' && HexText.getActiveProxy().allowAmpersand()) || start == 167) {
+                char fmt = Character.toLowerCase(input.charAt(index + 1));
+                return ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g';
             }
         }
 
