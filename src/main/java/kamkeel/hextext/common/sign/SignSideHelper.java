@@ -10,18 +10,33 @@ public final class SignSideHelper {
     private SignSideHelper() {
     }
 
-    public static SignSide determineSide(TileEntitySign sign, double playerX, double playerZ) {
+    public static SignSide determineSide(TileEntitySign sign, double playerX, double playerZ,
+            float hitX, float hitZ) {
         double centerX = sign.xCoord + 0.5D;
         double centerZ = sign.zCoord + 0.5D;
 
-        double vecX = playerX - centerX;
-        double vecZ = playerZ - centerZ;
+        double[] normal = computeFrontNormal(sign.getBlockType(), sign.getBlockMetadata());
+
+        double vecX;
+        double vecZ;
+
+        if (sign.getBlockType() == Blocks.standing_sign) {
+            vecX = hitX - 0.5D;
+            vecZ = hitZ - 0.5D;
+
+            if (Math.abs(vecX) < 1.0E-6D && Math.abs(vecZ) < 1.0E-6D) {
+                vecX = playerX - centerX;
+                vecZ = playerZ - centerZ;
+            }
+        } else {
+            vecX = playerX - centerX;
+            vecZ = playerZ - centerZ;
+        }
 
         if (vecX == 0.0D && vecZ == 0.0D) {
             return SignSide.FRONT;
         }
 
-        double[] normal = computeFrontNormal(sign.getBlockType(), sign.getBlockMetadata());
         double dot = vecX * normal[0] + vecZ * normal[1];
         return dot >= 0.0D ? SignSide.FRONT : SignSide.BACK;
     }
