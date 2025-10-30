@@ -1,5 +1,7 @@
 package kamkeel.hextext.mixin.early.impl;
 
+import kamkeel.hextext.api.sign.HexTextSignInteractions;
+import kamkeel.hextext.api.sign.SignInteractionType;
 import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.sign.SignSideHelper;
 import kamkeel.hextext.common.sign.SignState;
@@ -7,7 +9,6 @@ import net.minecraft.block.BlockContainer;
 import net.minecraft.block.BlockSign;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntitySign;
@@ -17,6 +18,9 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.Set;
+
 
 @Mixin(BlockSign.class)
 public abstract class MixinBlockSign extends BlockContainer {
@@ -49,30 +53,60 @@ public abstract class MixinBlockSign extends BlockContainer {
         ItemStack stack = player.getCurrentEquippedItem();
 
         if (stack != null) {
-            if (worldIn.isRemote) {
-                return true;
-            }
-
-            if (stack.getItem() == Items.glowstone_dust) {
-                if (signState.hextext$setGlowing(clickedSide, true)) {
-                    hextext$consumeItem(player, stack);
-                    worldIn.markBlockForUpdate(x, y, z);
+            Set<SignInteractionType> interactions = HexTextSignInteractions.getInteractions(stack);
+            if (!interactions.isEmpty()) {
+                if (worldIn.isRemote) {
+                    return true;
                 }
-                return true;
-            }
 
-            if (stack.getItem() == Items.dye && stack.getItemDamage() == 0) {
-                if (signState.hextext$setGlowing(clickedSide, false)) {
-                    hextext$consumeItem(player, stack);
-                    worldIn.markBlockForUpdate(x, y, z);
+                boolean consumed = false;
+                boolean updated = false;
+
+                if (interactions.contains(SignInteractionType.CLEANSE)) {
+                    boolean changed = false;
+                    changed |= signState.hextext$setGlowing(clickedSide, false);
+                    changed |= signState.hextext$setOutlined(clickedSide, false);
+                    if (changed) {
+                        updated = true;
+                        if (!consumed) {
+                            hextext$consumeItem(player, stack);
+                            consumed = true;
+                        }
+                    }
                 }
-                return true;
-            }
 
-            if (stack.getItem() == Items.slime_ball) {
-                if (!signState.hextext$isWaxed()) {
+                if (interactions.contains(SignInteractionType.WAX) && !signState.hextext$isWaxed()) {
                     signState.hextext$setWaxed(true);
-                    hextext$consumeItem(player, stack);
+                    updated = true;
+                    if (!consumed) {
+                        hextext$consumeItem(player, stack);
+                        consumed = true;
+                    }
+                }
+
+                if (interactions.contains(SignInteractionType.GLOW)) {
+                    boolean changed = signState.hextext$setGlowing(clickedSide, true);
+                    if (changed) {
+                        updated = true;
+                        if (!consumed) {
+                            hextext$consumeItem(player, stack);
+                            consumed = true;
+                        }
+                    }
+                }
+
+                if (interactions.contains(SignInteractionType.OUTLINE)) {
+                    boolean changed = signState.hextext$setOutlined(clickedSide, true);
+                    if (changed) {
+                        updated = true;
+                        if (!consumed) {
+                            hextext$consumeItem(player, stack);
+                            consumed = true;
+                        }
+                    }
+                }
+
+                if (updated) {
                     worldIn.markBlockForUpdate(x, y, z);
                 }
                 return true;

@@ -41,6 +41,8 @@ public abstract class MixinNetHandlerPlayClient {
 
         state.hextext$setGlowing(SignSide.FRONT, sync.hextext$isGlowing(SignSide.FRONT));
         state.hextext$setGlowing(SignSide.BACK, sync.hextext$isGlowing(SignSide.BACK));
+        state.hextext$setOutlined(SignSide.FRONT, sync.hextext$isOutlined(SignSide.FRONT));
+        state.hextext$setOutlined(SignSide.BACK, sync.hextext$isOutlined(SignSide.BACK));
         state.hextext$setWaxed(sync.hextext$isWaxed());
         state.hextext$setEditingSide(SignSide.FRONT);
     }

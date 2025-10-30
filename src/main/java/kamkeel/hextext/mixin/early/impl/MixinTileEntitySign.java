@@ -30,6 +30,9 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     private final boolean[] hextext$glowStates = new boolean[SignSide.values().length];
 
     @Unique
+    private final boolean[] hextext$outlineStates = new boolean[SignSide.values().length];
+
+    @Unique
     private final String[] hextext$backSignText = new String[] {"", "", "", ""};
 
     @Unique
@@ -46,6 +49,8 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
         hextext$isWaxed = compound.getBoolean("HexTextWaxed");
         hextext$glowStates[SignSide.FRONT.ordinal()] = compound.getBoolean("HexTextGlowFront");
         hextext$glowStates[SignSide.BACK.ordinal()] = compound.getBoolean("HexTextGlowBack");
+        hextext$outlineStates[SignSide.FRONT.ordinal()] = compound.getBoolean("HexTextOutlineFront");
+        hextext$outlineStates[SignSide.BACK.ordinal()] = compound.getBoolean("HexTextOutlineBack");
         if (compound.hasKey("HexTextBackText0")) {
             for (int i = 0; i < hextext$backSignText.length; i++) {
                 hextext$backSignText[i] = compound.getString("HexTextBackText" + i);
@@ -59,6 +64,8 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
         compound.setBoolean("HexTextWaxed", hextext$isWaxed);
         compound.setBoolean("HexTextGlowFront", hextext$glowStates[SignSide.FRONT.ordinal()]);
         compound.setBoolean("HexTextGlowBack", hextext$glowStates[SignSide.BACK.ordinal()]);
+        compound.setBoolean("HexTextOutlineFront", hextext$outlineStates[SignSide.FRONT.ordinal()]);
+        compound.setBoolean("HexTextOutlineBack", hextext$outlineStates[SignSide.BACK.ordinal()]);
         for (int i = 0; i < hextext$backSignText.length; i++) {
             compound.setString("HexTextBackText" + i, hextext$backSignText[i]);
         }
@@ -131,6 +138,22 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     }
 
     @Override
+    public boolean hextext$isOutlined(SignSide side) {
+        return hextext$outlineStates[side.ordinal()];
+    }
+
+    @Override
+    public boolean hextext$setOutlined(SignSide side, boolean outlined) {
+        int index = side.ordinal();
+        boolean changed = hextext$outlineStates[index] != outlined;
+        hextext$outlineStates[index] = outlined;
+        if (changed) {
+            markDirty();
+        }
+        return changed;
+    }
+
+    @Override
     public String[] hextext$getLines(SignSide side) {
         return side == SignSide.FRONT ? signText : hextext$backSignText;
     }
@@ -144,6 +167,7 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
         syncPacket.hextext$setBackText(hextext$backSignText.clone());
         for (SignSide side : SignSide.values()) {
             syncPacket.hextext$setGlowing(side, hextext$glowStates[side.ordinal()]);
+            syncPacket.hextext$setOutlined(side, hextext$outlineStates[side.ordinal()]);
         }
         syncPacket.hextext$setWaxed(hextext$isWaxed);
         return packet;

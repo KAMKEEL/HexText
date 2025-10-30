@@ -8,8 +8,9 @@ import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import kamkeel.hextext.config.HexTextConfig;
+import kamkeel.hextext.api.sign.HexTextSignInteractions;
 import kamkeel.hextext.client.config.HexTextConfigEventHandler;
+import kamkeel.hextext.config.HexTextConfig;
 
 public class CommonProxy {
     public static final Logger LOGGER = LogManager.getLogger(HexText.ID);
@@ -25,6 +26,7 @@ public class CommonProxy {
     public void preInit(FMLPreInitializationEvent ev) {
         HexTextConfig.init(ev.getSuggestedConfigurationFile());
         eventsInit();
+        HexTextSignInteractions.registerDefaults();
     }
 
     public void init(FMLInitializationEvent ev) {

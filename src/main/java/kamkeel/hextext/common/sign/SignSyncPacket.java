@@ -10,6 +10,10 @@ public interface SignSyncPacket {
 
     boolean hextext$isGlowing(SignSide side);
 
+    void hextext$setOutlined(SignSide side, boolean outlined);
+
+    boolean hextext$isOutlined(SignSide side);
+
     void hextext$setWaxed(boolean waxed);
 
     boolean hextext$isWaxed();
