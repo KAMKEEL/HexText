@@ -15,6 +15,18 @@ public interface SignState {
 
     void hextext$finishEdit();
 
+    /**
+     * Re-applies the currently active editing buffers so live text keeps rendering on the
+     * correct face even if vanilla logic mutates {@code TileEntitySign#signText} mid-session.
+     */
+    void hextext$refreshEditingView();
+
+    /**
+     * Replaces all lines on the requested side, clamping them to the visible width and updating
+     * any active editing buffer so UI state stays in sync.
+     */
+    void hextext$loadLines(SignSide side, String[] lines);
+
     boolean hextext$isWaxed();
 
     void hextext$setWaxed(boolean waxed);

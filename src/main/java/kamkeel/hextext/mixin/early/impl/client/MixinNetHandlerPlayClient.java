@@ -3,7 +3,6 @@ package kamkeel.hextext.mixin.early.impl.client;
 import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.sign.SignState;
 import kamkeel.hextext.common.sign.SignSyncPacket;
-import kamkeel.hextext.common.util.SignTextHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.network.play.server.S33PacketUpdateSign;
@@ -33,17 +32,13 @@ public abstract class MixinNetHandlerPlayClient {
         SignState state = (SignState) sign;
         SignSyncPacket sync = (SignSyncPacket) packet;
 
-        String[] backLines = sync.hextext$getBackText();
-        String[] dest = state.hextext$getLines(SignSide.BACK);
-        for (int i = 0; i < dest.length && i < backLines.length; i++) {
-            dest[i] = SignTextHelper.clampToVisibleLimit(backLines[i]);
-        }
+        state.hextext$loadLines(SignSide.BACK, sync.hextext$getBackText());
 
         state.hextext$setGlowing(SignSide.FRONT, sync.hextext$isGlowing(SignSide.FRONT));
         state.hextext$setGlowing(SignSide.BACK, sync.hextext$isGlowing(SignSide.BACK));
         state.hextext$setOutlined(SignSide.FRONT, sync.hextext$isOutlined(SignSide.FRONT));
         state.hextext$setOutlined(SignSide.BACK, sync.hextext$isOutlined(SignSide.BACK));
         state.hextext$setWaxed(sync.hextext$isWaxed());
-        state.hextext$setEditingSide(SignSide.FRONT);
+        state.hextext$refreshEditingView();
     }
 }
