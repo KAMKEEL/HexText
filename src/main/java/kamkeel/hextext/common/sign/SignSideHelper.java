@@ -44,6 +44,11 @@ public final class SignSideHelper {
 
         float wrapped = MathHelper.wrapAngleTo180_float((float) (metadata * 360) / 16.0F);
         double radians = Math.toRadians(wrapped);
-        return new double[] {MathHelper.sin((float) radians), MathHelper.cos((float) radians)};
+        float sin = MathHelper.sin((float) radians);
+        float cos = MathHelper.cos((float) radians);
+        // Standing signs rotate the model by -rotation degrees when rendering. The front of the
+        // sign therefore points opposite the positive rotation direction. Negating the sine
+        // component aligns the computed normal with the actual facing direction of the sign.
+        return new double[] {-sin, cos};
     }
 }
