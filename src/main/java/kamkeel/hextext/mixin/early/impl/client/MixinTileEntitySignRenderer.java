@@ -5,6 +5,9 @@ import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.sign.SignState;
 import net.minecraft.block.Block;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.renderer.tileentity.TileEntitySignRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.model.ModelSign;
@@ -12,6 +15,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntitySign;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -78,6 +82,7 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
     private void renderTextForSide(TileEntitySign sign, SignState state, FontRenderer fontRenderer,
             SignSide side, float scale, boolean front) {
         GL11.glPushMatrix();
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
         GL11.glTranslatef(0.0F, 0.5F * scale, front ? 0.07F * scale : -0.07F * scale);
         if (!front) {
             GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
@@ -90,12 +95,27 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
 
         boolean glowing = state.hextext$isGlowing(side);
         boolean outlined = state.hextext$isOutlined(side);
-        boolean lightingEnabled = GL11.glIsEnabled(GL11.GL_LIGHTING);
-        if (glowing && lightingEnabled) {
-            GL11.glDisable(GL11.GL_LIGHTING);
-        }
-        GlowingTextRenderer.setOutlineEnabled(glowing || outlined);
 
+        // Save current lightmap coords to restore later
+        int lxPacked = sign.getWorldObj().getLightBrightnessForSkyBlocks(sign.xCoord, sign.yCoord, sign.zCoord, 0);
+        float prevU = (lxPacked & 0xFFFF);
+        float prevV = (lxPacked >> 16);
+
+        // GUI-style blending + no fixed-function lighting
+        GL11.glEnable(GL11.GL_BLEND);
+        OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
+        GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glDepthMask(false);
+
+        if (glowing) {
+            OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0F, 240.0F);
+        } else {
+            OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, prevU, prevV);
+        }
+
+        if (glowing) RenderHelper.disableStandardItemLighting();
+
+        GlowingTextRenderer.setOutlineEnabled(outlined);
         String[] lines = state.hextext$getLines(side);
         int baseY = -lines.length * 5;
         SignSide editingSide = state.hextext$getEditingSide();
@@ -108,12 +128,14 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         }
 
         GlowingTextRenderer.setOutlineEnabled(false);
-        if (glowing && lightingEnabled) {
-            GL11.glEnable(GL11.GL_LIGHTING);
-        }
         GL11.glDepthMask(true);
+        if (glowing) {
+            OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, prevU, prevV);
+            RenderHelper.enableStandardItemLighting();
+        }
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         GL11.glPopMatrix();
+        GL11.glPopAttrib();
     }
 
 }
