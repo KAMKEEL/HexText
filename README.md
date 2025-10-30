@@ -7,8 +7,9 @@ available formatting tokens and how they interact so you can take full advantage
 ## Standard Minecraft formatting
 
 All of the vanilla `§` style formatting codes continue to work exactly as they do in base Minecraft.
-When using HexText you may prefer to write them with an ampersand for easier typing; HexText will
-normalise them for the game at render time. The supported codes are:
+When using HexText you may prefer to write them with an ampersand for easier typing; if the server
+permits ampersand formatting HexText will normalise them for the game at render time. The supported
+codes are:
 
 | Token        | Description                                     |
 | ------------ | ----------------------------------------------- |
@@ -28,15 +29,16 @@ HexText recognises two RGB-focused syntaxes that let you move beyond the vanilla
 
 ### Inline hex colours
 
-Use `&RRGGBB` to immediately switch to an exact RGB colour (for example `&ff8800`). The change takes
-effect from the character immediately following the code and clears any nested colour spans that were
-active before it.
+Use `&#RRGGBB` (or `§#RRGGBB`) to immediately switch to an exact RGB colour (for example
+`&#ff8800`). The change takes effect from the character immediately following the code and clears any
+nested colour spans that were active before it.
 
 ### Scoped hex spans
 
 Wrap a section of text in `<RRGGBB> ... </RRGGBB>` to apply a colour until the matching closing tag.
 These spans can be nested and work alongside inline hex codes. Closing a span restores the previous
 colour, making it easy to temporarily highlight text without permanently overwriting the stack.
+Servers can disable these HTML-style tags if they want to restrict formatting to inline codes.
 
 Both syntaxes accept upper- or lower-case hexadecimal digits.
 
@@ -66,3 +68,16 @@ code after the colour you want it to animate.
 
 With these tokens you can express complex gradients, highlight sections of text, or animate chat
 messages while remaining compatible with Minecraft's existing formatting system.
+
+## Server configuration
+
+HexText exposes several server-side toggles via the `server` category of its configuration file:
+
+* `enableRgbHtmlFormat` – when `true`, the `<RRGGBB>` and `</RRGGBB>` tags described above are parsed.
+  Set this to `false` to treat them as literal text.
+* `allowSignEditing` – controls whether players can right-click signs with an empty hand to open the
+  editor.
+* `allowAmpersandFormatting` – controls whether ampersands are accepted as an alternative to the
+  section sign for formatting codes and direct RGB colours.
+
+These options make it easy to tailor HexText's behaviour to a server's moderation or gameplay needs.

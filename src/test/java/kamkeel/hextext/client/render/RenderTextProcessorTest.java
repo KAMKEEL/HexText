@@ -1,6 +1,9 @@
 package kamkeel.hextext.client.render;
 
+import kamkeel.hextext.config.HexTextConfig;
+
 import org.junit.Test;
+import org.junit.Before;
 
 import java.util.List;
 import java.util.Map;
@@ -9,9 +12,16 @@ import static org.junit.Assert.*;
 
 public class RenderTextProcessorTest {
 
+    @Before
+    public void setUp() {
+        HexTextConfig.resetToDefaults();
+        HexTextConfig.setAllowAmpersand(true);
+        HexTextConfig.setEnableRgbHtmlFormat(true);
+    }
+
     @Test
     public void testNonRawHexProcessing() {
-        RenderTextData data = RenderTextProcessor.prepare("&FFAA11Hello", false);
+        RenderTextData data = RenderTextProcessor.prepare("&#FFAA11Hello", false);
         assertTrue(data.shouldReplaceText());
         assertEquals("Hello", data.getDisplayText());
         assertTrue(data.hasInstructions());
@@ -43,7 +53,7 @@ public class RenderTextProcessorTest {
 
     @Test
     public void testRawHexColor() {
-        RenderTextData data = RenderTextProcessor.prepare("&ABCDEFWorld", true);
+        RenderTextData data = RenderTextProcessor.prepare("&#ABCDEFWorld", true);
         assertFalse(data.shouldReplaceText());
         assertNull(data.getDisplayText());
         Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
@@ -52,6 +62,23 @@ public class RenderTextProcessorTest {
         RenderInstruction instruction = instructions.get(0).get(0);
         assertEquals(RenderInstruction.Type.APPLY_RGB, instruction.getType());
         assertEquals(0xABCDEF, instruction.getRgb());
+    }
+
+    @Test
+    public void testSectionSignHexProcessing() {
+        RenderTextData data = RenderTextProcessor.prepare("§#123456Hello", false);
+        assertTrue(data.shouldReplaceText());
+        assertEquals("Hello", data.getDisplayText());
+        assertTrue(data.hasInstructions());
+        Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
+        assertNotNull(instructions);
+        List<RenderInstruction> atZero = instructions.get(0);
+        assertNotNull(atZero);
+        assertFalse(atZero.isEmpty());
+        RenderInstruction instruction = atZero.get(0);
+        assertEquals(RenderInstruction.Type.APPLY_RGB, instruction.getType());
+        assertEquals(0x123456, instruction.getRgb());
+        assertTrue(instruction.shouldClearStack());
     }
 
     @Test
@@ -205,5 +232,27 @@ public class RenderTextProcessorTest {
             }
         }
         assertTrue("Expected shake instruction", sawShake);
+    }
+
+    @Test
+    public void testHtmlRgbDisabledTreatsTagsAsText() {
+        HexTextConfig.setEnableRgbHtmlFormat(false);
+        RenderTextData data = RenderTextProcessor.prepare("<123456>World", false);
+        assertFalse(data.hasInstructions());
+        assertFalse(data.shouldReplaceText());
+        assertNull(data.getDisplayText());
+    }
+
+    @Test
+    public void testAmpersandDisabledTreatsTokensAsText() {
+        HexTextConfig.setAllowAmpersand(false);
+        RenderTextData data = RenderTextProcessor.prepare("&aGreen", false);
+        assertFalse(data.hasInstructions());
+        assertFalse(data.shouldReplaceText());
+        assertNull(data.getDisplayText());
+        RenderTextData rgbData = RenderTextProcessor.prepare("&#FFAA11Text", false);
+        assertFalse(rgbData.hasInstructions());
+        assertFalse(rgbData.shouldReplaceText());
+        assertNull(rgbData.getDisplayText());
     }
 }

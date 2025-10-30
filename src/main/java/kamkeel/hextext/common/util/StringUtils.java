@@ -1,5 +1,7 @@
 package kamkeel.hextext.common.util;
 
+import kamkeel.hextext.config.HexTextConfig;
+
 import java.util.ArrayDeque;
 
 /**
@@ -58,7 +60,7 @@ public final class StringUtils {
                 char firstChar = str.charAt(i);
                 String code = str.substring(i, i + codeLen);
 
-                if (codeLen == 7 && firstChar == '&') {
+                if (codeLen == 8 && (firstChar == '&' || firstChar == 167)) {
                     currentColorCode = code;
                     colorStack.clear();
                     styleCodes.setLength(0);
@@ -220,19 +222,19 @@ public final class StringUtils {
 
     private static boolean isHexColorToken(CharSequence input, int index, int codeLen) {
         char start = input.charAt(index);
-        if (codeLen == 7 && start == '&') {
+        if (codeLen == 8 && (start == '&' || start == 167)) {
             return true;
         }
 
-        if (codeLen == 8 && start == '<') {
+        if (HexTextConfig.isRgbHtmlFormatEnabled() && codeLen == 8 && start == '<') {
             return true;
         }
 
-        if (codeLen == 9 && start == '<') {
+        if (HexTextConfig.isRgbHtmlFormatEnabled() && codeLen == 9 && start == '<') {
             return true;
         }
 
-        if (codeLen == 2 && (start == '&' || start == 167)) {
+        if (codeLen == 2 && ((start == '&' && HexTextConfig.isAmpersandAllowed()) || start == 167)) {
             char fmt = Character.toLowerCase(input.charAt(index + 1));
             return ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g';
         }
@@ -243,7 +245,7 @@ public final class StringUtils {
     private static boolean isStyleOrEffectToken(CharSequence input, int index, int codeLen) {
         if (codeLen == 2) {
             char start = input.charAt(index);
-            if (start == '&' || start == 167) {
+            if ((start == '&' && HexTextConfig.isAmpersandAllowed()) || start == 167) {
                 char fmt = Character.toLowerCase(input.charAt(index + 1));
                 return ColorCodeUtils.isStyleCode(fmt) || ColorCodeUtils.isEffectCode(fmt);
             }
