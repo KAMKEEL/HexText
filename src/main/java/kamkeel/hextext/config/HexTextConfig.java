@@ -13,8 +13,8 @@ public final class HexTextConfig {
     public static final String CATEGORY_SERVER = "server";
 
     private static final float DEFAULT_RAINBOW_SPEED = 3000.0f;
-    private static final int DEFAULT_SHAKE_INTERVAL = 100;
-    private static final int DEFAULT_IGNITE_INTERVAL = 100;
+    private static final int DEFAULT_SHAKE_INTERVAL = 50;
+    private static final int DEFAULT_IGNITE_INTERVAL = 700;
 
     private static final boolean DEFAULT_ENABLE_RGB_HTML_FORMAT = false;
     private static final boolean DEFAULT_ALLOW_SIGN_EDITING = true;

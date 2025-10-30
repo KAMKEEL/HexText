@@ -9,6 +9,8 @@ import java.util.ArrayDeque;
  */
 public final class StringUtils {
 
+    public static String SECTION_SIGN = "§";
+
     private StringUtils() {}
 
     public static String normalizeForRawDisplay(String text) {

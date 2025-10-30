@@ -3,11 +3,11 @@ package kamkeel.hextext.mixin.early.impl.client;
 import kamkeel.hextext.client.render.font.GlowingTextRenderer;
 import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.sign.SignState;
+import kamkeel.hextext.common.util.StringUtils;
 import net.minecraft.block.Block;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.renderer.tileentity.TileEntitySignRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.model.ModelSign;
@@ -81,6 +81,7 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
     @Unique
     private void renderTextForSide(TileEntitySign sign, SignState state, FontRenderer fontRenderer,
             SignSide side, float scale, boolean front) {
+
         GL11.glPushMatrix();
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
         GL11.glTranslatef(0.0F, 0.5F * scale, front ? 0.07F * scale : -0.07F * scale);
@@ -122,7 +123,7 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         for (int i = 0; i < lines.length; ++i) {
             String line = lines[i];
             if (editingSide == side && i == sign.lineBeingEdited) {
-                line = "> " + line + " <";
+                line = StringUtils.SECTION_SIGN +  "r> " + line + " " + StringUtils.SECTION_SIGN + "r<";
             }
             fontRenderer.drawString(line, -fontRenderer.getStringWidth(line) / 2, i * 10 + baseY, 0);
         }
