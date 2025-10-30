@@ -1,16 +1,40 @@
 package kamkeel.hextext.common.util;
 
+import kamkeel.hextext.config.HexTextConfig;
+
 import org.junit.Test;
+import org.junit.Before;
 
 import static org.junit.Assert.*;
 
 public class StringUtilsTest {
+
+    @Before
+    public void setUp() {
+        HexTextConfig.resetToDefaults();
+        HexTextConfig.setAllowAmpersand(true);
+        HexTextConfig.setEnableRgbHtmlFormat(true);
+    }
 
     @Test
     public void extractFormatKeepsLatestColour() {
         String input = "&a&lBold<123456>Still";
         String prefix = StringUtils.extractFormatFromString(input);
         assertEquals("<123456>", prefix);
+    }
+
+    @Test
+    public void extractFormatHandlesDirectRgbCode() {
+        String input = "&#112233Hello";
+        String prefix = StringUtils.extractFormatFromString(input);
+        assertEquals("&#112233", prefix);
+    }
+
+    @Test
+    public void extractFormatHandlesSectionSignRgbCode() {
+        String input = "§#445566Hello";
+        String prefix = StringUtils.extractFormatFromString(input);
+        assertEquals("§#445566", prefix);
     }
 
     @Test
@@ -63,6 +87,12 @@ public class StringUtilsTest {
     public void stripStylesKeepsColours() {
         String input = "&a&lBold&o Text";
         assertEquals("&aBold Text", StringUtils.stripStyles(input));
+    }
+
+    @Test
+    public void stripHexColorsRemovesDirectRgbCodes() {
+        String input = "&#abcdefColour";
+        assertEquals("Colour", StringUtils.stripHexColors(input));
     }
 
     @Test

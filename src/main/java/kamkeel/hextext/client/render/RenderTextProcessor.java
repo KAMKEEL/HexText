@@ -2,6 +2,7 @@ package kamkeel.hextext.client.render;
 
 import kamkeel.hextext.common.util.ColorCodeUtils;
 import kamkeel.hextext.common.util.StringUtils;
+import kamkeel.hextext.config.HexTextConfig;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,32 +26,40 @@ public final class RenderTextProcessor {
         Map<Integer, List<RenderInstruction>> instructions = null;
         boolean modified = rawMode && !processed.equals(text);
 
+        boolean allowAmpersand = HexTextConfig.isAmpersandAllowed();
+        boolean allowHtml = HexTextConfig.isRgbHtmlFormatEnabled();
+
         for (int i = 0; i < processed.length(); i++) {
             char current = processed.charAt(i);
 
-            boolean formatIndicator = current == '&' || current == 167;
-            if (formatIndicator && i + 1 < processed.length()) {
-                char next = processed.charAt(i + 1);
-                char lower = Character.toLowerCase(next);
-                int instructionIndex = sanitized.length();
-                boolean usingSectionSign = current == 167;
+            boolean usingSectionSign = current == 167;
+            boolean usingAmpersand = current == '&';
 
-                if (!usingSectionSign && ColorCodeUtils.isValidHexString(processed, i + 1)) {
-                    int rgb = ColorCodeUtils.parseHexColor(processed, i + 1);
-                    if (rgb != -1) {
-                        instructions = ensureInstructionMap(instructions);
-                        instructions.computeIfAbsent(instructionIndex, key -> new ArrayList<>())
-                            .add(RenderInstruction.apply(rgb, true));
-                        if (rawMode) {
-                            sanitized.append('&');
-                            sanitized.append(processed, i + 1, i + 7);
-                        } else {
-                            modified = true;
+            if ((usingSectionSign || (usingAmpersand && allowAmpersand)) && i + 1 < processed.length()) {
+                int instructionIndex = sanitized.length();
+
+                if (processed.charAt(i + 1) == '#') {
+                    int hexStart = i + 2;
+                    if (hexStart + 6 <= processed.length() && ColorCodeUtils.isValidHexString(processed, hexStart)) {
+                        int rgb = ColorCodeUtils.parseHexColor(processed, hexStart);
+                        if (rgb != -1) {
+                            instructions = ensureInstructionMap(instructions);
+                            instructions.computeIfAbsent(instructionIndex, key -> new ArrayList<>())
+                                .add(RenderInstruction.apply(rgb, true));
+                            if (rawMode) {
+                                sanitized.append(current).append('#');
+                                sanitized.append(processed, hexStart, hexStart + 6);
+                            } else {
+                                modified = true;
+                            }
+                            i += 7;
+                            continue;
                         }
-                        i += 6;
-                        continue;
                     }
                 }
+
+                char next = processed.charAt(i + 1);
+                char lower = Character.toLowerCase(next);
 
                 if (ColorCodeUtils.isFormattingCode(lower)) {
                     if (ColorCodeUtils.isEffectCode(lower)) {
@@ -135,7 +144,7 @@ public final class RenderTextProcessor {
                 }
             }
 
-            if (current == '<') {
+            if (allowHtml && current == '<') {
                 if (i + 8 <= processed.length() && processed.charAt(i + 7) == '>'
                     && ColorCodeUtils.isValidHexString(processed, i + 1)) {
                     int rgb = ColorCodeUtils.parseHexColor(processed, i + 1);

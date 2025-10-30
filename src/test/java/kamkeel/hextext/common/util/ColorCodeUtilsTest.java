@@ -1,10 +1,20 @@
 package kamkeel.hextext.common.util;
 
+import kamkeel.hextext.config.HexTextConfig;
+
 import org.junit.Test;
+import org.junit.Before;
 
 import static org.junit.Assert.*;
 
 public class ColorCodeUtilsTest {
+
+    @Before
+    public void setUp() {
+        HexTextConfig.resetToDefaults();
+        HexTextConfig.setAllowAmpersand(true);
+        HexTextConfig.setEnableRgbHtmlFormat(true);
+    }
 
     @Test
     public void testValidHexChar() {
@@ -31,11 +41,25 @@ public class ColorCodeUtilsTest {
 
     @Test
     public void testDetectColorCodeLength() {
-        assertEquals(7, ColorCodeUtils.detectColorCodeLength("&123456rest", 0));
+        assertEquals(8, ColorCodeUtils.detectColorCodeLength("&#123456rest", 0));
         assertEquals(2, ColorCodeUtils.detectColorCodeLength("§ares", 0));
         assertEquals(9, ColorCodeUtils.detectColorCodeLength("</ABCDEF>xyz", 0));
         assertEquals(8, ColorCodeUtils.detectColorCodeLength("<ABCDEF>xyz", 0));
         assertEquals(0, ColorCodeUtils.detectColorCodeLength("plain", 0));
+    }
+
+    @Test
+    public void testDetectColorCodeLengthRespectsHtmlToggle() {
+        HexTextConfig.setEnableRgbHtmlFormat(false);
+        assertEquals(0, ColorCodeUtils.detectColorCodeLength("<ABCDEF>xyz", 0));
+        assertEquals(0, ColorCodeUtils.detectColorCodeLength("</ABCDEF>xyz", 0));
+    }
+
+    @Test
+    public void testDetectColorCodeLengthRespectsAmpersandToggle() {
+        HexTextConfig.setAllowAmpersand(false);
+        assertEquals(0, ColorCodeUtils.detectColorCodeLength("&#123456rest", 0));
+        assertEquals(0, ColorCodeUtils.detectColorCodeLength("&aColour", 0));
     }
 
     @Test
@@ -45,7 +69,7 @@ public class ColorCodeUtilsTest {
 
     @Test
     public void testContainsFormattingCodes() {
-        assertTrue(ColorCodeUtils.containsFormattingCodes("Hello &aWorld"));
+        assertTrue(ColorCodeUtils.containsFormattingCodes("Hello &#aabbccWorld"));
         assertFalse(ColorCodeUtils.containsFormattingCodes("Plain text"));
     }
 

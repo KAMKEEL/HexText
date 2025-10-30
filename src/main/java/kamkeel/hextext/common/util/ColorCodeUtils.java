@@ -1,5 +1,7 @@
 package kamkeel.hextext.common.util;
 
+import kamkeel.hextext.config.HexTextConfig;
+
 /**
  * Utility helpers for parsing and working with Minecraft formatting and RGB colour codes.
  */
@@ -105,25 +107,41 @@ public final class ColorCodeUtils {
         }
 
         char c = str.charAt(pos);
+        boolean allowAmpersand = HexTextConfig.isAmpersandAllowed();
+        boolean allowHtml = HexTextConfig.isRgbHtmlFormatEnabled();
 
-        if (c == 167 && pos + 1 < str.length()) {
-            return 2;
+        if (c == 167) {
+            if (pos + 2 <= str.length() && str.charAt(pos + 1) == '#'
+                && pos + 8 <= str.length() && isValidHexString(str, pos + 2)) {
+                return 8;
+            }
+            if (pos + 1 < str.length() && isFormattingCode(str.charAt(pos + 1))) {
+                return 2;
+            }
+            return 0;
         }
 
-        if (c == '&' && pos + 7 <= str.length() && isValidHexString(str, pos + 1)) {
-            return 7;
+        if (c == '&') {
+            if (!allowAmpersand) {
+                return 0;
+            }
+            if (pos + 2 <= str.length() && str.charAt(pos + 1) == '#'
+                && pos + 8 <= str.length() && isValidHexString(str, pos + 2)) {
+                return 8;
+            }
+            if (pos + 1 < str.length() && isFormattingCode(str.charAt(pos + 1))) {
+                return 2;
+            }
+            return 0;
         }
 
-        if (c == '&' && pos + 1 < str.length() && isFormattingCode(str.charAt(pos + 1))) {
-            return 2;
-        }
-
-        if (c == '<' && pos + 9 <= str.length() && str.charAt(pos + 1) == '/' && str.charAt(pos + 8) == '>'
-            && isValidHexString(str, pos + 2)) {
+        if (allowHtml && c == '<' && pos + 9 <= str.length() && str.charAt(pos + 1) == '/'
+            && str.charAt(pos + 8) == '>' && isValidHexString(str, pos + 2)) {
             return 9;
         }
 
-        if (c == '<' && pos + 8 <= str.length() && str.charAt(pos + 7) == '>' && isValidHexString(str, pos + 1)) {
+        if (allowHtml && c == '<' && pos + 8 <= str.length() && str.charAt(pos + 7) == '>'
+            && isValidHexString(str, pos + 1)) {
             return 8;
         }
 
