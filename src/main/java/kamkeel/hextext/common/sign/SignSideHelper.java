@@ -3,7 +3,6 @@ package kamkeel.hextext.common.sign;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntitySign;
-import net.minecraft.util.MathHelper;
 
 public final class SignSideHelper {
 
@@ -15,50 +14,69 @@ public final class SignSideHelper {
         double centerX = sign.xCoord + 0.5D;
         double centerZ = sign.zCoord + 0.5D;
 
-        double[] normal = computeFrontNormal(sign.getBlockType(), sign.getBlockMetadata());
+        Block block = sign.getBlockType();
+        int metadata = sign.getBlockMetadata();
 
-        double vecX;
-        double vecZ;
+        double vecX = playerX - centerX;
+        double vecZ = playerZ - centerZ;
 
-        if (sign.getBlockType() == Blocks.standing_sign) {
-            vecX = hitX - 0.5D;
-            vecZ = hitZ - 0.5D;
-
-            if (Math.abs(vecX) < 1.0E-6D && Math.abs(vecZ) < 1.0E-6D) {
-                vecX = playerX - centerX;
-                vecZ = playerZ - centerZ;
+        if (block == Blocks.standing_sign) {
+            if (isNearlyZero(vecX) && isNearlyZero(vecZ)) {
+                vecX = hitX - 0.5D;
+                vecZ = hitZ - 0.5D;
             }
-        } else {
-            vecX = playerX - centerX;
-            vecZ = playerZ - centerZ;
+
+            if (isNearlyZero(vecX) && isNearlyZero(vecZ)) {
+                return SignSide.FRONT;
+            }
+
+            return isFacingFrontStanding(vecX, vecZ, metadata) ? SignSide.FRONT : SignSide.BACK;
         }
 
-        if (vecX == 0.0D && vecZ == 0.0D) {
-            return SignSide.FRONT;
+        double[] normal = computeWallFrontNormal(metadata);
+
+        if (isNearlyZero(vecX) && isNearlyZero(vecZ)) {
+            vecX = normal[0];
+            vecZ = normal[1];
         }
 
         double dot = vecX * normal[0] + vecZ * normal[1];
         return dot >= 0.0D ? SignSide.FRONT : SignSide.BACK;
     }
 
-    private static double[] computeFrontNormal(Block block, int metadata) {
-        if (block == Blocks.wall_sign) {
-            switch (metadata) {
-                case 2:
-                    return new double[] {0.0D, -1.0D};
-                case 3:
-                    return new double[] {0.0D, 1.0D};
-                case 4:
-                    return new double[] {-1.0D, 0.0D};
-                case 5:
-                    return new double[] {1.0D, 0.0D};
-                default:
-                    return new double[] {0.0D, 1.0D};
-            }
-        }
+    private static boolean isFacingFrontStanding(double vecX, double vecZ, int metadata) {
+        double playerAngle = Math.atan2(vecZ, vecX);
+        double facingAngle = computeStandingFacingAngle(metadata);
+        double delta = normalizeRadians(playerAngle - facingAngle);
+        return Math.abs(delta) <= Math.PI / 2.0D;
+    }
 
-        float wrapped = MathHelper.wrapAngleTo180_float((float) (metadata * 360) / 16.0F);
-        double radians = Math.toRadians(wrapped);
-        return new double[] {MathHelper.sin((float) radians), MathHelper.cos((float) radians)};
+    private static double computeStandingFacingAngle(int metadata) {
+        double rotationDegrees = (metadata * 360.0D) / 16.0D;
+        double radians = Math.toRadians(rotationDegrees);
+        return normalizeRadians(radians + (Math.PI / 2.0D));
+    }
+
+    private static double[] computeWallFrontNormal(int metadata) {
+        switch (metadata) {
+            case 2:
+                return new double[] {0.0D, -1.0D};
+            case 3:
+                return new double[] {0.0D, 1.0D};
+            case 4:
+                return new double[] {-1.0D, 0.0D};
+            case 5:
+                return new double[] {1.0D, 0.0D};
+            default:
+                return new double[] {0.0D, 1.0D};
+        }
+    }
+
+    private static double normalizeRadians(double angle) {
+        return Math.atan2(Math.sin(angle), Math.cos(angle));
+    }
+
+    private static boolean isNearlyZero(double value) {
+        return Math.abs(value) < 1.0E-6D;
     }
 }
