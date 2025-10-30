@@ -42,8 +42,9 @@ public final class SignSideHelper {
             }
         }
 
-        float wrapped = MathHelper.wrapAngleTo180_float((float) (metadata * 360) / 16.0F);
-        double radians = Math.toRadians(wrapped);
-        return new double[] {MathHelper.sin((float) radians), MathHelper.cos((float) radians)};
+        float orientation = (metadata * 360.0F) / 16.0F;
+        float yaw = MathHelper.wrapAngleTo180_float(orientation - 180.0F);
+        double radians = Math.toRadians(yaw);
+        return new double[] {-MathHelper.sin((float) radians), MathHelper.cos((float) radians)};
     }
 }
