@@ -75,6 +75,18 @@ public class StringUtilsTest {
     }
 
     @Test
+    public void convertAmpersandsToSectionSignsReplacesRecognisedTokens() {
+        String converted = StringUtils.convertAmpersandsToSectionSigns("&a&lHello &#A1B2C3World");
+        assertEquals("§a§lHello §#A1B2C3World", converted);
+    }
+
+    @Test
+    public void convertAmpersandsToSectionSignsLeavesInvalidAmpersands() {
+        String converted = StringUtils.convertAmpersandsToSectionSigns("&x& Hello &");
+        assertEquals("&x& Hello &", converted);
+    }
+
+    @Test
     public void stripExtrasRemovesAllFormatting() {
         String input = "&a&lBold <123456>Text&n";
         assertEquals("Bold Text", StringUtils.stripExtras(input));
