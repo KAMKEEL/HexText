@@ -1,11 +1,19 @@
 package kamkeel.hextext.client.render;
 
+import kamkeel.hextext.CommonProxy;
+import kamkeel.hextext.HexText;
 import kamkeel.hextext.client.support.SimpleCharWidthFunction;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
 public class FormattedTextMetricsTest {
+
+    @Before
+    public void setUp() {
+        HexText.proxy = new CommonProxy();
+    }
 
     @Test
     public void calculateMaxLineWidthSkipsFormattingCodes() {

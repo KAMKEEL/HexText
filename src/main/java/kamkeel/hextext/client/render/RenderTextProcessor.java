@@ -1,8 +1,8 @@
 package kamkeel.hextext.client.render;
 
+import kamkeel.hextext.HexText;
 import kamkeel.hextext.common.util.ColorCodeUtils;
 import kamkeel.hextext.common.util.StringUtils;
-import kamkeel.hextext.config.HexTextConfig;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,8 +26,8 @@ public final class RenderTextProcessor {
         Map<Integer, List<RenderInstruction>> instructions = null;
         boolean modified = rawMode && !processed.equals(text);
 
-        boolean allowAmpersand = HexTextConfig.isAmpersandAllowed();
-        boolean allowHtml = HexTextConfig.isRgbHtmlFormatEnabled();
+        boolean allowAmpersand = HexText.getActiveProxy().allowAmpersand();
+        boolean allowHtml = HexText.getActiveProxy().allowHtmlFormatting();
 
         for (int i = 0; i < processed.length(); i++) {
             char current = processed.charAt(i);

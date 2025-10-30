@@ -1,11 +1,11 @@
 package kamkeel.hextext.mixin.early.impl;
 
+import kamkeel.hextext.HexText;
 import kamkeel.hextext.api.sign.HexTextSignInteractions;
 import kamkeel.hextext.api.sign.SignInteractionType;
 import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.sign.SignSideHelper;
 import kamkeel.hextext.common.sign.SignState;
-import kamkeel.hextext.config.HexTextConfig;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.BlockSign;
 import net.minecraft.block.material.Material;
@@ -117,7 +117,7 @@ public abstract class MixinBlockSign extends BlockContainer {
             return false;
         }
 
-        if (!HexTextConfig.isSignEditingAllowed()) {
+        if (!HexText.getActiveProxy().allowSignEditing()) {
             return false;
         }
 

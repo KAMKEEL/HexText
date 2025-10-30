@@ -1,6 +1,6 @@
 package kamkeel.hextext.common.util;
 
-import kamkeel.hextext.config.HexTextConfig;
+import kamkeel.hextext.HexText;
 
 import java.util.ArrayDeque;
 
@@ -226,15 +226,15 @@ public final class StringUtils {
             return true;
         }
 
-        if (HexTextConfig.isRgbHtmlFormatEnabled() && codeLen == 8 && start == '<') {
+        if (HexText.getActiveProxy().allowHtmlFormatting() && codeLen == 8 && start == '<') {
             return true;
         }
 
-        if (HexTextConfig.isRgbHtmlFormatEnabled() && codeLen == 9 && start == '<') {
+        if (HexText.getActiveProxy().allowHtmlFormatting() && codeLen == 9 && start == '<') {
             return true;
         }
 
-        if (codeLen == 2 && ((start == '&' && HexTextConfig.isAmpersandAllowed()) || start == 167)) {
+        if (codeLen == 2 && ((start == '&' && HexText.getActiveProxy().allowAmpersand()) || start == 167)) {
             char fmt = Character.toLowerCase(input.charAt(index + 1));
             return ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g';
         }
@@ -245,7 +245,7 @@ public final class StringUtils {
     private static boolean isStyleOrEffectToken(CharSequence input, int index, int codeLen) {
         if (codeLen == 2) {
             char start = input.charAt(index);
-            if ((start == '&' && HexTextConfig.isAmpersandAllowed()) || start == 167) {
+            if ((start == '&' && HexText.getActiveProxy().allowAmpersand()) || start == 167) {
                 char fmt = Character.toLowerCase(input.charAt(index + 1));
                 return ColorCodeUtils.isStyleCode(fmt) || ColorCodeUtils.isEffectCode(fmt);
             }

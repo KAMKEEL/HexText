@@ -1,6 +1,6 @@
 package kamkeel.hextext.common.util;
 
-import kamkeel.hextext.config.HexTextConfig;
+import kamkeel.hextext.HexText;
 
 /**
  * Utility helpers for parsing and working with Minecraft formatting and RGB colour codes.
@@ -107,8 +107,8 @@ public final class ColorCodeUtils {
         }
 
         char c = str.charAt(pos);
-        boolean allowAmpersand = HexTextConfig.isAmpersandAllowed();
-        boolean allowHtml = HexTextConfig.isRgbHtmlFormatEnabled();
+        boolean allowAmpersand = HexText.getActiveProxy().allowAmpersand();
+        boolean allowHtml = HexText.getActiveProxy().allowHtmlFormatting();
 
         if (c == 167) {
             if (pos + 2 <= str.length() && str.charAt(pos + 1) == '#'
