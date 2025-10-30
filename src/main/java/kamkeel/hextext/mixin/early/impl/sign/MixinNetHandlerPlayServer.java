@@ -1,8 +1,5 @@
-package kamkeel.hextext.mixin.early.impl;
+package kamkeel.hextext.mixin.early.impl.sign;
 
-import kamkeel.hextext.common.sign.SignSide;
-import kamkeel.hextext.common.sign.SignState;
-import kamkeel.hextext.common.sign.SignUpdatePacket;
 import kamkeel.hextext.common.util.SignTextHelper;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
@@ -52,10 +49,6 @@ public abstract class MixinNetHandlerPlayServer {
             sign.signText[i] = SignTextHelper.clampToVisibleLimit(sanitized);
         }
 
-        SignState state = (SignState) sign;
-        SignSide packetSide = ((SignUpdatePacket) packet).hextext$getEditingSide();
-        state.hextext$setEditingSide(packetSide);
-        state.hextext$finishEdit();
         sign.func_145912_a(null);
         world.markBlockForUpdate(x, y, z);
         ci.cancel();

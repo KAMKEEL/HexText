@@ -1,8 +1,9 @@
-package kamkeel.hextext.mixin.early.impl.client;
+package kamkeel.hextext.mixin.early.impl.client.sign;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
-import kamkeel.hextext.common.sign.SignState;
+import kamkeel.hextext.common.sign.IHexTextSign;
+import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.sign.SignUpdatePacket;
 import kamkeel.hextext.common.util.SignTextHelper;
 import net.minecraft.client.gui.GuiScreen;
@@ -13,6 +14,7 @@ import net.minecraft.tileentity.TileEntitySign;
 import org.lwjgl.input.Keyboard;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -23,6 +25,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinGuiEditSign extends GuiScreen {
 
     @Shadow private TileEntitySign tileSign;
+
+    @Unique
+    public SignSide editSide = SignSide.FRONT;
+
+    @Inject(method = "initGui", at = @At(value = "HEAD"))
+    private void initSide(CallbackInfo ci) {
+        IHexTextSign hexTextSign = (IHexTextSign) tileSign;
+        this.editSide = hexTextSign.getEditSide();
+    }
 
     @Redirect(method = "keyTyped", at = @At(value = "INVOKE", target = "Ljava/lang/String;length()I", ordinal = 2))
     private int hextext$measureVisibleLength(String line) {
@@ -37,12 +48,9 @@ public abstract class MixinGuiEditSign extends GuiScreen {
         if (handler != null) {
             C12PacketUpdateSign packet = new C12PacketUpdateSign(tileSign.xCoord, tileSign.yCoord,
                 tileSign.zCoord, tileSign.signText);
-            SignState state = (SignState) tileSign;
-            ((SignUpdatePacket) packet).hextext$setEditingSide(state.hextext$getEditingSide());
+            ((SignUpdatePacket) packet).setSide(editSide);
             handler.addToSendQueue(packet);
         }
-
-        ((SignState) tileSign).hextext$finishEdit();
         tileSign.setEditable(true);
     }
 }

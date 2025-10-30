@@ -75,4 +75,8 @@ public final class SignTextHelper {
 
         return builder.toString();
     }
+
+    public void copyText(String[] in, String[] out, int srcPos, int desPos, int length){
+        System.arraycopy(in, srcPos, out, desPos, length);
+    }
 }

@@ -1,11 +1,12 @@
-package kamkeel.hextext.mixin.early.impl;
+package kamkeel.hextext.mixin.early.impl.sign;
 
 import kamkeel.hextext.HexText;
 import kamkeel.hextext.api.sign.HexTextSignInteractions;
 import kamkeel.hextext.api.sign.SignInteractionType;
 import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.sign.SignSideHelper;
-import kamkeel.hextext.common.sign.SignState;
+import kamkeel.hextext.common.sign.IHexTextSign;
+import kamkeel.hextext.common.util.ItemHelper;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.BlockSign;
 import net.minecraft.block.material.Material;
@@ -16,9 +17,6 @@ import net.minecraft.tileentity.TileEntitySign;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Set;
 
@@ -43,9 +41,9 @@ public abstract class MixinBlockSign extends BlockContainer {
         }
 
         TileEntitySign sign = (TileEntitySign) tileEntity;
-        SignState signState = (SignState) sign;
+        IHexTextSign hexTextSign = (IHexTextSign) sign;
 
-        if (signState.hextext$isWaxed()) {
+        if (hexTextSign.isWaxed()) {
             return true;
         }
 
@@ -64,43 +62,43 @@ public abstract class MixinBlockSign extends BlockContainer {
 
                 if (interactions.contains(SignInteractionType.CLEANSE)) {
                     boolean changed = false;
-                    changed |= signState.hextext$setGlowing(clickedSide, false);
-                    changed |= signState.hextext$setOutlined(clickedSide, false);
+                    changed |= hexTextSign.setGlowing(clickedSide, false);
+                    changed |= hexTextSign.setOutlined(clickedSide, false);
                     if (changed) {
                         updated = true;
                         if (!consumed) {
-                            hextext$consumeItem(player, stack);
+                            ItemHelper.consumeItem(player, stack);
                             consumed = true;
                         }
                     }
                 }
 
-                if (interactions.contains(SignInteractionType.WAX) && !signState.hextext$isWaxed()) {
-                    signState.hextext$setWaxed(true);
+                if (interactions.contains(SignInteractionType.WAX) && !hexTextSign.isWaxed()) {
+                    hexTextSign.setWaxed(true);
                     updated = true;
                     if (!consumed) {
-                        hextext$consumeItem(player, stack);
+                        ItemHelper.consumeItem(player, stack);
                         consumed = true;
                     }
                 }
 
                 if (interactions.contains(SignInteractionType.GLOW)) {
-                    boolean changed = signState.hextext$setGlowing(clickedSide, true);
+                    boolean changed = hexTextSign.setGlowing(clickedSide, true);
                     if (changed) {
                         updated = true;
                         if (!consumed) {
-                            hextext$consumeItem(player, stack);
+                            ItemHelper.consumeItem(player, stack);
                             consumed = true;
                         }
                     }
                 }
 
                 if (interactions.contains(SignInteractionType.OUTLINE)) {
-                    boolean changed = signState.hextext$setOutlined(clickedSide, true);
+                    boolean changed = hexTextSign.setOutlined(clickedSide, true);
                     if (changed) {
                         updated = true;
                         if (!consumed) {
-                            hextext$consumeItem(player, stack);
+                            ItemHelper.consumeItem(player, stack);
                             consumed = true;
                         }
                     }
@@ -108,6 +106,7 @@ public abstract class MixinBlockSign extends BlockContainer {
 
                 if (updated) {
                     worldIn.markBlockForUpdate(x, y, z);
+                    tileEntity.markDirty();
                 }
                 return true;
             }
@@ -121,23 +120,12 @@ public abstract class MixinBlockSign extends BlockContainer {
             return false;
         }
 
-        signState.hextext$prepareForEdit(clickedSide);
         sign.func_145912_a(player);
-        if (!worldIn.isRemote) {
+        if (worldIn.isRemote) {
+            hexTextSign.setEditSide(clickedSide);
             player.func_146100_a(sign);
         }
 
         return true;
-    }
-
-    @Unique
-    private void hextext$consumeItem(EntityPlayer player, ItemStack stack) {
-        if (player.capabilities.isCreativeMode) {
-            return;
-        }
-        stack.stackSize--;
-        if (stack.stackSize <= 0) {
-            player.inventory.setInventorySlotContents(player.inventory.currentItem, null);
-        }
     }
 }

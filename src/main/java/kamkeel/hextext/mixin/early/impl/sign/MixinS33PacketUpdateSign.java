@@ -1,4 +1,4 @@
-package kamkeel.hextext.mixin.early.impl;
+package kamkeel.hextext.mixin.early.impl.sign;
 
 import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.sign.SignSyncPacket;
@@ -8,7 +8,6 @@ import net.minecraft.network.play.server.S33PacketUpdateSign;
 
 import java.io.IOException;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -69,7 +68,7 @@ public abstract class MixinS33PacketUpdateSign extends Packet implements SignSyn
     }
 
     @Override
-    public void hextext$setBackText(String[] lines) {
+    public void setBackText(String[] lines) {
         if (lines == null) {
             hextext$backLines = new String[] {"", "", "", ""};
         } else {
@@ -78,12 +77,12 @@ public abstract class MixinS33PacketUpdateSign extends Packet implements SignSyn
     }
 
     @Override
-    public String[] hextext$getBackText() {
+    public String[] getBackText() {
         return hextext$backLines.clone();
     }
 
     @Override
-    public void hextext$setGlowing(SignSide side, boolean glowing) {
+    public void setGlowing(SignSide side, boolean glowing) {
         if (side == SignSide.FRONT) {
             hextext$glowFront = glowing;
         } else {
@@ -92,12 +91,12 @@ public abstract class MixinS33PacketUpdateSign extends Packet implements SignSyn
     }
 
     @Override
-    public boolean hextext$isGlowing(SignSide side) {
+    public boolean isGlowing(SignSide side) {
         return side == SignSide.FRONT ? hextext$glowFront : hextext$glowBack;
     }
 
     @Override
-    public void hextext$setOutlined(SignSide side, boolean outlined) {
+    public void setOutlined(SignSide side, boolean outlined) {
         if (side == SignSide.FRONT) {
             hextext$outlineFront = outlined;
         } else {
@@ -106,17 +105,17 @@ public abstract class MixinS33PacketUpdateSign extends Packet implements SignSyn
     }
 
     @Override
-    public boolean hextext$isOutlined(SignSide side) {
+    public boolean isOutlined(SignSide side) {
         return side == SignSide.FRONT ? hextext$outlineFront : hextext$outlineBack;
     }
 
     @Override
-    public void hextext$setWaxed(boolean waxed) {
+    public void setWaxed(boolean waxed) {
         hextext$waxed = waxed;
     }
 
     @Override
-    public boolean hextext$isWaxed() {
+    public boolean isWaxed() {
         return hextext$waxed;
     }
 }

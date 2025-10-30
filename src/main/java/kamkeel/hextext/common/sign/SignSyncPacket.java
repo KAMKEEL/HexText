@@ -2,19 +2,19 @@ package kamkeel.hextext.common.sign;
 
 public interface SignSyncPacket {
 
-    void hextext$setBackText(String[] lines);
+    void setBackText(String[] lines);
 
-    String[] hextext$getBackText();
+    String[] getBackText();
 
-    void hextext$setGlowing(SignSide side, boolean glowing);
+    void setGlowing(SignSide side, boolean glowing);
 
-    boolean hextext$isGlowing(SignSide side);
+    boolean isGlowing(SignSide side);
 
-    void hextext$setOutlined(SignSide side, boolean outlined);
+    void setOutlined(SignSide side, boolean outlined);
 
-    boolean hextext$isOutlined(SignSide side);
+    boolean isOutlined(SignSide side);
 
-    void hextext$setWaxed(boolean waxed);
+    void setWaxed(boolean waxed);
 
-    boolean hextext$isWaxed();
+    boolean isWaxed();
 }

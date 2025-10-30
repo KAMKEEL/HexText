@@ -40,16 +40,16 @@ public final class HexTextEarlyMixins implements IMixinConfigPlugin {
             mixins.add("client.MixinFontRenderer");
             mixins.add("client.MixinGuiNewChat");
             mixins.add("client.MixinGuiTextField");
-            mixins.add("client.MixinGuiEditSign");
-            mixins.add("client.MixinNetHandlerPlayClient");
-            mixins.add("client.MixinTileEntitySignRenderer");
+            mixins.add("client.sign.MixinGuiEditSign");
+            mixins.add("client.sign.MixinNetHandlerPlayClient");
+            mixins.add("client.sign.MixinTileEntitySignRenderer");
         }
 
-        mixins.add("MixinBlockSign");
-        mixins.add("MixinC12PacketUpdateSign");
-        mixins.add("MixinS33PacketUpdateSign");
-        mixins.add("MixinNetHandlerPlayServer");
-        mixins.add("MixinTileEntitySign");
+        mixins.add("sign.MixinBlockSign");
+        mixins.add("sign.MixinC12PacketUpdateSign");
+        mixins.add("sign.MixinS33PacketUpdateSign");
+        mixins.add("sign.MixinNetHandlerPlayServer");
+        mixins.add("sign.MixinTileEntitySign");
         return mixins;
     }
 

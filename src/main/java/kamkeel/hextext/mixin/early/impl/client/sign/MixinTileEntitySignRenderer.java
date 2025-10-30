@@ -1,8 +1,8 @@
-package kamkeel.hextext.mixin.early.impl.client;
+package kamkeel.hextext.mixin.early.impl.client.sign;
 
 import kamkeel.hextext.client.render.font.GlowingTextRenderer;
 import kamkeel.hextext.common.sign.SignSide;
-import kamkeel.hextext.common.sign.SignState;
+import kamkeel.hextext.common.sign.IHexTextSign;
 import kamkeel.hextext.common.util.StringUtils;
 import net.minecraft.block.Block;
 import net.minecraft.client.gui.FontRenderer;
@@ -15,7 +15,6 @@ import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntitySign;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -69,7 +68,7 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         GL11.glPopMatrix();
 
         FontRenderer fontRenderer = this.func_147498_b();
-        SignState state = (SignState) sign;
+        IHexTextSign state = (IHexTextSign) sign;
 
         renderTextForSide(sign, state, fontRenderer, SignSide.FRONT, scale);
         renderTextForSide(sign, state, fontRenderer, SignSide.BACK, scale);
@@ -79,8 +78,8 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
     }
 
     @Unique
-    private void renderTextForSide(TileEntitySign sign, SignState state, FontRenderer fontRenderer,
-            SignSide side, float scale) {
+    private void renderTextForSide(TileEntitySign sign, IHexTextSign state, FontRenderer fontRenderer,
+                                   SignSide side, float scale) {
 
         GL11.glPushMatrix();
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
@@ -94,8 +93,8 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         GL11.glNormal3f(0.0F, 0.0F, -1.0F * fontScale);
         GL11.glDepthMask(false);
 
-        boolean glowing = state.hextext$isGlowing(side);
-        boolean outlined = state.hextext$isOutlined(side);
+        boolean glowing = state.isGlowing(side);
+        boolean outlined = state.isOutlined(side);
 
         // Save current lightmap coords to restore later
         int lxPacked = sign.getWorldObj().getLightBrightnessForSkyBlocks(sign.xCoord, sign.yCoord, sign.zCoord, 0);
@@ -117,7 +116,7 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         if (glowing) RenderHelper.disableStandardItemLighting();
 
         GlowingTextRenderer.setOutlineEnabled(outlined);
-        String[] lines = state.hextext$getLines(side);
+        String[] lines = state.getLines(side);
         int baseY = -lines.length * 5;
         for (int i = 0; i < lines.length; ++i) {
             String line = lines[i];

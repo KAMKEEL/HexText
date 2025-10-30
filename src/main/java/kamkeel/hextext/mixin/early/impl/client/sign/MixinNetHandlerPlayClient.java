@@ -1,7 +1,7 @@
-package kamkeel.hextext.mixin.early.impl.client;
+package kamkeel.hextext.mixin.early.impl.client.sign;
 
 import kamkeel.hextext.common.sign.SignSide;
-import kamkeel.hextext.common.sign.SignState;
+import kamkeel.hextext.common.sign.IHexTextSign;
 import kamkeel.hextext.common.sign.SignSyncPacket;
 import kamkeel.hextext.common.util.SignTextHelper;
 import net.minecraft.client.Minecraft;
@@ -30,22 +30,19 @@ public abstract class MixinNetHandlerPlayClient {
         }
 
         TileEntitySign sign = (TileEntitySign) tileEntity;
-        SignState state = (SignState) sign;
+        IHexTextSign state = (IHexTextSign) sign;
         SignSyncPacket sync = (SignSyncPacket) packet;
 
-        String[] backLines = sync.hextext$getBackText();
-        String[] dest = state.hextext$getLines(SignSide.BACK);
+        String[] backLines = sync.getBackText();
+        String[] dest = state.getLines(SignSide.BACK);
         for (int i = 0; i < dest.length && i < backLines.length; i++) {
             dest[i] = SignTextHelper.clampToVisibleLimit(backLines[i]);
         }
 
-        state.hextext$setGlowing(SignSide.FRONT, sync.hextext$isGlowing(SignSide.FRONT));
-        state.hextext$setGlowing(SignSide.BACK, sync.hextext$isGlowing(SignSide.BACK));
-        state.hextext$setOutlined(SignSide.FRONT, sync.hextext$isOutlined(SignSide.FRONT));
-        state.hextext$setOutlined(SignSide.BACK, sync.hextext$isOutlined(SignSide.BACK));
-        state.hextext$setWaxed(sync.hextext$isWaxed());
-        if (sign.lineBeingEdited < 0) {
-            state.hextext$setEditingSide(SignSide.FRONT);
-        }
+        state.setGlowing(SignSide.FRONT, sync.isGlowing(SignSide.FRONT));
+        state.setGlowing(SignSide.BACK, sync.isGlowing(SignSide.BACK));
+        state.setOutlined(SignSide.FRONT, sync.isOutlined(SignSide.FRONT));
+        state.setOutlined(SignSide.BACK, sync.isOutlined(SignSide.BACK));
+        state.setWaxed(sync.isWaxed());
     }
 }
