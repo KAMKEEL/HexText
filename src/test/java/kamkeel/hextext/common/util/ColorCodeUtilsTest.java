@@ -1,5 +1,7 @@
 package kamkeel.hextext.common.util;
 
+import kamkeel.hextext.CommonProxy;
+import kamkeel.hextext.HexText;
 import kamkeel.hextext.config.HexTextConfig;
 
 import org.junit.Test;
@@ -11,6 +13,7 @@ public class ColorCodeUtilsTest {
 
     @Before
     public void setUp() {
+        HexText.proxy = new CommonProxy();
         HexTextConfig.resetToDefaults();
         HexTextConfig.setAllowAmpersand(true);
         HexTextConfig.setEnableRgbHtmlFormat(true);

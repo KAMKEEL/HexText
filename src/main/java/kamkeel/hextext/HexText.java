@@ -64,4 +64,8 @@ public class HexText {
     public static Side side() {
         return FMLCommonHandler.instance().getEffectiveSide();
     }
+
+    public static CommonProxy getActiveProxy() {
+        return proxy;
+    }
 }
