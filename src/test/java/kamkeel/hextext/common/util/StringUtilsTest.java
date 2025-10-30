@@ -87,6 +87,24 @@ public class StringUtilsTest {
     }
 
     @Test
+    public void stripColorsRemovesMinecraftCodes() {
+        String input = "&a&lHello §cWorld";
+        assertEquals("&lHello World", StringUtils.stripColors(input));
+    }
+
+    @Test
+    public void stripColorsKeepsHexAndStyles() {
+        String input = "&#123456&lColourful";
+        assertEquals("&#123456&lColourful", StringUtils.stripColors(input));
+    }
+
+    @Test
+    public void stripColorsRemovesRainbowCode() {
+        String input = "&gRainbow";
+        assertEquals("Rainbow", StringUtils.stripColors(input));
+    }
+
+    @Test
     public void stripStylesKeepsColours() {
         String input = "&a&lBold&o Text";
         assertEquals("&aBold Text", StringUtils.stripStyles(input));
