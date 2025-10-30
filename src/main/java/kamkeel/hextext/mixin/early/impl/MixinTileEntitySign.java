@@ -17,15 +17,19 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.Arrays;
+
 @Mixin(TileEntitySign.class)
 public abstract class MixinTileEntitySign extends TileEntity implements SignState {
 
+    @Unique
+    private static final int hextext$SIGN_LINE_COUNT = 4;
 
     @Unique
     private boolean hextext$isWaxed = false;
 
     @Shadow
-    public abstract void setEditable(boolean p_145913_1_);
+    public abstract void setEditable(boolean canEdit);
 
     @Shadow
     public String[] signText;
@@ -37,44 +41,47 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     private final boolean[] hextext$outlineStates = new boolean[SignSide.values().length];
 
     @Unique
-    private final String[] hextext$backSignText = new String[] {"", "", "", ""};
+    private final String[] hextext$backSignText = hextext$createEmptyLines();
 
     @Unique
     private SignSide hextext$editingSide = SignSide.FRONT;
 
     @Unique
-    private String[] hextext$frontBackup = null;
+    private String[] hextext$frontSnapshot;
 
     @Inject(method = "readFromNBT", at = @At("RETURN"))
-    private void hextext$clampLoadedLines(NBTTagCompound compound, CallbackInfo ci) {
+    private void hextext$readExtraData(NBTTagCompound compound, CallbackInfo ci) {
         if (signText != null) {
             hextext$clampLines(signText);
         }
+
         hextext$isWaxed = compound.getBoolean("HexTextWaxed");
         hextext$glowStates[SignSide.FRONT.ordinal()] = compound.getBoolean("HexTextGlowFront");
         hextext$glowStates[SignSide.BACK.ordinal()] = compound.getBoolean("HexTextGlowBack");
         hextext$outlineStates[SignSide.FRONT.ordinal()] = compound.getBoolean("HexTextOutlineFront");
         hextext$outlineStates[SignSide.BACK.ordinal()] = compound.getBoolean("HexTextOutlineBack");
+
+        Arrays.fill(hextext$backSignText, "");
         if (compound.hasKey("HexTextBackText0")) {
-            for (int i = 0; i < hextext$backSignText.length; i++) {
-                hextext$backSignText[i] = compound.getString("HexTextBackText" + i);
+            for (int line = 0; line < hextext$backSignText.length; line++) {
+                hextext$backSignText[line] = compound.getString("HexTextBackText" + line);
             }
         }
         hextext$clampLines(hextext$backSignText);
 
-        // Allows Client to Edit Sign
         setEditable(!hextext$isWaxed);
     }
 
     @Inject(method = "writeToNBT", at = @At("RETURN"))
-    private void hextext$writeCustomData(NBTTagCompound compound, CallbackInfo ci) {
+    private void hextext$writeExtraData(NBTTagCompound compound, CallbackInfo ci) {
         compound.setBoolean("HexTextWaxed", hextext$isWaxed);
         compound.setBoolean("HexTextGlowFront", hextext$glowStates[SignSide.FRONT.ordinal()]);
         compound.setBoolean("HexTextGlowBack", hextext$glowStates[SignSide.BACK.ordinal()]);
         compound.setBoolean("HexTextOutlineFront", hextext$outlineStates[SignSide.FRONT.ordinal()]);
         compound.setBoolean("HexTextOutlineBack", hextext$outlineStates[SignSide.BACK.ordinal()]);
-        for (int i = 0; i < hextext$backSignText.length; i++) {
-            compound.setString("HexTextBackText" + i, hextext$backSignText[i]);
+
+        for (int line = 0; line < hextext$backSignText.length; line++) {
+            compound.setString("HexTextBackText" + line, hextext$backSignText[line]);
         }
     }
 
@@ -87,34 +94,33 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     @Override
     @Unique
     public void hextext$setEditingSide(SignSide side) {
-        this.hextext$editingSide = side == null ? SignSide.FRONT : side;
+        hextext$editingSide = side == null ? SignSide.FRONT : side;
     }
 
     @Override
     @Unique
     public void hextext$prepareForEdit(SignSide side) {
-        hextext$editingSide = side;
-        if (side == SignSide.BACK) {
-            hextext$frontBackup = signText.clone();
+        hextext$editingSide = side == null ? SignSide.FRONT : side;
+
+        if (hextext$isEditing(SignSide.BACK)) {
+            hextext$frontSnapshot = signText.clone();
             hextext$copyLines(hextext$backSignText, signText);
         } else {
-            hextext$frontBackup = null;
+            hextext$frontSnapshot = null;
         }
     }
 
     @Override
     @Unique
     public void hextext$finishEdit() {
-        if (hextext$editingSide == SignSide.BACK) {
+        if (hextext$isEditing(SignSide.BACK)) {
             hextext$clampLines(signText);
             hextext$copyLines(signText, hextext$backSignText);
-            if (hextext$frontBackup != null) {
-                hextext$copyLines(hextext$frontBackup, signText);
-            }
+            hextext$restoreFrontPreview();
         } else {
             hextext$clampLines(signText);
         }
-        hextext$frontBackup = null;
+
         hextext$editingSide = SignSide.FRONT;
         markDirty();
     }
@@ -130,6 +136,7 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     public void hextext$setWaxed(boolean waxed) {
         if (hextext$isWaxed != waxed) {
             hextext$isWaxed = waxed;
+            setEditable(!hextext$isWaxed);
             markDirty();
         }
     }
@@ -145,8 +152,8 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     public boolean hextext$setGlowing(SignSide side, boolean glowing) {
         int index = side.ordinal();
         boolean changed = hextext$glowStates[index] != glowing;
-        hextext$glowStates[index] = glowing;
         if (changed) {
+            hextext$glowStates[index] = glowing;
             markDirty();
         }
         return changed;
@@ -163,8 +170,8 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     public boolean hextext$setOutlined(SignSide side, boolean outlined) {
         int index = side.ordinal();
         boolean changed = hextext$outlineStates[index] != outlined;
-        hextext$outlineStates[index] = outlined;
         if (changed) {
+            hextext$outlineStates[index] = outlined;
             markDirty();
         }
         return changed;
@@ -173,7 +180,11 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
     @Override
     @Unique
     public String[] hextext$getLines(SignSide side) {
-        return side == SignSide.FRONT ? signText : hextext$backSignText;
+        if (hextext$isEditing(SignSide.BACK)) {
+            return side == SignSide.BACK ? signText : hextext$getFrontPreview();
+        }
+
+        return hextext$getStoredLines(side);
     }
 
     @Inject(method = "getDescriptionPacket", at = @At("RETURN"))
@@ -190,6 +201,36 @@ public abstract class MixinTileEntitySign extends TileEntity implements SignStat
         sync.hextext$setOutlined(SignSide.FRONT, hextext$outlineStates[SignSide.FRONT.ordinal()]);
         sync.hextext$setOutlined(SignSide.BACK, hextext$outlineStates[SignSide.BACK.ordinal()]);
         sync.hextext$setWaxed(hextext$isWaxed);
+    }
+
+    @Unique
+    private boolean hextext$isEditing(SignSide side) {
+        return hextext$editingSide == side;
+    }
+
+    @Unique
+    private String[] hextext$getStoredLines(SignSide side) {
+        return side == SignSide.FRONT ? signText : hextext$backSignText;
+    }
+
+    @Unique
+    private String[] hextext$getFrontPreview() {
+        return hextext$frontSnapshot != null ? hextext$frontSnapshot : signText;
+    }
+
+    @Unique
+    private void hextext$restoreFrontPreview() {
+        if (hextext$frontSnapshot != null) {
+            hextext$copyLines(hextext$frontSnapshot, signText);
+            hextext$frontSnapshot = null;
+        }
+    }
+
+    @Unique
+    private static String[] hextext$createEmptyLines() {
+        String[] lines = new String[hextext$SIGN_LINE_COUNT];
+        Arrays.fill(lines, "");
+        return lines;
     }
 
     @Unique
