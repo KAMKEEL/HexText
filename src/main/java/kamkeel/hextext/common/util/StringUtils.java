@@ -47,6 +47,48 @@ public final class StringUtils {
         return builder == null ? text : builder.toString();
     }
 
+    /**
+     * Replaces recognised HexText ampersand formatting codes (e.g. {@code &a}, {@code &#abcdef}) with
+     * section sign equivalents. Non-formatting ampersands are left untouched.
+     *
+     * @param text input containing potential ampersand formatting tokens
+     * @return the input with recognised tokens normalised to use section signs
+     */
+    public static String convertAmpersandsToSectionSigns(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+
+        StringBuilder builder = null;
+        int index = 0;
+
+        while (index < text.length()) {
+            char current = text.charAt(index);
+
+            if (current == '&') {
+                int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, index);
+                if (codeLen == 2 || codeLen == 8) {
+                    if (builder == null) {
+                        builder = new StringBuilder(text.length());
+                        builder.append(text, 0, index);
+                    }
+
+                    builder.append(SECTION_SIGN);
+                    builder.append(text, index + 1, index + codeLen);
+                    index += codeLen;
+                    continue;
+                }
+            }
+
+            if (builder != null) {
+                builder.append(current);
+            }
+            index++;
+        }
+
+        return builder == null ? text : builder.toString();
+    }
+
     public static String extractFormatFromString(String str) {
         if (str == null || str.isEmpty()) {
             return "";
