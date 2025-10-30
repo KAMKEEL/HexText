@@ -32,10 +32,10 @@ public class CommonProxy {
         HexTextConfig.init(ev.getSuggestedConfigurationFile());
         HexTextNetwork.init();
         eventsInit();
-        HexTextSignInteractions.registerDefaults();
     }
 
     public void init(FMLInitializationEvent ev) {
+        HexTextSignInteractions.registerDefaults();
     }
 
     public void postInit(FMLPostInitializationEvent ev) {
