@@ -31,6 +31,12 @@ public abstract class MixinS33PacketUpdateSign extends Packet implements SignSyn
     private boolean hextext$glowBack;
 
     @Unique
+    private boolean hextext$outlineFront;
+
+    @Unique
+    private boolean hextext$outlineBack;
+
+    @Unique
     private boolean hextext$waxed;
 
     @Inject(method = "writePacketData", at = @At("TAIL"))
@@ -44,6 +50,8 @@ public abstract class MixinS33PacketUpdateSign extends Packet implements SignSyn
         }
         data.writeBoolean(hextext$glowFront);
         data.writeBoolean(hextext$glowBack);
+        data.writeBoolean(hextext$outlineFront);
+        data.writeBoolean(hextext$outlineBack);
         data.writeBoolean(hextext$waxed);
     }
 
@@ -59,6 +67,8 @@ public abstract class MixinS33PacketUpdateSign extends Packet implements SignSyn
         }
         hextext$glowFront = data.readBoolean();
         hextext$glowBack = data.readBoolean();
+        hextext$outlineFront = data.readBoolean();
+        hextext$outlineBack = data.readBoolean();
         hextext$waxed = data.readBoolean();
     }
 
@@ -88,6 +98,20 @@ public abstract class MixinS33PacketUpdateSign extends Packet implements SignSyn
     @Override
     public boolean hextext$isGlowing(SignSide side) {
         return side == SignSide.FRONT ? hextext$glowFront : hextext$glowBack;
+    }
+
+    @Override
+    public void hextext$setOutlined(SignSide side, boolean outlined) {
+        if (side == SignSide.FRONT) {
+            hextext$outlineFront = outlined;
+        } else {
+            hextext$outlineBack = outlined;
+        }
+    }
+
+    @Override
+    public boolean hextext$isOutlined(SignSide side) {
+        return side == SignSide.FRONT ? hextext$outlineFront : hextext$outlineBack;
     }
 
     @Override

@@ -85,11 +85,12 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         GL11.glDepthMask(false);
 
         boolean glowing = state.hextext$isGlowing(side);
+        boolean outlined = state.hextext$isOutlined(side);
         boolean lightingEnabled = GL11.glIsEnabled(GL11.GL_LIGHTING);
         if (glowing && lightingEnabled) {
             GL11.glDisable(GL11.GL_LIGHTING);
         }
-        GlowingTextRenderer.setOutlineEnabled(glowing);
+        GlowingTextRenderer.setOutlineEnabled(glowing || outlined);
 
         String[] lines = state.hextext$getLines(side);
         int baseY = -lines.length * 5;

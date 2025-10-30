@@ -23,6 +23,10 @@ public interface SignState {
 
     boolean hextext$setGlowing(SignSide side, boolean glowing);
 
+    boolean hextext$isOutlined(SignSide side);
+
+    boolean hextext$setOutlined(SignSide side, boolean outlined);
+
     String[] hextext$getLines(SignSide side);
 
     default String hextext$getLine(SignSide side, int index) {
