@@ -41,6 +41,7 @@ public final class HexTextEarlyMixins implements IMixinConfigPlugin {
             mixins.add("client.MixinGuiNewChat");
             mixins.add("client.MixinGuiTextField");
             mixins.add("client.MixinGuiChat");
+            mixins.add("client.MixinGuiRepair");
 
             mixins.add("client.sign.MixinGuiEditSign");
             mixins.add("client.sign.MixinNetHandlerPlayClient");

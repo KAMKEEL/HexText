@@ -3,6 +3,8 @@ package kamkeel.hextext.client.render;
 import kamkeel.hextext.CommonProxy;
 import kamkeel.hextext.HexText;
 import kamkeel.hextext.client.support.SimpleCharWidthFunction;
+import kamkeel.hextext.config.HexTextConfig;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,6 +15,12 @@ public class FormattedTextMetricsTest {
     @Before
     public void setUp() {
         HexText.proxy = new CommonProxy();
+        HexTextConfig.setUniversalAmpersandEnabled(true);
+    }
+
+    @After
+    public void tearDown() {
+        HexTextConfig.resetToDefaults();
     }
 
     @Test

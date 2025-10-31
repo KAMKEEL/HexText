@@ -89,6 +89,49 @@ public final class StringUtils {
         return builder == null ? text : builder.toString();
     }
 
+    /**
+     * Converts recognised section sign formatting codes back to their ampersand equivalents. This is
+     * primarily used when presenting stored text to editing interfaces where the user expects to work
+     * with ampersand tokens.
+     *
+     * @param text input potentially containing section sign formatting tokens
+     * @return the provided text with recognised section sign tokens rewritten to use ampersands
+     */
+    public static String convertSectionSignsToAmpersands(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+
+        StringBuilder builder = null;
+        int index = 0;
+
+        while (index < text.length()) {
+            char current = text.charAt(index);
+
+            if (current == SECTION_SIGN) {
+                int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, index);
+                if (codeLen == 2 || codeLen == 8) {
+                    if (builder == null) {
+                        builder = new StringBuilder(text.length());
+                        builder.append(text, 0, index);
+                    }
+
+                    builder.append('&');
+                    builder.append(text, index + 1, Math.min(index + codeLen, text.length()));
+                    index += codeLen;
+                    continue;
+                }
+            }
+
+            if (builder != null) {
+                builder.append(current);
+            }
+            index++;
+        }
+
+        return builder == null ? text : builder.toString();
+    }
+
     public static String extractFormatFromString(String str) {
         if (str == null || str.isEmpty()) {
             return "";

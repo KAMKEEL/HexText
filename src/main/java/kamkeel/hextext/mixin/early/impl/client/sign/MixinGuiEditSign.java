@@ -2,10 +2,13 @@ package kamkeel.hextext.mixin.early.impl.client.sign;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import kamkeel.hextext.HexText;
+import kamkeel.hextext.client.render.FontRenderContext;
 import kamkeel.hextext.common.sign.IHexTextSign;
 import kamkeel.hextext.common.sign.SignSide;
 import kamkeel.hextext.common.sign.SignUpdatePacket;
 import kamkeel.hextext.common.util.SignTextHelper;
+import kamkeel.hextext.common.util.StringUtils;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiEditSign;
 import net.minecraft.client.network.NetHandlerPlayClient;
@@ -34,11 +37,23 @@ public abstract class MixinGuiEditSign extends GuiScreen {
     @Unique
     public String[] editLines;
 
+    @Unique
+    private boolean hextext$rawRenderingActive;
+
     @Inject(method = "initGui", at = @At(value = "HEAD"))
     private void initSide(CallbackInfo ci) {
         IHexTextSign hexTextSign = (IHexTextSign) tileSign;
         this.editSide = hexTextSign.getEditSide();
         this.editLines = hexTextSign.getLines(this.editSide);
+
+        if (HexText.getActiveProxy() != null
+            && (HexText.getActiveProxy().convertAmpersandsOnSigns()
+            || HexText.getActiveProxy().allowUniversalAmpersand())
+            && this.editLines != null) {
+            for (int i = 0; i < this.editLines.length; i++) {
+                this.editLines[i] = StringUtils.convertSectionSignsToAmpersands(this.editLines[i]);
+            }
+        }
     }
 
     /**
@@ -58,6 +73,47 @@ public abstract class MixinGuiEditSign extends GuiScreen {
         if (side == SignSide.BACK) {
             GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
         }
+    }
+
+    @Inject(
+        method = "drawScreen(IIF)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/tileentity/TileEntityRendererDispatcher;renderTileEntityAt(Lnet/minecraft/tileentity/TileEntity;DDDF)V",
+            shift = At.Shift.BEFORE
+        )
+    )
+    private void hextext$enableRawRendering(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
+        if (HexText.getActiveProxy() == null) {
+            return;
+        }
+
+        if (!HexText.getActiveProxy().convertAmpersandsOnSigns()
+            && !HexText.getActiveProxy().allowUniversalAmpersand()) {
+            return;
+        }
+
+        FontRenderContext.pushRawTextRendering();
+        HexText.rawRenderingEnabled = true;
+        hextext$rawRenderingActive = true;
+    }
+
+    @Inject(
+        method = "drawScreen(IIF)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/tileentity/TileEntityRendererDispatcher;renderTileEntityAt(Lnet/minecraft/tileentity/TileEntity;DDDF)V",
+            shift = At.Shift.AFTER
+        )
+    )
+    private void hextext$disableRawRendering(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
+        if (!hextext$rawRenderingActive) {
+            return;
+        }
+
+        FontRenderContext.popRawTextRendering();
+        HexText.rawRenderingEnabled = false;
+        hextext$rawRenderingActive = false;
     }
 
     /**
@@ -85,9 +141,20 @@ public abstract class MixinGuiEditSign extends GuiScreen {
         ci.cancel();
         Keyboard.enableRepeatEvents(false);
         NetHandlerPlayClient handler = this.mc.getNetHandler();
+        String[] packetLines = this.editLines;
+        if (HexText.getActiveProxy() != null && HexText.getActiveProxy().convertAmpersandsOnSigns()
+            && this.editLines != null) {
+            packetLines = new String[this.editLines.length];
+            for (int i = 0; i < this.editLines.length; i++) {
+                String converted = StringUtils.convertAmpersandsToSectionSigns(this.editLines[i]);
+                packetLines[i] = converted;
+                this.editLines[i] = converted;
+            }
+        }
+
         if (handler != null) {
             C12PacketUpdateSign packet = new C12PacketUpdateSign(
-                tileSign.xCoord, tileSign.yCoord, tileSign.zCoord, this.editLines
+                tileSign.xCoord, tileSign.yCoord, tileSign.zCoord, packetLines
             );
             ((SignUpdatePacket) packet).setSide(editSide);
             handler.addToSendQueue(packet);

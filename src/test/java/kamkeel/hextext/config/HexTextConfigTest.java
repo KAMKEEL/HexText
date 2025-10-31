@@ -22,10 +22,10 @@ public class HexTextConfigTest {
     public void defaultsReflectExpectedValues() {
         assertFalse(HexTextConfig.isRgbHtmlFormatEnabled());
         assertTrue(HexTextConfig.isSignEditingAllowed());
-        assertTrue(HexTextConfig.isUniversalAmpersandEnabled());
-        assertFalse(HexTextConfig.isChatAmpersandConversionEnabled());
-        assertFalse(HexTextConfig.isSignAmpersandConversionEnabled());
-        assertFalse(HexTextConfig.isRepairAmpersandConversionEnabled());
+        assertFalse(HexTextConfig.isUniversalAmpersandEnabled());
+        assertTrue(HexTextConfig.isChatAmpersandConversionEnabled());
+        assertTrue(HexTextConfig.isSignAmpersandConversionEnabled());
+        assertTrue(HexTextConfig.isRepairAmpersandConversionEnabled());
     }
 
     @Test
