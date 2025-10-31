@@ -20,10 +20,12 @@ public final class HexTextConfig {
 
     private static final boolean DEFAULT_ENABLE_RGB_HTML_FORMAT = false;
     private static final boolean DEFAULT_ALLOW_SIGN_EDITING = true;
-    private static final boolean DEFAULT_UNIVERSAL_AMPERSAND = true;
-    private static final boolean DEFAULT_CHAT_AMPERSAND_CONVERSION = false;
-    private static final boolean DEFAULT_SIGN_AMPERSAND_CONVERSION = false;
-    private static final boolean DEFAULT_REPAIR_AMPERSAND_CONVERSION = false;
+
+    private static final boolean DEFAULT_UNIVERSAL_AMPERSAND = false;
+    private static final boolean DEFAULT_CHAT_AMPERSAND_CONVERSION = true;
+    private static final boolean DEFAULT_SIGN_AMPERSAND_CONVERSION = true;
+    private static final boolean DEFAULT_REPAIR_AMPERSAND_CONVERSION = true;
+
     private static final boolean DEFAULT_GLOWSTONE_DUST_GLOW = true;
     private static final boolean DEFAULT_REDSTONE_DUST_OUTLINE = true;
     private static final boolean DEFAULT_SLIMEBALL_WAX = true;

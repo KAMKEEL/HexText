@@ -25,6 +25,8 @@ public class HexText {
     @SidedProxy(clientSide = "kamkeel.hextext.client.ClientProxy", serverSide = "kamkeel.hextext.CommonProxy")
     public static CommonProxy proxy;
 
+    public static boolean rawRenderingEnabled = true;
+
     @Mod.Instance
     public static HexText instance;
 
