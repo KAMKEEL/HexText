@@ -85,6 +85,9 @@ public final class FontRendererRenderPipeline {
                 rawTokenSkip--;
             } else {
                 int tokenLength = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, index);
+                if (tokenLength == 0) {
+                    tokenLength = detectRawAmpersandTokenLength(text, index);
+                }
                 if (tokenLength > 0) {
                     if (text.charAt(index) != 167) {
                         float width = TokenHighlightUtils.measureLiteralWidth(bridge.getFontRenderer(), text, index, tokenLength);
@@ -115,6 +118,19 @@ public final class FontRendererRenderPipeline {
         for (RenderInstruction instruction : instructions) {
             executeInstruction(instruction);
         }
+    }
+
+    private static int detectRawAmpersandTokenLength(CharSequence text, int index) {
+        if (text == null || index < 0 || index >= text.length() - 1) {
+            return 0;
+        }
+        if (text.charAt(index) != '&') {
+            return 0;
+        }
+        if (text.charAt(index + 1) == '#') {
+            return index + 8 <= text.length() && ColorCodeUtils.isValidHexString(text, index + 2) ? 8 : 0;
+        }
+        return ColorCodeUtils.isFormattingCode(text.charAt(index + 1)) ? 2 : 0;
     }
 
     public void end() {
