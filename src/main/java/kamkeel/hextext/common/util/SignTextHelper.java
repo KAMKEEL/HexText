@@ -1,5 +1,7 @@
 package kamkeel.hextext.common.util;
 
+import net.minecraft.util.ChatAllowedCharacters;
+
 /**
  * Helper utilities for working with sign text limits whilst respecting
  * formatting sequences.
@@ -106,9 +108,25 @@ public final class SignTextHelper {
         if (dst == null) return;
         for (int i = 0; i < 4; i++) {
             String s = (src != null && i < src.length) ? src[i] : "";
-            if (s == null) s = "";
-            s = net.minecraft.util.ChatAllowedCharacters.filerAllowedCharacters(s);
+            if (s == null)
+                s = "";
+            s = signedAllowCharacters(s);
             dst[i] = clampToVisibleLimit(s);
         }
+    }
+
+    /**
+     * Filter string by only keeping those characters for which isAllowedCharacter() returns true.
+     */
+    public static String signedAllowCharacters(String input)
+    {
+        StringBuilder stringbuilder = new StringBuilder();
+        char[] achar = input.toCharArray();
+        for (char c0 : achar) {
+            if (ChatAllowedCharacters.isAllowedCharacter(c0) || (c0 == StringUtils.SECTION_SIGN)) {
+                stringbuilder.append(c0);
+            }
+        }
+        return stringbuilder.toString();
     }
 }

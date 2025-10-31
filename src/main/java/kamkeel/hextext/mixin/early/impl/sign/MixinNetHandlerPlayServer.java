@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -63,9 +64,16 @@ public abstract class MixinNetHandlerPlayServer {
     }
 
     @Redirect(method = "processChatMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ChatAllowedCharacters;isAllowedCharacter(C)Z"))
-    public boolean hexText$processChatMessage(char character){
-        if(HexText.getActiveProxy().allowUniversalAmpersand() && character == StringUtils.SECTION_SIGN)
+    public boolean hexText$processChatConvert(char character){
+        if(HexText.getActiveProxy().convertAmpersandsInChat() && character == StringUtils.SECTION_SIGN)
             return true;
         return ChatAllowedCharacters.isAllowedCharacter(character);
+    }
+
+    @ModifyArg(method = "processVanilla250Packet", at = @At(value = "INVOKE", target = "Lnet/minecraft/inventory/ContainerRepair;updateItemName(Ljava/lang/String;)V"))
+    public String hexText$processRepairConvert(String original){
+        if(!HexText.getActiveProxy().convertAmpersandsInRepairs())
+            return original;
+        return StringUtils.convertAmpersandsToSectionSigns(original);
     }
 }

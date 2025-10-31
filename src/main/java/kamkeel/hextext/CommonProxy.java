@@ -46,15 +46,15 @@ public class CommonProxy {
     }
 
     public boolean convertAmpersandsInChat() {
-        return HexTextConfig.isChatAmpersandConversionEnabled();
+        return allowUniversalAmpersand() || HexTextConfig.isChatAmpersandConversionEnabled();
     }
 
     public boolean convertAmpersandsOnSigns() {
-        return HexTextConfig.isSignAmpersandConversionEnabled();
+        return allowUniversalAmpersand() || HexTextConfig.isSignAmpersandConversionEnabled();
     }
 
     public boolean convertAmpersandsInRepairs() {
-        return HexTextConfig.isRepairAmpersandConversionEnabled();
+        return allowUniversalAmpersand() || HexTextConfig.isRepairAmpersandConversionEnabled();
     }
 
     public boolean allowSignEditing() {

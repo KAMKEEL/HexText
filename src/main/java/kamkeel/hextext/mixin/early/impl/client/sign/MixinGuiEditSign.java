@@ -46,10 +46,7 @@ public abstract class MixinGuiEditSign extends GuiScreen {
         this.editSide = hexTextSign.getEditSide();
         this.editLines = hexTextSign.getLines(this.editSide);
 
-        if (HexText.getActiveProxy() != null
-            && (HexText.getActiveProxy().convertAmpersandsOnSigns()
-            || HexText.getActiveProxy().allowUniversalAmpersand())
-            && this.editLines != null) {
+        if (HexText.getActiveProxy().convertAmpersandsOnSigns()){
             for (int i = 0; i < this.editLines.length; i++) {
                 this.editLines[i] = StringUtils.convertSectionSignsToAmpersands(this.editLines[i]);
             }
@@ -141,20 +138,16 @@ public abstract class MixinGuiEditSign extends GuiScreen {
         ci.cancel();
         Keyboard.enableRepeatEvents(false);
         NetHandlerPlayClient handler = this.mc.getNetHandler();
-        String[] packetLines = this.editLines;
-        if (HexText.getActiveProxy() != null && HexText.getActiveProxy().convertAmpersandsOnSigns()
-            && this.editLines != null) {
-            packetLines = new String[this.editLines.length];
+        if (HexText.getActiveProxy().convertAmpersandsOnSigns()){
             for (int i = 0; i < this.editLines.length; i++) {
                 String converted = StringUtils.convertAmpersandsToSectionSigns(this.editLines[i]);
-                packetLines[i] = converted;
                 this.editLines[i] = converted;
             }
         }
 
         if (handler != null) {
             C12PacketUpdateSign packet = new C12PacketUpdateSign(
-                tileSign.xCoord, tileSign.yCoord, tileSign.zCoord, packetLines
+                tileSign.xCoord, tileSign.yCoord, tileSign.zCoord, this.editLines
             );
             ((SignUpdatePacket) packet).setSide(editSide);
             handler.addToSendQueue(packet);

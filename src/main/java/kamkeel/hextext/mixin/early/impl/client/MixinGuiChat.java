@@ -5,8 +5,8 @@ import cpw.mods.fml.relauncher.SideOnly;
 import kamkeel.hextext.HexText;
 import kamkeel.hextext.client.render.FontRenderContext;
 import kamkeel.hextext.common.util.StringUtils;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiChat;
+import net.minecraft.client.gui.GuiScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @SideOnly(Side.CLIENT)
 @Mixin(GuiChat.class)
-public abstract class MixinGuiChat extends Gui {
+public abstract class MixinGuiChat extends GuiScreen {
 
     @Inject(method = "drawScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiTextField;drawTextBox()V", shift = At.Shift.BEFORE))
     private void hextext$PushRawRendering(CallbackInfo ci) {
@@ -29,11 +29,9 @@ public abstract class MixinGuiChat extends Gui {
         HexText.rawRenderingEnabled = true;
     }
 
-    @ModifyArg(
-        method = "keyTyped",
-        at = @At(value = "INVOKE", target = "Lnet/minecraft/client/entity/EntityClientPlayerMP;func_71165_d(Ljava/lang/String;)V")
-    )
-    private String hextext$convertSubmittedChat(String original) {
+    @ModifyArg(method = "func_146403_a", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/entity/EntityClientPlayerMP;sendChatMessage(Ljava/lang/String;)V"))
+    public String hextext$ConvertChatOnSubmit(String original)
+    {
         if (HexText.getActiveProxy() == null)
             return original;
 

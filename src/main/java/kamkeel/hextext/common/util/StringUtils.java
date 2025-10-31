@@ -66,7 +66,7 @@ public final class StringUtils {
             char current = text.charAt(index);
 
             if (current == '&') {
-                int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, index);
+                int codeLen = detectAmpersandFormattingCodeLength(text, index);
                 if (codeLen == 2 || codeLen == 8) {
                     if (builder == null) {
                         builder = new StringBuilder(text.length());
@@ -87,6 +87,19 @@ public final class StringUtils {
         }
 
         return builder == null ? text : builder.toString();
+    }
+
+    private static int detectAmpersandFormattingCodeLength(CharSequence text, int index) {
+        if (text == null || index < 0 || index >= text.length() - 1) {
+            return 0;
+        }
+
+        char next = text.charAt(index + 1);
+        if (next == '#') {
+            return index + 8 <= text.length() && ColorCodeUtils.isValidHexString(text, index + 2) ? 8 : 0;
+        }
+
+        return ColorCodeUtils.isFormattingCode(next) ? 2 : 0;
     }
 
     /**

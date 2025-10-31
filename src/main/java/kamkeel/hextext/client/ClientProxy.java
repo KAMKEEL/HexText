@@ -38,17 +38,17 @@ public class ClientProxy extends CommonProxy {
 
     @Override
     public boolean convertAmpersandsInChat() {
-        return clientConfig.convertAmpersandsInChat();
+        return allowUniversalAmpersand() || clientConfig.convertAmpersandsInChat();
     }
 
     @Override
     public boolean convertAmpersandsOnSigns() {
-        return clientConfig.convertAmpersandsOnSigns();
+        return allowUniversalAmpersand() || clientConfig.convertAmpersandsOnSigns();
     }
 
     @Override
     public boolean convertAmpersandsInRepairs() {
-        return clientConfig.convertAmpersandsInRepairs();
+        return allowUniversalAmpersand() || clientConfig.convertAmpersandsInRepairs();
     }
 
     @Override

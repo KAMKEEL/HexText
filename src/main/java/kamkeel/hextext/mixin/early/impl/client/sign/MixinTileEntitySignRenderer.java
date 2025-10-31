@@ -123,7 +123,7 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         for (int i = 0; i < lines.length; ++i) {
             String line = lines[i];
             if (i == sign.lineBeingEdited) {
-                line = StringUtils.SECTION_SIGN + "r> " + line + " " + StringUtils.SECTION_SIGN + "r<";
+                line = "> " + line + " <";
             }
             fontRenderer.drawString(line, -fontRenderer.getStringWidth(line) / 2, i * 10 + baseY, 0);
         }
