@@ -26,9 +26,11 @@ public final class FormattedTextMetrics {
         boolean isBold = false;
         final int length = text.length();
 
+        ColorCodeUtils.FormattingEnvironment env = rawMode ? null : ColorCodeUtils.captureFormattingEnvironment(false);
+
         for (int index = 0; index < length; ) {
             if (!rawMode) {
-                int codeLen = ColorCodeUtils.detectColorCodeLength(text, index);
+                int codeLen = ColorCodeUtils.detectColorCodeLength(text, index, false, env);
                 if (codeLen > 0) {
                     if (codeLen == 2 && index + 1 < length) {
                         char fmt = Character.toLowerCase(text.charAt(index + 1));
@@ -79,9 +81,11 @@ public final class FormattedTextMetrics {
         boolean isBold = false;
         final int length = text.length();
 
+        ColorCodeUtils.FormattingEnvironment env = rawMode ? null : ColorCodeUtils.captureFormattingEnvironment(false);
+
         for (int index = 0; index < length; ) {
             if (!rawMode) {
-                int codeLen = ColorCodeUtils.detectColorCodeLength(text, index);
+                int codeLen = ColorCodeUtils.detectColorCodeLength(text, index, false, env);
                 if (codeLen > 0) {
                     if (codeLen == 2 && index + 1 < length) {
                         char fmt = Character.toLowerCase(text.charAt(index + 1));

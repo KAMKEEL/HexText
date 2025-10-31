@@ -1,5 +1,6 @@
 package kamkeel.hextext.common.util;
 
+import kamkeel.hextext.CommonProxy;
 import kamkeel.hextext.HexText;
 
 /**
@@ -8,6 +9,41 @@ import kamkeel.hextext.HexText;
 public final class ColorCodeUtils {
 
     private ColorCodeUtils() {
+    }
+
+    /**
+     * Captures the formatting rules that should be applied when scanning text. The rules are derived
+     * from the active proxy and optionally loosened for raw mode rendering, allowing calling sites to
+     * reuse them across multiple lookups without repeatedly consulting the proxy.
+     */
+    public static final class FormattingEnvironment {
+
+        private final boolean allowHtmlFormatting;
+        private final boolean allowUniversalAmpersand;
+
+        private FormattingEnvironment(boolean allowHtmlFormatting, boolean allowUniversalAmpersand) {
+            this.allowHtmlFormatting = allowHtmlFormatting;
+            this.allowUniversalAmpersand = allowUniversalAmpersand;
+        }
+
+        public boolean allowsHtmlFormatting() {
+            return allowHtmlFormatting;
+        }
+
+        public boolean allowsUniversalAmpersand() {
+            return allowUniversalAmpersand;
+        }
+    }
+
+    public static FormattingEnvironment captureFormattingEnvironment(boolean rawMode) {
+        CommonProxy proxy = HexText.getActiveProxy();
+        boolean allowHtml = proxy == null || proxy.allowHtmlFormatting();
+        boolean allowAmpersand = rawMode || proxy == null || proxy.allowUniversalAmpersand();
+        return new FormattingEnvironment(allowHtml, allowAmpersand);
+    }
+
+    public static FormattingEnvironment captureFormattingEnvironment() {
+        return captureFormattingEnvironment(false);
     }
 
     public static boolean isValidHexChar(char c) {
@@ -103,15 +139,35 @@ public final class ColorCodeUtils {
     }
 
     public static int detectColorCodeLength(CharSequence str, int pos, boolean rawMode) {
+        return detectColorCodeLength(str, pos, rawMode, captureFormattingEnvironment(rawMode));
+    }
+
+    public static int detectColorCodeLength(CharSequence str, int pos, boolean rawMode, FormattingEnvironment env) {
+        if (env == null) {
+            env = captureFormattingEnvironment(rawMode);
+        }
+        return detectColorCodeLength(str, pos, rawMode, env.allowsHtmlFormatting(), env.allowsUniversalAmpersand());
+    }
+
+    public static int detectColorCodeLength(CharSequence str, int pos) {
+        return detectColorCodeLength(str, pos, false);
+    }
+
+    public static int detectColorCodeLengthIgnoringRaw(CharSequence str, int pos) {
+        return detectColorCodeLength(str, pos, false);
+    }
+
+    public static int detectColorCodeLengthIgnoringRaw(CharSequence str, int pos, FormattingEnvironment env) {
+        return detectColorCodeLength(str, pos, false, env);
+    }
+
+    private static int detectColorCodeLength(CharSequence str, int pos, boolean rawMode,
+                                             boolean allowHtml, boolean allowAmpersand) {
         if (str == null || pos < 0 || pos >= str.length() || rawMode) {
             return 0;
         }
 
         char c = str.charAt(pos);
-
-        final boolean allowHtml = HexText.getActiveProxy() == null || HexText.getActiveProxy().allowHtmlFormatting();
-        final boolean allowAmpersand = HexText.getActiveProxy() == null
-            || HexText.getActiveProxy().allowUniversalAmpersand();
 
         if (c == 167) {
             if (pos + 2 <= str.length() && str.charAt(pos + 1) == '#'
@@ -149,14 +205,6 @@ public final class ColorCodeUtils {
         }
 
         return 0;
-    }
-
-    public static int detectColorCodeLength(CharSequence str, int pos) {
-        return detectColorCodeLength(str, pos, false);
-    }
-
-    public static int detectColorCodeLengthIgnoringRaw(CharSequence str, int pos) {
-        return detectColorCodeLength(str, pos, false);
     }
 
     public static int calculateShadowColor(int rgb) {
@@ -237,8 +285,9 @@ public final class ColorCodeUtils {
             return false;
         }
 
+        FormattingEnvironment env = captureFormattingEnvironment(false);
         for (int index = 0; index < input.length(); index++) {
-            if (detectColorCodeLengthIgnoringRaw(input, index) > 0) {
+            if (detectColorCodeLengthIgnoringRaw(input, index, env) > 0) {
                 return true;
             }
         }
@@ -258,8 +307,9 @@ public final class ColorCodeUtils {
             return -1;
         }
 
+        FormattingEnvironment env = captureFormattingEnvironment(false);
         for (int index = start; index < input.length(); index++) {
-            if (detectColorCodeLengthIgnoringRaw(input, index) > 0) {
+            if (detectColorCodeLengthIgnoringRaw(input, index, env) > 0) {
                 return index;
             }
         }

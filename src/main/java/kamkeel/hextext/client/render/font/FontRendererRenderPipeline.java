@@ -35,6 +35,7 @@ public final class FontRendererRenderPipeline {
     private boolean hasPendingRenderColor;
     private int outlineGlyphIndex = -1;
     private boolean outlineDrawnForCurrentGlyph;
+    private ColorCodeUtils.FormattingEnvironment formattingEnvironmentIgnoreRaw;
 
     public FontRendererRenderPipeline(FontRendererBridge bridge) {
         this.bridge = bridge;
@@ -50,6 +51,7 @@ public final class FontRendererRenderPipeline {
         renderData = RenderTextProcessor.prepare(text, rawMode);
         shadowPass = shadow;
         renderingShadow = shadow;
+        formattingEnvironmentIgnoreRaw = ColorCodeUtils.captureFormattingEnvironment(false);
 
         int initialColor = resolveInitialColor();
         colorState.begin(initialColor, shadow);
@@ -84,7 +86,12 @@ public final class FontRendererRenderPipeline {
             if (rawTokenSkip > 0) {
                 rawTokenSkip--;
             } else {
-                int tokenLength = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, index);
+                ColorCodeUtils.FormattingEnvironment env = formattingEnvironmentIgnoreRaw;
+                if (env == null) {
+                    env = ColorCodeUtils.captureFormattingEnvironment(false);
+                    formattingEnvironmentIgnoreRaw = env;
+                }
+                int tokenLength = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, index, env);
                 if (tokenLength == 0) {
                     tokenLength = detectRawAmpersandTokenLength(text, index);
                 }

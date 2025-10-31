@@ -27,7 +27,18 @@ public final class SignTextHelper {
         if (text == null) {
             return 0;
         }
-        return StringUtils.stripColorCodes(text).length();
+        int visible = 0;
+        ColorCodeUtils.FormattingEnvironment env = ColorCodeUtils.captureFormattingEnvironment(false);
+        for (int index = 0; index < text.length(); ) {
+            int codeLength = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, index, env);
+            if (codeLength > 0) {
+                index += codeLength;
+                continue;
+            }
+            visible++;
+            index++;
+        }
+        return visible;
     }
 
     /**
@@ -42,18 +53,13 @@ public final class SignTextHelper {
             return text;
         }
 
-        if (visibleLength(text) <= SIGN_LINE_VISIBLE_LIMIT) {
-            return text;
-        }
-
-        StringBuilder builder = new StringBuilder(text.length());
+        ColorCodeUtils.FormattingEnvironment env = ColorCodeUtils.captureFormattingEnvironment(false);
         int index = 0;
         int visible = 0;
 
         while (index < text.length()) {
-            int codeLength = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, index);
+            int codeLength = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, index, env);
             if (codeLength > 0) {
-                builder.append(text, index, index + codeLength);
                 index += codeLength;
                 continue;
             }
@@ -62,18 +68,42 @@ public final class SignTextHelper {
                 break;
             }
 
-            builder.append(text.charAt(index));
             visible++;
             index++;
         }
 
-        while (index < text.length()) {
-            int codeLength = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, index);
+        if (index >= text.length()) {
+            return text;
+        }
+
+        StringBuilder builder = new StringBuilder(text.length());
+        int copyIndex = 0;
+        visible = 0;
+
+        while (copyIndex < text.length()) {
+            int codeLength = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, copyIndex, env);
+            if (codeLength > 0) {
+                builder.append(text, copyIndex, copyIndex + codeLength);
+                copyIndex += codeLength;
+                continue;
+            }
+
+            if (visible >= SIGN_LINE_VISIBLE_LIMIT) {
+                break;
+            }
+
+            builder.append(text.charAt(copyIndex));
+            visible++;
+            copyIndex++;
+        }
+
+        while (copyIndex < text.length()) {
+            int codeLength = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, copyIndex, env);
             if (codeLength <= 0) {
                 break;
             }
-            builder.append(text, index, index + codeLength);
-            index += codeLength;
+            builder.append(text, copyIndex, copyIndex + codeLength);
+            copyIndex += codeLength;
         }
 
         return builder.toString();

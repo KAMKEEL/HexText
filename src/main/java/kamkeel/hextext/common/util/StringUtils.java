@@ -117,12 +117,13 @@ public final class StringUtils {
 
         StringBuilder builder = null;
         int index = 0;
+        ColorCodeUtils.FormattingEnvironment env = ColorCodeUtils.captureFormattingEnvironment(false);
 
         while (index < text.length()) {
             char current = text.charAt(index);
 
             if (current == SECTION_SIGN) {
-                int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, index);
+                int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, index, env);
                 if (codeLen == 2 || codeLen == 8) {
                     if (builder == null) {
                         builder = new StringBuilder(text.length());
@@ -153,9 +154,10 @@ public final class StringUtils {
         String currentColorCode = null;
         StringBuilder styleCodes = new StringBuilder();
         ArrayDeque<String> colorStack = new ArrayDeque<>();
+        ColorCodeUtils.FormattingEnvironment env = ColorCodeUtils.captureFormattingEnvironment(false);
 
         for (int i = 0; i < str.length(); ) {
-            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(str, i);
+            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(str, i, env);
 
             if (codeLen > 0) {
                 char firstChar = str.charAt(i);
@@ -213,19 +215,27 @@ public final class StringUtils {
             return null;
         }
 
-        StringBuilder builder = new StringBuilder(input.length());
-        for (int index = 0; index < input.length(); ) {
-            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index);
+        StringBuilder builder = null;
+        int index = 0;
+        ColorCodeUtils.FormattingEnvironment env = ColorCodeUtils.captureFormattingEnvironment(false);
+        while (index < input.length()) {
+            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index, env);
             if (codeLen > 0) {
+                if (builder == null) {
+                    builder = new StringBuilder(input.length());
+                    builder.append(input, 0, index);
+                }
                 index += codeLen;
                 continue;
             }
 
-            builder.append(input.charAt(index));
+            if (builder != null) {
+                builder.append(input.charAt(index));
+            }
             index++;
         }
 
-        return builder.toString();
+        return builder == null ? input.toString() : builder.toString();
     }
 
     /**
@@ -247,8 +257,9 @@ public final class StringUtils {
 
         StringBuilder builder = null;
         int index = 0;
+        ColorCodeUtils.FormattingEnvironment env = ColorCodeUtils.captureFormattingEnvironment(false);
         while (index < input.length()) {
-            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index);
+            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index, env);
             if (codeLen > 0) {
                 if (isHexColorToken(input, index, codeLen)) {
                     if (builder == null) {
@@ -286,8 +297,9 @@ public final class StringUtils {
 
         StringBuilder builder = null;
         int index = 0;
+        ColorCodeUtils.FormattingEnvironment env = ColorCodeUtils.captureFormattingEnvironment(false);
         while (index < input.length()) {
-            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index);
+            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index, env);
             if (codeLen > 0) {
                 if (isStandardColorToken(input, index, codeLen)) {
                     if (builder == null) {
@@ -325,8 +337,9 @@ public final class StringUtils {
 
         StringBuilder builder = null;
         int index = 0;
+        ColorCodeUtils.FormattingEnvironment env = ColorCodeUtils.captureFormattingEnvironment(false);
         while (index < input.length()) {
-            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index);
+            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index, env);
             if (codeLen > 0) {
                 if (isStyleOrEffectToken(input, index, codeLen)) {
                     if (builder == null) {
