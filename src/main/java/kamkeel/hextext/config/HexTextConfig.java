@@ -39,9 +39,11 @@ public final class HexTextConfig {
     private static float rainbowSpeed = DEFAULT_RAINBOW_SPEED;
     private static int shakeInterval = DEFAULT_SHAKE_INTERVAL;
     private static int igniteInterval = DEFAULT_IGNITE_INTERVAL;
+
     private static boolean enableRgbHtmlFormat = DEFAULT_ENABLE_RGB_HTML_FORMAT;
     private static boolean allowSignEditing = DEFAULT_ALLOW_SIGN_EDITING;
     private static boolean allowAmpersand = DEFAULT_ALLOW_AMPERSAND;
+
     private static boolean enableGlowstoneDustGlow = DEFAULT_GLOWSTONE_DUST_GLOW;
     private static boolean enableRedstoneDustOutline = DEFAULT_REDSTONE_DUST_OUTLINE;
     private static boolean enableSlimeballWax = DEFAULT_SLIMEBALL_WAX;
