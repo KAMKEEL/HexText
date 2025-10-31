@@ -108,8 +108,9 @@ public final class ColorCodeUtils {
         }
 
         char c = str.charAt(pos);
-        boolean allowAmpersand = HexText.getActiveProxy().allowAmpersand();
-        boolean allowHtml = HexText.getActiveProxy().allowHtmlFormatting();
+
+        final boolean allowHtml = HexText.getActiveProxy() == null || HexText.getActiveProxy().allowHtmlFormatting();
+        final boolean allowAmpersand = HexText.getActiveProxy() == null || HexText.getActiveProxy().allowAmpersand();
 
         if (c == 167) {
             if (pos + 2 <= str.length() && str.charAt(pos + 1) == '#'

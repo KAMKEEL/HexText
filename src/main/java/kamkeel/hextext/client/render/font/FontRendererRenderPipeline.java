@@ -321,8 +321,8 @@ public final class FontRendererRenderPipeline {
             return pendingRenderColor & 0xFFFFFF;
         }
         int r = Math.round(bridge.getRedComponent() * 255.0f);
-        int g = Math.round(bridge.getBlueComponent() * 255.0f);
-        int b = Math.round(bridge.getGreenComponent() * 255.0f);
+        int g = Math.round(bridge.getGreenComponent() * 255.0f);
+        int b = Math.round(bridge.getBlueComponent() * 255.0f);
         return (r << 16) | (g << 8) | b;
     }
 }

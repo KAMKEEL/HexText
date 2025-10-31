@@ -310,15 +310,18 @@ public final class StringUtils {
             return true;
         }
 
-        if (HexText.getActiveProxy().allowHtmlFormatting() && codeLen == 8 && start == '<') {
+        final boolean htmlFormat = HexText.getActiveProxy() == null || HexText.getActiveProxy().allowHtmlFormatting();
+        final boolean ampersandFormat = HexText.getActiveProxy() == null || HexText.getActiveProxy().allowAmpersand();
+
+        if (htmlFormat && codeLen == 8 && start == '<') {
             return true;
         }
 
-        if (HexText.getActiveProxy().allowHtmlFormatting() && codeLen == 9 && start == '<') {
+        if (htmlFormat && codeLen == 9 && start == '<') {
             return true;
         }
 
-        if (codeLen == 2 && ((start == '&' && HexText.getActiveProxy().allowAmpersand()) || start == 167)) {
+        if (codeLen == 2 && ((start == '&' && ampersandFormat) || start == 167)) {
             char fmt = Character.toLowerCase(input.charAt(index + 1));
             return ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g';
         }
@@ -329,7 +332,8 @@ public final class StringUtils {
     private static boolean isStyleOrEffectToken(CharSequence input, int index, int codeLen) {
         if (codeLen == 2) {
             char start = input.charAt(index);
-            if ((start == '&' && HexText.getActiveProxy().allowAmpersand()) || start == 167) {
+            final boolean ampersandFormat = HexText.getActiveProxy() == null || HexText.getActiveProxy().allowAmpersand();
+            if ((start == '&' && ampersandFormat) || start == 167) {
                 char fmt = Character.toLowerCase(input.charAt(index + 1));
                 return ColorCodeUtils.isStyleCode(fmt) || ColorCodeUtils.isEffectCode(fmt);
             }
@@ -341,7 +345,8 @@ public final class StringUtils {
     private static boolean isStandardColorToken(CharSequence input, int index, int codeLen) {
         if (codeLen == 2) {
             char start = input.charAt(index);
-            if ((start == '&' && HexText.getActiveProxy().allowAmpersand()) || start == 167) {
+            final boolean ampersandFormat = HexText.getActiveProxy() == null || HexText.getActiveProxy().allowAmpersand();
+            if ((start == '&' && ampersandFormat) || start == 167) {
                 char fmt = Character.toLowerCase(input.charAt(index + 1));
                 return ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g';
             }

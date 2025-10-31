@@ -27,8 +27,8 @@ public final class RenderTextProcessor {
         Map<Integer, List<RenderInstruction>> instructions = null;
         boolean modified = rawMode && !processed.equals(text);
 
-        boolean allowAmpersand = HexText.getActiveProxy().allowAmpersand();
-        boolean allowHtml = HexText.getActiveProxy().allowHtmlFormatting();
+        final boolean allowHtml = HexText.getActiveProxy() == null || HexText.getActiveProxy().allowHtmlFormatting();
+        final boolean allowAmpersand = HexText.getActiveProxy() == null || HexText.getActiveProxy().allowAmpersand();
 
         for (int i = 0; i < processed.length(); i++) {
             char current = processed.charAt(i);
