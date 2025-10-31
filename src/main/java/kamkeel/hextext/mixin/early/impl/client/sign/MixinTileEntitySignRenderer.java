@@ -1,5 +1,6 @@
 package kamkeel.hextext.mixin.early.impl.client.sign;
 
+import kamkeel.hextext.client.render.RenderSignPipeline;
 import kamkeel.hextext.client.render.font.GlowingTextRenderer;
 import kamkeel.hextext.common.sign.IHexTextSign;
 import kamkeel.hextext.common.sign.SignSide;
@@ -81,70 +82,11 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
             OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, baseLightU, baseLightV);
         }
 
-        renderTextForSide(sign, state, fontRenderer, SignSide.FRONT, scale, baseLightU, baseLightV);
-        renderTextForSide(sign, state, fontRenderer, SignSide.BACK, scale, baseLightU, baseLightV);
+        RenderSignPipeline.renderTextForSide(sign, state, fontRenderer, SignSide.FRONT, scale, baseLightU, baseLightV);
+        RenderSignPipeline.renderTextForSide(sign, state, fontRenderer, SignSide.BACK, scale, baseLightU, baseLightV);
 
         GL11.glPopMatrix();
         ci.cancel();
-    }
-
-    @Unique
-    private void renderTextForSide(TileEntitySign sign, IHexTextSign state, FontRenderer fontRenderer,
-                                   SignSide side, float scale, float baseLightU, float baseLightV) {
-
-        GL11.glPushMatrix();
-        GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_CURRENT_BIT | GL11.GL_LIGHTING_BIT);
-        GL11.glTranslatef(0.0F, 0.5F * scale, side == SignSide.FRONT ? 0.07F * scale : -0.07F * scale);
-        if (side == SignSide.BACK) {
-            GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
-        }
-
-        float fontScale = 0.016666668F * scale;
-        GL11.glScalef(fontScale, -fontScale, fontScale);
-        GL11.glNormal3f(0.0F, 0.0F, -1.0F * fontScale);
-
-        boolean glowing = state.isGlowing(side);
-        boolean outlined = state.isOutlined(side);
-
-        // GUI-style blending + no fixed-function lighting
-        GL11.glEnable(GL11.GL_BLEND);
-        OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDepthMask(false);
-
-        boolean changedLightmap = false;
-        if (glowing) {
-            if (OpenGlHelper.lastBrightnessX != 240.0F || OpenGlHelper.lastBrightnessY != 240.0F) {
-                OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0F, 240.0F);
-                changedLightmap = true;
-            }
-        }
-
-        if (glowing) RenderHelper.disableStandardItemLighting();
-
-        GlowingTextRenderer.setOutlineEnabled(outlined);
-        String[] lines = state.getLines(side);
-        int baseY = -lines.length * 5;
-        for (int i = 0; i < lines.length; ++i) {
-            String line = lines[i];
-            if (i == sign.lineBeingEdited) {
-                line = "> " + line + " <";
-            }
-            int lineWidth = fontRenderer.getStringWidth(line);
-            fontRenderer.drawString(line, -lineWidth / 2, i * 10 + baseY, 0);
-        }
-
-        GlowingTextRenderer.setOutlineEnabled(false);
-        GL11.glDepthMask(true);
-        if (glowing) {
-            if (changedLightmap) {
-                OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, baseLightU, baseLightV);
-            }
-            RenderHelper.enableStandardItemLighting();
-        }
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GL11.glPopMatrix();
-        GL11.glPopAttrib();
     }
 
 }
