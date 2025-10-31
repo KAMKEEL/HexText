@@ -9,7 +9,7 @@ import java.util.ArrayDeque;
  */
 public final class StringUtils {
 
-    public static String SECTION_SIGN = "§";
+    public static char SECTION_SIGN = '§';
 
     private StringUtils() {
     }

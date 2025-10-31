@@ -43,6 +43,7 @@ public final class HexTextEarlyMixins implements IMixinConfigPlugin {
             mixins.add("client.sign.MixinGuiEditSign");
             mixins.add("client.sign.MixinNetHandlerPlayClient");
             mixins.add("client.sign.MixinTileEntitySignRenderer");
+            mixins.add("client.sign.MixinTileEntitySignClient");
         }
 
         mixins.add("sign.MixinBlockSign");

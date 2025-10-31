@@ -6,6 +6,9 @@ import kamkeel.hextext.client.render.font.FontRendererRenderPipeline;
 import kamkeel.hextext.client.render.font.GlyphRenderer;
 import kamkeel.hextext.common.util.StringUtils;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.settings.GameSettings;
+import net.minecraft.util.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -66,7 +69,25 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
     protected abstract float hextext$invokeRenderUnicodeChar(char character, boolean italic);
 
     @Unique
-    private final FontRendererRenderPipeline hextext$pipeline = new FontRendererRenderPipeline(this);
+    private FontRendererRenderPipeline hextext$pipeline = new FontRendererRenderPipeline(this);
+
+    @Unique
+    private boolean hexText$DoNotModify = false;
+
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void angelica$injectBatcher(GameSettings settings, ResourceLocation fontLocation, TextureManager texManager,
+                                        boolean unicodeMode, CallbackInfo ci) {
+        hextext$pipeline = new FontRendererRenderPipeline(this);
+        if (hextext$isSubclassOfFontRenderer())
+            this.hexText$DoNotModify = true;
+    }
+
+    private boolean hextext$isSubclassOfFontRenderer() {
+        // Avoid generic capture by using wildcard Class<?>
+        final Class<?> clazz = ((Object) this).getClass();
+        // True for any subclass of FontRenderer, false for FontRenderer itself
+        return FontRenderer.class.isAssignableFrom(clazz) && !FontRenderer.class.equals(clazz);
+    }
 
     @Unique
     private final GlyphRenderer hextext$glyphRenderer = new GlyphRenderer() {
@@ -81,10 +102,10 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
         }
     };
 
-    @Inject(method = "renderString", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;setColor(FFFF)V", shift = At.Shift.AFTER), locals = LocalCapture.CAPTURE_FAILHARD)
+    @Inject(method = "renderString", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;setColor(FFFF)V", shift = At.Shift.AFTER))
     private void hextext$capturePreparedColor(String text, int x, int y, int color, boolean dropShadow,
                                               CallbackInfoReturnable<Integer> cir) {
-        if(HexText.getActiveProxy() == null)
+        if(this.hexText$DoNotModify || HexText.getActiveProxy() == null)
             return;
 
         hextext$pipeline.capturePreparedColor(color);
@@ -92,7 +113,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
 
     @Inject(method = "renderStringAtPos", at = @At("HEAD"))
     private void hextext$begin(String text, boolean shadow, CallbackInfo ci) {
-        if(HexText.getActiveProxy() == null)
+        if(this.hexText$DoNotModify || HexText.getActiveProxy() == null)
             return;
 
         hextext$pipeline.begin(text, shadow);
@@ -100,7 +121,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
 
     @ModifyVariable(method = "renderStringAtPos", at = @At("HEAD"), argsOnly = true)
     private String hextext$replaceRenderText(String text) {
-        if(HexText.getActiveProxy() == null)
+        if(this.hexText$DoNotModify || HexText.getActiveProxy() == null)
             return text;
 
         return hextext$pipeline.adjustRenderText(text);
@@ -109,7 +130,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
     @Inject(method = "renderStringAtPos", at = @At(value = "INVOKE_ASSIGN", target = "Ljava/lang/String;charAt(I)C"),
         locals = LocalCapture.CAPTURE_FAILHARD)
     private void hextext$applyInstructions(String text, boolean shadow, CallbackInfo ci, int index, char current) {
-        if(HexText.getActiveProxy() == null)
+        if(this.hexText$DoNotModify || HexText.getActiveProxy() == null)
             return;
 
         hextext$pipeline.applyInstructions(text, index, current);
@@ -117,7 +138,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
 
     @Inject(method = "renderStringAtPos", at = @At("TAIL"))
     private void hextext$end(String text, boolean shadow, CallbackInfo ci) {
-        if(HexText.getActiveProxy() == null)
+        if(this.hexText$DoNotModify || HexText.getActiveProxy() == null)
             return;
 
         hextext$pipeline.end();
@@ -125,7 +146,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
 
     @Inject(method = "getStringWidth", at = @At("RETURN"), cancellable = true)
     private void hextext$width(String text, CallbackInfoReturnable<Integer> cir) {
-        if(HexText.getActiveProxy() == null)
+        if(this.hexText$DoNotModify || HexText.getActiveProxy() == null)
             return;
 
         cir.setReturnValue(hextext$pipeline.computeStringWidth(text));
@@ -133,7 +154,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
 
     @Inject(method = "sizeStringToWidth", at = @At("RETURN"), cancellable = true)
     private void hextext$size(String text, int maxWidth, CallbackInfoReturnable<Integer> cir) {
-        if(HexText.getActiveProxy() == null)
+        if(this.hexText$DoNotModify || HexText.getActiveProxy() == null)
             return;
 
         cir.setReturnValue(hextext$pipeline.computeLineBreakIndex(text, maxWidth));
@@ -141,7 +162,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
 
     @Inject(method = "trimStringToWidth(Ljava/lang/String;IZ)Ljava/lang/String;", at = @At("RETURN"), cancellable = true)
     private void hextext$trim(String text, int width, boolean reverse, CallbackInfoReturnable<String> cir) {
-        if(HexText.getActiveProxy() == null)
+        if(this.hexText$DoNotModify || HexText.getActiveProxy() == null)
             return;
 
         cir.setReturnValue(hextext$pipeline.trimStringToWidth(text, width, reverse));
@@ -149,7 +170,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
 
     @Inject(method = "wrapFormattedStringToWidth", at = @At("RETURN"), cancellable = true)
     private void hextext$wrap(String text, int width, CallbackInfoReturnable<String> cir) {
-        if(HexText.getActiveProxy() == null)
+        if(this.hexText$DoNotModify || HexText.getActiveProxy() == null)
             return;
 
         cir.setReturnValue(hextext$pipeline.wrapFormattedString(text, width));
@@ -166,7 +187,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
     @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;renderDefaultChar(IZ)F"))
     private float hextext$renderDefaultChar(FontRenderer fontRenderer, int character, boolean italic,
                                             int glyphIndex, char glyph, boolean italicFlag) {
-        if(HexText.getActiveProxy() == null)
+        if(this.hexText$DoNotModify || HexText.getActiveProxy() == null)
             return  this.renderDefaultChar(glyphIndex, italicFlag);
 
         return hextext$pipeline.renderGlyph(glyph, italic, false, character, glyph, hextext$glyphRenderer);
@@ -175,7 +196,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
     @Redirect(method = "renderCharAtPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;renderUnicodeChar(CZ)F"))
     private float hextext$renderUnicodeChar(FontRenderer fontRenderer, char character, boolean italic,
                                             int glyphIndex, char glyph, boolean italicFlag) {
-        if(HexText.getActiveProxy() == null)
+        if(this.hexText$DoNotModify || HexText.getActiveProxy() == null)
             return this.renderUnicodeChar(glyph, italicFlag);
 
         return hextext$pipeline.renderGlyph(glyph, italic, true, 0, character, hextext$glyphRenderer);
@@ -183,7 +204,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
 
     @Inject(method = "doDraw", at = @At("TAIL"), remap = false)
     private void hextext$advanceVisibleGlyphIndex(float width, CallbackInfo ci) {
-        if(HexText.getActiveProxy() == null)
+        if(this.hexText$DoNotModify || HexText.getActiveProxy() == null)
             return;
 
         hextext$pipeline.advanceGlyphIndex();
