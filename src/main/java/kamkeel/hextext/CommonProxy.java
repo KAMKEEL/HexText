@@ -41,8 +41,20 @@ public class CommonProxy {
     public void postInit(FMLPostInitializationEvent ev) {
     }
 
-    public boolean allowAmpersand() {
-        return HexTextConfig.isAmpersandAllowed();
+    public boolean allowUniversalAmpersand() {
+        return HexTextConfig.isUniversalAmpersandEnabled();
+    }
+
+    public boolean convertAmpersandsInChat() {
+        return HexTextConfig.isChatAmpersandConversionEnabled();
+    }
+
+    public boolean convertAmpersandsOnSigns() {
+        return HexTextConfig.isSignAmpersandConversionEnabled();
+    }
+
+    public boolean convertAmpersandsInRepairs() {
+        return HexTextConfig.isRepairAmpersandConversionEnabled();
     }
 
     public boolean allowSignEditing() {
@@ -53,7 +65,8 @@ public class CommonProxy {
         return HexTextConfig.isRgbHtmlFormatEnabled();
     }
 
-    public void applyServerConfig(boolean allowAmpersand, boolean allowSignEditing, boolean enableHtmlFormat) {
+    public void applyServerConfig(boolean universalAmpersand, boolean chatAmpersands, boolean signAmpersands,
+        boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat) {
         // Server already owns the authoritative configuration, so nothing further needs to happen here.
     }
 }

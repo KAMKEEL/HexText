@@ -43,7 +43,7 @@ public abstract class MixinGuiTextField extends Gui {
 
     @Inject(method = "getText", at = @At("RETURN"), cancellable = true)
     private void hextext$legacy$endRawMode(CallbackInfoReturnable<String> cir) {
-        if(!HexText.getActiveProxy().allowAmpersand())
+        if(!HexText.getActiveProxy().allowUniversalAmpersand())
             return;
 
         cir.setReturnValue(StringUtils.convertAmpersandsToSectionSigns(cir.getReturnValue()));

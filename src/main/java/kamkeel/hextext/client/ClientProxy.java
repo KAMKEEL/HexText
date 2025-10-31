@@ -32,8 +32,23 @@ public class ClientProxy extends CommonProxy {
     }
 
     @Override
-    public boolean allowAmpersand() {
-        return clientConfig.allowAmpersand();
+    public boolean allowUniversalAmpersand() {
+        return clientConfig.allowUniversalAmpersand();
+    }
+
+    @Override
+    public boolean convertAmpersandsInChat() {
+        return clientConfig.convertAmpersandsInChat();
+    }
+
+    @Override
+    public boolean convertAmpersandsOnSigns() {
+        return clientConfig.convertAmpersandsOnSigns();
+    }
+
+    @Override
+    public boolean convertAmpersandsInRepairs() {
+        return clientConfig.convertAmpersandsInRepairs();
     }
 
     @Override
@@ -47,7 +62,9 @@ public class ClientProxy extends CommonProxy {
     }
 
     @Override
-    public void applyServerConfig(boolean allowAmpersand, boolean allowSignEditing, boolean enableHtmlFormat) {
-        clientConfig.apply(allowAmpersand, allowSignEditing, enableHtmlFormat);
+    public void applyServerConfig(boolean universalAmpersand, boolean chatAmpersands, boolean signAmpersands,
+        boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat) {
+        clientConfig.apply(universalAmpersand, chatAmpersands, signAmpersands, repairAmpersands, allowSignEditing,
+            enableHtmlFormat);
     }
 }

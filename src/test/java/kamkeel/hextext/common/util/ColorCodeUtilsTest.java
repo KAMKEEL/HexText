@@ -15,7 +15,7 @@ public class ColorCodeUtilsTest {
     public void setUp() {
         HexText.proxy = new CommonProxy();
         HexTextConfig.resetToDefaults();
-        HexTextConfig.setAllowAmpersand(true);
+        HexTextConfig.setUniversalAmpersandEnabled(true);
         HexTextConfig.setEnableRgbHtmlFormat(true);
     }
 
@@ -60,7 +60,7 @@ public class ColorCodeUtilsTest {
 
     @Test
     public void testDetectColorCodeLengthRespectsAmpersandToggle() {
-        HexTextConfig.setAllowAmpersand(false);
+        HexTextConfig.setUniversalAmpersandEnabled(false);
         assertEquals(0, ColorCodeUtils.detectColorCodeLength("&#123456rest", 0));
         assertEquals(0, ColorCodeUtils.detectColorCodeLength("&aColour", 0));
     }

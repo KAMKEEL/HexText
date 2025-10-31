@@ -13,35 +13,60 @@ import kamkeel.hextext.client.ClientProxy;
  */
 public class SyncConfigMessage implements IMessage {
 
-    private boolean allowAmpersand;
+    private boolean universalAmpersand;
+    private boolean chatAmpersands;
+    private boolean signAmpersands;
+    private boolean repairAmpersands;
     private boolean allowSignEditing;
     private boolean enableHtmlFormat;
 
     public SyncConfigMessage() {
     }
 
-    public SyncConfigMessage(boolean allowAmpersand, boolean allowSignEditing, boolean enableHtmlFormat) {
-        this.allowAmpersand = allowAmpersand;
+    public SyncConfigMessage(boolean universalAmpersand, boolean chatAmpersands, boolean signAmpersands,
+        boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat) {
+        this.universalAmpersand = universalAmpersand;
+        this.chatAmpersands = chatAmpersands;
+        this.signAmpersands = signAmpersands;
+        this.repairAmpersands = repairAmpersands;
         this.allowSignEditing = allowSignEditing;
         this.enableHtmlFormat = enableHtmlFormat;
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
-        allowAmpersand = buf.readBoolean();
+        universalAmpersand = buf.readBoolean();
+        chatAmpersands = buf.readBoolean();
+        signAmpersands = buf.readBoolean();
+        repairAmpersands = buf.readBoolean();
         allowSignEditing = buf.readBoolean();
         enableHtmlFormat = buf.readBoolean();
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
-        buf.writeBoolean(allowAmpersand);
+        buf.writeBoolean(universalAmpersand);
+        buf.writeBoolean(chatAmpersands);
+        buf.writeBoolean(signAmpersands);
+        buf.writeBoolean(repairAmpersands);
         buf.writeBoolean(allowSignEditing);
         buf.writeBoolean(enableHtmlFormat);
     }
 
-    public boolean allowAmpersand() {
-        return allowAmpersand;
+    public boolean allowUniversalAmpersand() {
+        return universalAmpersand;
+    }
+
+    public boolean convertAmpersandsInChat() {
+        return chatAmpersands;
+    }
+
+    public boolean convertAmpersandsOnSigns() {
+        return signAmpersands;
+    }
+
+    public boolean convertAmpersandsInRepairs() {
+        return repairAmpersands;
     }
 
     public boolean allowSignEditing() {
@@ -61,8 +86,9 @@ public class SyncConfigMessage implements IMessage {
             }
 
             if (HexText.getActiveProxy() instanceof ClientProxy) {
-                ((ClientProxy) HexText.getActiveProxy()).applyServerConfig(message.allowAmpersand(),
-                    message.allowSignEditing(), message.enableHtmlFormat());
+                ((ClientProxy) HexText.getActiveProxy()).applyServerConfig(message.allowUniversalAmpersand(),
+                    message.convertAmpersandsInChat(), message.convertAmpersandsOnSigns(),
+                    message.convertAmpersandsInRepairs(), message.allowSignEditing(), message.enableHtmlFormat());
             }
             return null;
         }

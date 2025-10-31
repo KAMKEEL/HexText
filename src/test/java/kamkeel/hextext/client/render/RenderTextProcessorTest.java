@@ -18,7 +18,7 @@ public class RenderTextProcessorTest {
     public void setUp() {
         HexText.proxy = new CommonProxy();
         HexTextConfig.resetToDefaults();
-        HexTextConfig.setAllowAmpersand(true);
+        HexTextConfig.setUniversalAmpersandEnabled(true);
         HexTextConfig.setEnableRgbHtmlFormat(true);
     }
 
@@ -248,7 +248,7 @@ public class RenderTextProcessorTest {
 
     @Test
     public void testAmpersandDisabledTreatsTokensAsText() {
-        HexTextConfig.setAllowAmpersand(false);
+        HexTextConfig.setUniversalAmpersandEnabled(false);
         RenderTextData data = RenderTextProcessor.prepare("&aGreen", false);
         assertFalse(data.hasInstructions());
         assertFalse(data.shouldReplaceText());
