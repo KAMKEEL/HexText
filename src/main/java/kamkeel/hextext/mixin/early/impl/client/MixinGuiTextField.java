@@ -2,6 +2,7 @@ package kamkeel.hextext.mixin.early.impl.client;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import kamkeel.hextext.HexText;
 import kamkeel.hextext.client.render.FontRenderContext;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiTextField;
@@ -20,12 +21,18 @@ public abstract class MixinGuiTextField extends Gui {
 
     @Inject(method = "drawTextBox", at = @At("HEAD"))
     private void hextext$legacy$beginRawMode(CallbackInfo ci) {
+        if(HexText.getActiveProxy() == null)
+            return;
+
         FontRenderContext.pushRawTextRendering();
         hextext$legacy$rawPushed = true;
     }
 
     @Inject(method = "drawTextBox", at = @At("RETURN"))
     private void hextext$legacy$endRawMode(CallbackInfo ci) {
+        if(HexText.getActiveProxy() == null)
+            return;
+
         if (hextext$legacy$rawPushed) {
             FontRenderContext.popRawTextRendering();
             hextext$legacy$rawPushed = false;
