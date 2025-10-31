@@ -18,7 +18,10 @@ public class ServerConfigSyncHandler {
 
         EntityPlayerMP player = (EntityPlayerMP) event.player;
         SyncConfigMessage message = new SyncConfigMessage(
-            HexTextConfig.isAmpersandAllowed(),
+            HexTextConfig.isUniversalAmpersandEnabled(),
+            HexTextConfig.isChatAmpersandConversionEnabled(),
+            HexTextConfig.isSignAmpersandConversionEnabled(),
+            HexTextConfig.isRepairAmpersandConversionEnabled(),
             HexTextConfig.isSignEditingAllowed(),
             HexTextConfig.isRgbHtmlFormatEnabled()
         );

@@ -64,7 +64,7 @@ public abstract class MixinNetHandlerPlayServer {
 
     @Redirect(method = "processChatMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ChatAllowedCharacters;isAllowedCharacter(C)Z"))
     public boolean hexText$processChatMessage(char character){
-        if(HexText.getActiveProxy().allowAmpersand() && character == StringUtils.SECTION_SIGN)
+        if(HexText.getActiveProxy().allowUniversalAmpersand() && character == StringUtils.SECTION_SIGN)
             return true;
         return ChatAllowedCharacters.isAllowedCharacter(character);
     }

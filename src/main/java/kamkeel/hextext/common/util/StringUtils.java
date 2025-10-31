@@ -311,7 +311,8 @@ public final class StringUtils {
         }
 
         final boolean htmlFormat = HexText.getActiveProxy() == null || HexText.getActiveProxy().allowHtmlFormatting();
-        final boolean ampersandFormat = HexText.getActiveProxy() == null || HexText.getActiveProxy().allowAmpersand();
+        final boolean ampersandFormat = HexText.getActiveProxy() == null
+            || HexText.getActiveProxy().allowUniversalAmpersand();
 
         if (htmlFormat && codeLen == 8 && start == '<') {
             return true;
@@ -332,7 +333,8 @@ public final class StringUtils {
     private static boolean isStyleOrEffectToken(CharSequence input, int index, int codeLen) {
         if (codeLen == 2) {
             char start = input.charAt(index);
-            final boolean ampersandFormat = HexText.getActiveProxy() == null || HexText.getActiveProxy().allowAmpersand();
+            final boolean ampersandFormat = HexText.getActiveProxy() == null
+                || HexText.getActiveProxy().allowUniversalAmpersand();
             if ((start == '&' && ampersandFormat) || start == 167) {
                 char fmt = Character.toLowerCase(input.charAt(index + 1));
                 return ColorCodeUtils.isStyleCode(fmt) || ColorCodeUtils.isEffectCode(fmt);
@@ -345,7 +347,8 @@ public final class StringUtils {
     private static boolean isStandardColorToken(CharSequence input, int index, int codeLen) {
         if (codeLen == 2) {
             char start = input.charAt(index);
-            final boolean ampersandFormat = HexText.getActiveProxy() == null || HexText.getActiveProxy().allowAmpersand();
+            final boolean ampersandFormat = HexText.getActiveProxy() == null
+                || HexText.getActiveProxy().allowUniversalAmpersand();
             if ((start == '&' && ampersandFormat) || start == 167) {
                 char fmt = Character.toLowerCase(input.charAt(index + 1));
                 return ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g';

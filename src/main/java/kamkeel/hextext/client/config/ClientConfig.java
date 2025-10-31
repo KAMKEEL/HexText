@@ -8,12 +8,27 @@ import kamkeel.hextext.config.HexTextConfig;
  */
 public class ClientConfig {
 
-    private boolean allowAmpersand = HexTextConfig.isAmpersandAllowed();
+    private boolean universalAmpersand = HexTextConfig.isUniversalAmpersandEnabled();
+    private boolean chatAmpersands = HexTextConfig.isChatAmpersandConversionEnabled();
+    private boolean signAmpersands = HexTextConfig.isSignAmpersandConversionEnabled();
+    private boolean repairAmpersands = HexTextConfig.isRepairAmpersandConversionEnabled();
     private boolean allowSignEditing = HexTextConfig.isSignEditingAllowed();
     private boolean enableHtmlFormat = HexTextConfig.isRgbHtmlFormatEnabled();
 
-    public boolean allowAmpersand() {
-        return allowAmpersand;
+    public boolean allowUniversalAmpersand() {
+        return universalAmpersand;
+    }
+
+    public boolean convertAmpersandsInChat() {
+        return chatAmpersands;
+    }
+
+    public boolean convertAmpersandsOnSigns() {
+        return signAmpersands;
+    }
+
+    public boolean convertAmpersandsInRepairs() {
+        return repairAmpersands;
     }
 
     public boolean allowSignEditing() {
@@ -24,15 +39,22 @@ public class ClientConfig {
         return enableHtmlFormat;
     }
 
-    public void apply(boolean allowAmpersand, boolean allowSignEditing, boolean enableHtmlFormat) {
-        this.allowAmpersand = allowAmpersand;
+    public void apply(boolean universalAmpersand, boolean chatAmpersands, boolean signAmpersands,
+        boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat) {
+        this.universalAmpersand = universalAmpersand;
+        this.chatAmpersands = chatAmpersands;
+        this.signAmpersands = signAmpersands;
+        this.repairAmpersands = repairAmpersands;
         this.allowSignEditing = allowSignEditing;
         this.enableHtmlFormat = enableHtmlFormat;
     }
 
     public void resetToLocalConfig() {
         apply(
-            HexTextConfig.isAmpersandAllowed(),
+            HexTextConfig.isUniversalAmpersandEnabled(),
+            HexTextConfig.isChatAmpersandConversionEnabled(),
+            HexTextConfig.isSignAmpersandConversionEnabled(),
+            HexTextConfig.isRepairAmpersandConversionEnabled(),
             HexTextConfig.isSignEditingAllowed(),
             HexTextConfig.isRgbHtmlFormatEnabled()
         );

@@ -20,7 +20,10 @@ public final class HexTextConfig {
 
     private static final boolean DEFAULT_ENABLE_RGB_HTML_FORMAT = false;
     private static final boolean DEFAULT_ALLOW_SIGN_EDITING = true;
-    private static final boolean DEFAULT_ALLOW_AMPERSAND = true;
+    private static final boolean DEFAULT_UNIVERSAL_AMPERSAND = true;
+    private static final boolean DEFAULT_CHAT_AMPERSAND_CONVERSION = false;
+    private static final boolean DEFAULT_SIGN_AMPERSAND_CONVERSION = false;
+    private static final boolean DEFAULT_REPAIR_AMPERSAND_CONVERSION = false;
     private static final boolean DEFAULT_GLOWSTONE_DUST_GLOW = true;
     private static final boolean DEFAULT_REDSTONE_DUST_OUTLINE = true;
     private static final boolean DEFAULT_SLIMEBALL_WAX = true;
@@ -42,7 +45,10 @@ public final class HexTextConfig {
 
     private static boolean enableRgbHtmlFormat = DEFAULT_ENABLE_RGB_HTML_FORMAT;
     private static boolean allowSignEditing = DEFAULT_ALLOW_SIGN_EDITING;
-    private static boolean allowAmpersand = DEFAULT_ALLOW_AMPERSAND;
+    private static boolean universalAmpersand = DEFAULT_UNIVERSAL_AMPERSAND;
+    private static boolean chatAmpersandConversion = DEFAULT_CHAT_AMPERSAND_CONVERSION;
+    private static boolean signAmpersandConversion = DEFAULT_SIGN_AMPERSAND_CONVERSION;
+    private static boolean repairAmpersandConversion = DEFAULT_REPAIR_AMPERSAND_CONVERSION;
 
     private static boolean enableGlowstoneDustGlow = DEFAULT_GLOWSTONE_DUST_GLOW;
     private static boolean enableRedstoneDustOutline = DEFAULT_REDSTONE_DUST_OUTLINE;
@@ -114,11 +120,32 @@ public final class HexTextConfig {
             "Permit players to open the sign editor by right-clicking with an empty hand."
         );
 
-        allowAmpersand = configuration.getBoolean(
-            "allowAmpersandFormatting",
+        universalAmpersand = configuration.getBoolean(
+            "universalAmpersandFormatting",
             CATEGORY_SERVER,
-            DEFAULT_ALLOW_AMPERSAND,
-            "Enable & as an alternative to the section sign when entering formatting codes."
+            DEFAULT_UNIVERSAL_AMPERSAND,
+            "Allow & as an alternative to the section sign when entering formatting codes."
+        );
+
+        chatAmpersandConversion = configuration.getBoolean(
+            "ampersandsInChat",
+            CATEGORY_SERVER,
+            DEFAULT_CHAT_AMPERSAND_CONVERSION,
+            "Convert & formatting tokens to section signs when sending chat or commands."
+        );
+
+        signAmpersandConversion = configuration.getBoolean(
+            "ampersandsInSigns",
+            CATEGORY_SERVER,
+            DEFAULT_SIGN_AMPERSAND_CONVERSION,
+            "Convert & formatting tokens to section signs when editing signs."
+        );
+
+        repairAmpersandConversion = configuration.getBoolean(
+            "ampersandsInRepairs",
+            CATEGORY_SERVER,
+            DEFAULT_REPAIR_AMPERSAND_CONVERSION,
+            "Convert & formatting tokens to section signs when renaming items in anvils."
         );
 
         enableGlowstoneDustGlow = configuration.getBoolean(
@@ -174,8 +201,20 @@ public final class HexTextConfig {
         return allowSignEditing;
     }
 
-    public static boolean isAmpersandAllowed() {
-        return allowAmpersand;
+    public static boolean isUniversalAmpersandEnabled() {
+        return universalAmpersand;
+    }
+
+    public static boolean isChatAmpersandConversionEnabled() {
+        return chatAmpersandConversion;
+    }
+
+    public static boolean isSignAmpersandConversionEnabled() {
+        return signAmpersandConversion;
+    }
+
+    public static boolean isRepairAmpersandConversionEnabled() {
+        return repairAmpersandConversion;
     }
 
     public static boolean isGlowstoneDustGlowEnabled() {
@@ -206,8 +245,20 @@ public final class HexTextConfig {
         allowSignEditing = allowed;
     }
 
-    public static void setAllowAmpersand(boolean allowed) {
-        allowAmpersand = allowed;
+    public static void setUniversalAmpersandEnabled(boolean enabled) {
+        universalAmpersand = enabled;
+    }
+
+    public static void setChatAmpersandConversionEnabled(boolean enabled) {
+        chatAmpersandConversion = enabled;
+    }
+
+    public static void setSignAmpersandConversionEnabled(boolean enabled) {
+        signAmpersandConversion = enabled;
+    }
+
+    public static void setRepairAmpersandConversionEnabled(boolean enabled) {
+        repairAmpersandConversion = enabled;
     }
 
     public static void resetToDefaults() {
@@ -216,7 +267,10 @@ public final class HexTextConfig {
         igniteInterval = DEFAULT_IGNITE_INTERVAL;
         enableRgbHtmlFormat = DEFAULT_ENABLE_RGB_HTML_FORMAT;
         allowSignEditing = DEFAULT_ALLOW_SIGN_EDITING;
-        allowAmpersand = DEFAULT_ALLOW_AMPERSAND;
+        universalAmpersand = DEFAULT_UNIVERSAL_AMPERSAND;
+        chatAmpersandConversion = DEFAULT_CHAT_AMPERSAND_CONVERSION;
+        signAmpersandConversion = DEFAULT_SIGN_AMPERSAND_CONVERSION;
+        repairAmpersandConversion = DEFAULT_REPAIR_AMPERSAND_CONVERSION;
         enableGlowstoneDustGlow = DEFAULT_GLOWSTONE_DUST_GLOW;
         enableRedstoneDustOutline = DEFAULT_REDSTONE_DUST_OUTLINE;
         enableSlimeballWax = DEFAULT_SLIMEBALL_WAX;

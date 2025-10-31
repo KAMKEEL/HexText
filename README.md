@@ -77,7 +77,12 @@ HexText exposes several server-side toggles via the `server` category of its con
   Set this to `false` to treat them as literal text.
 * `allowSignEditing` – controls whether players can right-click signs with an empty hand to open the
   editor.
-* `allowAmpersandFormatting` – controls whether ampersands are accepted as an alternative to the
-  section sign for formatting codes and direct RGB colours.
+* `universalAmpersandFormatting` – accepts ampersands as an alternative to the section sign for
+  formatting codes and direct RGB colours.
+* `ampersandsInChat` – converts ampersand formatting tokens to section signs when sending chat
+  messages or commands.
+* `ampersandsInSigns` – converts ampersand formatting tokens to section signs while editing signs.
+* `ampersandsInRepairs` – converts ampersand formatting tokens to section signs when renaming items
+  in anvils.
 
 These options make it easy to tailor HexText's behaviour to a server's moderation or gameplay needs.

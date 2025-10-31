@@ -15,7 +15,7 @@ public class StringUtilsTest {
     public void setUp() {
         HexText.proxy = new CommonProxy();
         HexTextConfig.resetToDefaults();
-        HexTextConfig.setAllowAmpersand(true);
+        HexTextConfig.setUniversalAmpersandEnabled(true);
         HexTextConfig.setEnableRgbHtmlFormat(true);
     }
 

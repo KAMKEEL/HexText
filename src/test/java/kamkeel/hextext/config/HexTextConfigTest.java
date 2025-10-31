@@ -22,17 +22,26 @@ public class HexTextConfigTest {
     public void defaultsReflectExpectedValues() {
         assertFalse(HexTextConfig.isRgbHtmlFormatEnabled());
         assertTrue(HexTextConfig.isSignEditingAllowed());
-        assertTrue(HexTextConfig.isAmpersandAllowed());
+        assertTrue(HexTextConfig.isUniversalAmpersandEnabled());
+        assertFalse(HexTextConfig.isChatAmpersandConversionEnabled());
+        assertFalse(HexTextConfig.isSignAmpersandConversionEnabled());
+        assertFalse(HexTextConfig.isRepairAmpersandConversionEnabled());
     }
 
     @Test
     public void settersOverrideServerFlags() {
         HexTextConfig.setEnableRgbHtmlFormat(true);
         HexTextConfig.setAllowSignEditing(false);
-        HexTextConfig.setAllowAmpersand(false);
+        HexTextConfig.setUniversalAmpersandEnabled(false);
+        HexTextConfig.setChatAmpersandConversionEnabled(true);
+        HexTextConfig.setSignAmpersandConversionEnabled(true);
+        HexTextConfig.setRepairAmpersandConversionEnabled(true);
 
         assertTrue(HexTextConfig.isRgbHtmlFormatEnabled());
         assertFalse(HexTextConfig.isSignEditingAllowed());
-        assertFalse(HexTextConfig.isAmpersandAllowed());
+        assertFalse(HexTextConfig.isUniversalAmpersandEnabled());
+        assertTrue(HexTextConfig.isChatAmpersandConversionEnabled());
+        assertTrue(HexTextConfig.isSignAmpersandConversionEnabled());
+        assertTrue(HexTextConfig.isRepairAmpersandConversionEnabled());
     }
 }
