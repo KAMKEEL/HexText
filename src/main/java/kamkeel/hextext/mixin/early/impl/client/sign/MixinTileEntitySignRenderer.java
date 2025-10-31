@@ -72,8 +72,17 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         FontRenderer fontRenderer = this.func_147498_b();
         IHexTextSign state = (IHexTextSign) sign;
 
-        renderTextForSide(sign, state, fontRenderer, SignSide.FRONT, scale);
-        renderTextForSide(sign, state, fontRenderer, SignSide.BACK, scale);
+        float baseLightU = OpenGlHelper.lastBrightnessX;
+        float baseLightV = OpenGlHelper.lastBrightnessY;
+        if (sign.hasWorldObj()) {
+            int packedLight = sign.getWorldObj().getLightBrightnessForSkyBlocks(sign.xCoord, sign.yCoord, sign.zCoord, 0);
+            baseLightU = (float) (packedLight & 0xFFFF);
+            baseLightV = (float) ((packedLight >> 16) & 0xFFFF);
+            OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, baseLightU, baseLightV);
+        }
+
+        renderTextForSide(sign, state, fontRenderer, SignSide.FRONT, scale, baseLightU, baseLightV);
+        renderTextForSide(sign, state, fontRenderer, SignSide.BACK, scale, baseLightU, baseLightV);
 
         GL11.glPopMatrix();
         ci.cancel();
@@ -81,10 +90,10 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
 
     @Unique
     private void renderTextForSide(TileEntitySign sign, IHexTextSign state, FontRenderer fontRenderer,
-                                   SignSide side, float scale) {
+                                   SignSide side, float scale, float baseLightU, float baseLightV) {
 
         GL11.glPushMatrix();
-        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_CURRENT_BIT | GL11.GL_LIGHTING_BIT);
         GL11.glTranslatef(0.0F, 0.5F * scale, side == SignSide.FRONT ? 0.07F * scale : -0.07F * scale);
         if (side == SignSide.BACK) {
             GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
@@ -93,15 +102,9 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         float fontScale = 0.016666668F * scale;
         GL11.glScalef(fontScale, -fontScale, fontScale);
         GL11.glNormal3f(0.0F, 0.0F, -1.0F * fontScale);
-        GL11.glDepthMask(false);
 
         boolean glowing = state.isGlowing(side);
         boolean outlined = state.isOutlined(side);
-
-        // Save current lightmap coords to restore later
-        int lxPacked = sign.getWorldObj().getLightBrightnessForSkyBlocks(sign.xCoord, sign.yCoord, sign.zCoord, 0);
-        float prevU = (lxPacked & 0xFFFF);
-        float prevV = (lxPacked >> 16);
 
         // GUI-style blending + no fixed-function lighting
         GL11.glEnable(GL11.GL_BLEND);
@@ -109,10 +112,12 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDepthMask(false);
 
+        boolean changedLightmap = false;
         if (glowing) {
-            OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0F, 240.0F);
-        } else {
-            OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, prevU, prevV);
+            if (OpenGlHelper.lastBrightnessX != 240.0F || OpenGlHelper.lastBrightnessY != 240.0F) {
+                OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0F, 240.0F);
+                changedLightmap = true;
+            }
         }
 
         if (glowing) RenderHelper.disableStandardItemLighting();
@@ -125,13 +130,16 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
             if (i == sign.lineBeingEdited) {
                 line = "> " + line + " <";
             }
-            fontRenderer.drawString(line, -fontRenderer.getStringWidth(line) / 2, i * 10 + baseY, 0);
+            int lineWidth = fontRenderer.getStringWidth(line);
+            fontRenderer.drawString(line, -lineWidth / 2, i * 10 + baseY, 0);
         }
 
         GlowingTextRenderer.setOutlineEnabled(false);
         GL11.glDepthMask(true);
         if (glowing) {
-            OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, prevU, prevV);
+            if (changedLightmap) {
+                OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, baseLightU, baseLightV);
+            }
             RenderHelper.enableStandardItemLighting();
         }
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
