@@ -1,5 +1,6 @@
 package kamkeel.hextext.api.sign;
 
+import kamkeel.hextext.config.HexTextConfig;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -44,10 +45,18 @@ public final class HexTextSignInteractions {
             if (defaultsRegistered) {
                 return;
             }
-            register(Items.glowstone_dust, ANY_META, EnumSet.of(SignInteractionType.GLOW));
-            register(Items.redstone, ANY_META, EnumSet.of(SignInteractionType.OUTLINE));
-            register(Items.slime_ball, ANY_META, EnumSet.of(SignInteractionType.WAX));
-            register(Items.dye, 0, EnumSet.of(SignInteractionType.CLEANSE));
+            if (HexTextConfig.isGlowstoneDustGlowEnabled()) {
+                register(Items.glowstone_dust, ANY_META, EnumSet.of(SignInteractionType.GLOW));
+            }
+            if (HexTextConfig.isRedstoneDustOutlineEnabled()) {
+                register(Items.redstone, ANY_META, EnumSet.of(SignInteractionType.OUTLINE));
+            }
+            if (HexTextConfig.isSlimeballWaxEnabled()) {
+                register(Items.slime_ball, ANY_META, EnumSet.of(SignInteractionType.WAX));
+            }
+            if (HexTextConfig.isInkSacCleanseEnabled()) {
+                register(Items.dye, 0, EnumSet.of(SignInteractionType.CLEANSE));
+            }
             defaultsRegistered = true;
         }
     }

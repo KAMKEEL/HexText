@@ -11,6 +11,8 @@ public final class HexTextConfig {
 
     public static final String CATEGORY_EFFECTS = "effects";
     public static final String CATEGORY_SERVER = "server";
+    public static final String CATEGORY_SIGN_MODIFIERS =
+        CATEGORY_SERVER + Configuration.CATEGORY_SPLITTER + "signModifiers";
 
     private static final float DEFAULT_RAINBOW_SPEED = 3000.0f;
     private static final int DEFAULT_SHAKE_INTERVAL = 50;
@@ -19,6 +21,10 @@ public final class HexTextConfig {
     private static final boolean DEFAULT_ENABLE_RGB_HTML_FORMAT = false;
     private static final boolean DEFAULT_ALLOW_SIGN_EDITING = true;
     private static final boolean DEFAULT_ALLOW_AMPERSAND = true;
+    private static final boolean DEFAULT_GLOWSTONE_DUST_GLOW = true;
+    private static final boolean DEFAULT_REDSTONE_DUST_OUTLINE = true;
+    private static final boolean DEFAULT_SLIMEBALL_WAX = true;
+    private static final boolean DEFAULT_INK_SAC_CLEANSE = true;
 
     private static final float MIN_RAINBOW_SPEED = 1.0f;
     private static final int MIN_SHAKE_INTERVAL = 1;
@@ -36,6 +42,10 @@ public final class HexTextConfig {
     private static boolean enableRgbHtmlFormat = DEFAULT_ENABLE_RGB_HTML_FORMAT;
     private static boolean allowSignEditing = DEFAULT_ALLOW_SIGN_EDITING;
     private static boolean allowAmpersand = DEFAULT_ALLOW_AMPERSAND;
+    private static boolean enableGlowstoneDustGlow = DEFAULT_GLOWSTONE_DUST_GLOW;
+    private static boolean enableRedstoneDustOutline = DEFAULT_REDSTONE_DUST_OUTLINE;
+    private static boolean enableSlimeballWax = DEFAULT_SLIMEBALL_WAX;
+    private static boolean enableInkSacCleanse = DEFAULT_INK_SAC_CLEANSE;
 
     private HexTextConfig() {
     }
@@ -58,6 +68,8 @@ public final class HexTextConfig {
             "Timing controls for HexText's dynamic formatting effects.");
         configuration.addCustomCategoryComment(CATEGORY_SERVER,
             "Server-side behavioural toggles for HexText formatting and sign editing.");
+        configuration.addCustomCategoryComment(CATEGORY_SIGN_MODIFIERS,
+            "Enable or disable the built-in HexText sign modifier items.");
 
         rainbowSpeed = clamp(configuration.getFloat(
             "rainbowCycleDurationMs",
@@ -107,6 +119,34 @@ public final class HexTextConfig {
             "Enable & as an alternative to the section sign when entering formatting codes."
         );
 
+        enableGlowstoneDustGlow = configuration.getBoolean(
+            "enableGlowstoneDustGlowModifier",
+            CATEGORY_SIGN_MODIFIERS,
+            DEFAULT_GLOWSTONE_DUST_GLOW,
+            "Allow glowstone dust to apply the glowing text modifier to signs."
+        );
+
+        enableRedstoneDustOutline = configuration.getBoolean(
+            "enableRedstoneDustOutlineModifier",
+            CATEGORY_SIGN_MODIFIERS,
+            DEFAULT_REDSTONE_DUST_OUTLINE,
+            "Allow redstone dust to apply the outlined text modifier to signs."
+        );
+
+        enableSlimeballWax = configuration.getBoolean(
+            "enableSlimeballWaxModifier",
+            CATEGORY_SIGN_MODIFIERS,
+            DEFAULT_SLIMEBALL_WAX,
+            "Allow slimeballs to wax signs and preserve their current styling."
+        );
+
+        enableInkSacCleanse = configuration.getBoolean(
+            "enableInkSacCleanseModifier",
+            CATEGORY_SIGN_MODIFIERS,
+            DEFAULT_INK_SAC_CLEANSE,
+            "Allow ink sacs to cleanse glowing and outlined effects from signs."
+        );
+
         if (configuration.hasChanged()) {
             configuration.save();
         }
@@ -136,6 +176,22 @@ public final class HexTextConfig {
         return allowAmpersand;
     }
 
+    public static boolean isGlowstoneDustGlowEnabled() {
+        return enableGlowstoneDustGlow;
+    }
+
+    public static boolean isRedstoneDustOutlineEnabled() {
+        return enableRedstoneDustOutline;
+    }
+
+    public static boolean isSlimeballWaxEnabled() {
+        return enableSlimeballWax;
+    }
+
+    public static boolean isInkSacCleanseEnabled() {
+        return enableInkSacCleanse;
+    }
+
     public static Configuration getConfiguration() {
         return configuration;
     }
@@ -159,6 +215,10 @@ public final class HexTextConfig {
         enableRgbHtmlFormat = DEFAULT_ENABLE_RGB_HTML_FORMAT;
         allowSignEditing = DEFAULT_ALLOW_SIGN_EDITING;
         allowAmpersand = DEFAULT_ALLOW_AMPERSAND;
+        enableGlowstoneDustGlow = DEFAULT_GLOWSTONE_DUST_GLOW;
+        enableRedstoneDustOutline = DEFAULT_REDSTONE_DUST_OUTLINE;
+        enableSlimeballWax = DEFAULT_SLIMEBALL_WAX;
+        enableInkSacCleanse = DEFAULT_INK_SAC_CLEANSE;
     }
 
     private static float clamp(float value, float min, float max) {
