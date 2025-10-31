@@ -3,7 +3,6 @@ package kamkeel.hextext.mixin.early.impl.client.sign;
 import kamkeel.hextext.client.render.font.GlowingTextRenderer;
 import kamkeel.hextext.common.sign.IHexTextSign;
 import kamkeel.hextext.common.sign.SignSide;
-import kamkeel.hextext.common.util.StringUtils;
 import net.minecraft.block.Block;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.model.ModelSign;
@@ -22,6 +21,9 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Mixin(TileEntitySignRenderer.class)
 public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRenderer {
@@ -80,11 +82,27 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
     }
 
     @Unique
+    private static final int ATTRIBUTE_MASK = GL11.GL_ENABLE_BIT | GL11.GL_COLOR_BUFFER_BIT
+        | GL11.GL_CURRENT_BIT | GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_LIGHTING_BIT;
+
+    @Unique
+    private static final int STRING_WIDTH_CACHE_SIZE = 256;
+
+    @Unique
+    private static final Map<String, Integer> STRING_WIDTH_CACHE = new LinkedHashMap<String, Integer>(
+        STRING_WIDTH_CACHE_SIZE, 0.75F, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, Integer> eldest) {
+            return size() > STRING_WIDTH_CACHE_SIZE;
+        }
+    };
+
+    @Unique
     private void renderTextForSide(TileEntitySign sign, IHexTextSign state, FontRenderer fontRenderer,
                                    SignSide side, float scale) {
 
         GL11.glPushMatrix();
-        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glPushAttrib(ATTRIBUTE_MASK);
         GL11.glTranslatef(0.0F, 0.5F * scale, side == SignSide.FRONT ? 0.07F * scale : -0.07F * scale);
         if (side == SignSide.BACK) {
             GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
@@ -93,15 +111,9 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         float fontScale = 0.016666668F * scale;
         GL11.glScalef(fontScale, -fontScale, fontScale);
         GL11.glNormal3f(0.0F, 0.0F, -1.0F * fontScale);
-        GL11.glDepthMask(false);
 
         boolean glowing = state.isGlowing(side);
         boolean outlined = state.isOutlined(side);
-
-        // Save current lightmap coords to restore later
-        int lxPacked = sign.getWorldObj().getLightBrightnessForSkyBlocks(sign.xCoord, sign.yCoord, sign.zCoord, 0);
-        float prevU = (lxPacked & 0xFFFF);
-        float prevV = (lxPacked >> 16);
 
         // GUI-style blending + no fixed-function lighting
         GL11.glEnable(GL11.GL_BLEND);
@@ -109,13 +121,15 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDepthMask(false);
 
+        float prevU = 0.0F;
+        float prevV = 0.0F;
         if (glowing) {
+            int brightness = sign.getWorldObj().getLightBrightnessForSkyBlocks(sign.xCoord, sign.yCoord, sign.zCoord, 0);
+            prevU = brightness & 0xFFFF;
+            prevV = brightness >> 16;
             OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0F, 240.0F);
-        } else {
-            OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, prevU, prevV);
+            RenderHelper.disableStandardItemLighting();
         }
-
-        if (glowing) RenderHelper.disableStandardItemLighting();
 
         GlowingTextRenderer.setOutlineEnabled(outlined);
         String[] lines = state.getLines(side);
@@ -125,7 +139,8 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
             if (i == sign.lineBeingEdited) {
                 line = "> " + line + " <";
             }
-            fontRenderer.drawString(line, -fontRenderer.getStringWidth(line) / 2, i * 10 + baseY, 0);
+            int centeredX = -getCachedStringWidth(fontRenderer, line) / 2;
+            fontRenderer.drawString(line, centeredX, i * 10 + baseY, 0);
         }
 
         GlowingTextRenderer.setOutlineEnabled(false);
@@ -137,6 +152,23 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         GL11.glPopMatrix();
         GL11.glPopAttrib();
+    }
+
+    @Unique
+    private static int getCachedStringWidth(FontRenderer fontRenderer, String text) {
+        if (text == null) {
+            return 0;
+        }
+
+        synchronized (STRING_WIDTH_CACHE) {
+            Integer cached = STRING_WIDTH_CACHE.get(text);
+            if (cached != null) {
+                return cached;
+            }
+            int width = fontRenderer.getStringWidth(text);
+            STRING_WIDTH_CACHE.put(text, width);
+            return width;
+        }
     }
 
 }
