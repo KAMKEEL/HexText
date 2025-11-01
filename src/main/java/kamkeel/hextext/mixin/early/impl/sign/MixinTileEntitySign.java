@@ -28,6 +28,9 @@ public abstract class MixinTileEntitySign extends TileEntity implements IHexText
     @Shadow
     public String[] signText;
 
+    @Shadow
+    private boolean field_145916_j;
+
     @Unique
     private boolean[] glowStates = new boolean[SignSide.values().length];
 
@@ -56,6 +59,8 @@ public abstract class MixinTileEntitySign extends TileEntity implements IHexText
             }
         }
         hextext$clampLines(backSignText);
+
+        this.field_145916_j = !isWaxed;
     }
 
     @Inject(method = "writeToNBT", at = @At("RETURN"))
@@ -68,6 +73,8 @@ public abstract class MixinTileEntitySign extends TileEntity implements IHexText
         for (int i = 0; i < backSignText.length; i++) {
             compound.setString("HexTextBackText" + i, backSignText[i]);
         }
+
+        this.field_145916_j = !isWaxed;
     }
 
     @Override
