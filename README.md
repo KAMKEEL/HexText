@@ -1,8 +1,28 @@
-# HexText
+## 👋 Welcome to the HexText Repository.
 
 HexText extends Minecraft's font renderer with a modern colour pipeline that understands full RGB
 hex codes, nested colour spans, and a handful of animated text effects. This document summarises the
 available formatting tokens and how they interact so you can take full advantage of the system.
+
+----------------
+
+<a href="https://discord.gg/pQqRTvFeJ5"> <img src="https://img.shields.io/badge/KAMKEEL_Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white" width="400" height="60"> </a>
+<a href="https://ko-fi.com/kamkeel"> <img src="https://img.shields.io/badge/Support_Me_|_Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Support Me"  width="400" height="60"> </a>
+
+[![Download CustomNPC+](https://img.shields.io/badge/CustomNPC+-0081CB?style=for-the-badge&logo=material-ui&logoColor=white)](https://modrinth.com/mod/customnpc-plus)
+[![Download MPM+](https://img.shields.io/badge/MorePlayerModels+-0081CB?style=for-the-badge&logo=material-ui&logoColor=white)](https://www.curseforge.com/minecraft/mc-mods/moreplayermodels-plus)
+[![Download PluginMod](https://img.shields.io/badge/Plugin_Mod-0081CB?style=for-the-badge&logo=material-ui&logoColor=white)](https://github.com/KAMKEEL/Plugin-Mod)
+
+----------------
+
+### ⬇️ Downloads
+- **Modrinth**: [NONE]()
+- **CurseForge**: [NONE]()
+
+### 🔹 Installation
+This mod requires **UniMixins** to run. It can be installed on both the Server and Client.
+
+----------------
 
 ## Standard Minecraft formatting
 
