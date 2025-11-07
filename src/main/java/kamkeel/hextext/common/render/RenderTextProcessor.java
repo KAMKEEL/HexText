@@ -1,6 +1,8 @@
-package kamkeel.hextext.client.render;
+package kamkeel.hextext.common.render;
 
 import kamkeel.hextext.HexText;
+import kamkeel.hextext.api.rendering.RenderDirective;
+import kamkeel.hextext.api.rendering.RenderPlan;
 import kamkeel.hextext.common.util.ColorCodeUtils;
 import kamkeel.hextext.common.util.StringUtils;
 
@@ -10,21 +12,21 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Prepares the text and associated render instructions for the font renderer mixin.
+ * Prepares the text and associated render directives for the font renderer mixin.
  */
 public final class RenderTextProcessor {
 
     private RenderTextProcessor() {
     }
 
-    public static RenderTextData prepare(String text, boolean rawMode) {
+    public static RenderPlan prepare(String text, boolean rawMode) {
         if (text == null || text.isEmpty()) {
-            return RenderTextData.unchanged();
+            return RenderPlanImpl.unchanged();
         }
 
         String processed = rawMode ? StringUtils.normalizeForRawDisplay(text) : text;
         StringBuilder sanitized = new StringBuilder(processed.length() + (rawMode ? 16 : 0));
-        Map<Integer, List<RenderInstruction>> instructions = null;
+        Map<Integer, List<RenderDirective>> directives = null;
         boolean modified = rawMode && !processed.equals(text);
 
         final boolean allowHtml = HexText.getActiveProxy() == null || HexText.getActiveProxy().allowHtmlFormatting();
@@ -38,16 +40,16 @@ public final class RenderTextProcessor {
             boolean usingAmpersand = current == '&';
 
             if ((usingSectionSign || (usingAmpersand && allowAmpersand)) && i + 1 < processed.length()) {
-                int instructionIndex = sanitized.length();
+                int directiveIndex = sanitized.length();
 
                 if (processed.charAt(i + 1) == '#') {
                     int hexStart = i + 2;
                     if (hexStart + 6 <= processed.length() && ColorCodeUtils.isValidHexString(processed, hexStart)) {
                         int rgb = ColorCodeUtils.parseHexColor(processed, hexStart);
                         if (rgb != -1) {
-                            instructions = ensureInstructionMap(instructions);
-                            instructions.computeIfAbsent(instructionIndex, key -> new ArrayList<>())
-                                .add(RenderInstruction.apply(rgb, true));
+                            directives = ensureDirectiveMap(directives);
+                            directives.computeIfAbsent(directiveIndex, key -> new ArrayList<>())
+                                .add(RenderDirectiveImpl.apply(rgb, true));
                             if (rawMode) {
                                 sanitized.append(current).append('#');
                                 sanitized.append(processed, hexStart, hexStart + 6);
@@ -65,21 +67,21 @@ public final class RenderTextProcessor {
 
                 if (ColorCodeUtils.isFormattingCode(lower)) {
                     if (ColorCodeUtils.isEffectCode(lower)) {
-                        instructions = ensureInstructionMap(instructions);
-                        List<RenderInstruction> bucket =
-                            instructions.computeIfAbsent(instructionIndex, key -> new ArrayList<>());
+                        directives = ensureDirectiveMap(directives);
+                        List<RenderDirective> bucket =
+                            directives.computeIfAbsent(directiveIndex, key -> new ArrayList<>());
                         switch (lower) {
                             case 'g':
-                                bucket.add(RenderInstruction.setRainbow(true, instructionIndex));
+                                bucket.add(RenderDirectiveImpl.setRainbow(true, directiveIndex));
                                 break;
                             case 'h':
-                                bucket.add(RenderInstruction.setDinnerbone(true));
+                                bucket.add(RenderDirectiveImpl.setDinnerbone(true));
                                 break;
                             case 'i':
-                                bucket.add(RenderInstruction.setIgnite(true));
+                                bucket.add(RenderDirectiveImpl.setIgnite(true));
                                 break;
                             case 'j':
-                                bucket.add(RenderInstruction.setShake(true));
+                                bucket.add(RenderDirectiveImpl.setShake(true));
                                 break;
                             default:
                                 break;
@@ -97,33 +99,33 @@ public final class RenderTextProcessor {
                     boolean isColor = ColorCodeUtils.isMinecraftColorCode(lower);
                     boolean isStyle = ColorCodeUtils.isStyleCode(lower);
 
-                    instructions = ensureInstructionMap(instructions);
-                    List<RenderInstruction> bucket =
-                        instructions.computeIfAbsent(instructionIndex, key -> new ArrayList<>());
+                    directives = ensureDirectiveMap(directives);
+                    List<RenderDirective> bucket =
+                        directives.computeIfAbsent(directiveIndex, key -> new ArrayList<>());
 
                     if (isColor) {
                         int colorIndex = ColorCodeUtils.getMinecraftColorIndex(lower);
                         if (colorIndex >= 0) {
-                            bucket.add(RenderInstruction.applyVanillaColor(colorIndex));
+                            bucket.add(RenderDirectiveImpl.applyVanillaColor(colorIndex));
                         }
                     } else if (isReset) {
-                        bucket.add(RenderInstruction.resetToBase());
+                        bucket.add(RenderDirectiveImpl.resetToBase());
                     } else if (isStyle) {
                         switch (lower) {
                             case 'k':
-                                bucket.add(RenderInstruction.setRandom(true));
+                                bucket.add(RenderDirectiveImpl.setRandom(true));
                                 break;
                             case 'l':
-                                bucket.add(RenderInstruction.setBold(true));
+                                bucket.add(RenderDirectiveImpl.setBold(true));
                                 break;
                             case 'm':
-                                bucket.add(RenderInstruction.setStrikethrough(true));
+                                bucket.add(RenderDirectiveImpl.setStrikethrough(true));
                                 break;
                             case 'n':
-                                bucket.add(RenderInstruction.setUnderline(true));
+                                bucket.add(RenderDirectiveImpl.setUnderline(true));
                                 break;
                             case 'o':
-                                bucket.add(RenderInstruction.setItalic(true));
+                                bucket.add(RenderDirectiveImpl.setItalic(true));
                                 break;
                             default:
                                 break;
@@ -151,9 +153,9 @@ public final class RenderTextProcessor {
                     && ColorCodeUtils.isValidHexString(processed, i + 1)) {
                     int rgb = ColorCodeUtils.parseHexColor(processed, i + 1);
                     if (rgb != -1) {
-                        instructions = ensureInstructionMap(instructions);
-                        instructions.computeIfAbsent(sanitized.length(), key -> new ArrayList<>())
-                            .add(RenderInstruction.push(rgb));
+                        directives = ensureDirectiveMap(directives);
+                        directives.computeIfAbsent(sanitized.length(), key -> new ArrayList<>())
+                            .add(RenderDirectiveImpl.push(rgb));
                         if (rawMode) {
                             sanitized.append(processed, i, i + 8);
                         } else {
@@ -166,9 +168,9 @@ public final class RenderTextProcessor {
 
                 if (i + 9 <= processed.length() && processed.charAt(i + 1) == '/'
                     && processed.charAt(i + 8) == '>' && ColorCodeUtils.isValidHexString(processed, i + 2)) {
-                    instructions = ensureInstructionMap(instructions);
-                    instructions.computeIfAbsent(sanitized.length(), key -> new ArrayList<>())
-                        .add(RenderInstruction.pop());
+                    directives = ensureDirectiveMap(directives);
+                    directives.computeIfAbsent(sanitized.length(), key -> new ArrayList<>())
+                        .add(RenderDirectiveImpl.pop());
                     if (rawMode) {
                         sanitized.append(processed, i, i + 9);
                     } else {
@@ -182,26 +184,29 @@ public final class RenderTextProcessor {
             sanitized.append(current);
         }
 
-        Map<Integer, List<RenderInstruction>> normalizedInstructions = normalizeInstructions(instructions);
+        Map<Integer, List<RenderDirective>> normalized = normalizeDirectives(directives);
 
-        if (!modified && (normalizedInstructions == null || normalizedInstructions.isEmpty())) {
-            return RenderTextData.unchanged();
+        if (!modified && (normalized == null || normalized.isEmpty())) {
+            return RenderPlanImpl.unchanged();
         }
 
-        if (!modified && normalizedInstructions != null) {
-            return RenderTextData.withInstructions(normalizedInstructions);
+        if (!modified && normalized != null) {
+            return RenderPlanImpl.withInstructions(normalized);
         }
 
-        return RenderTextData.withDisplayText(sanitized.toString(), normalizedInstructions);
+        return RenderPlanImpl.withDisplayText(sanitized.toString(), normalized);
     }
 
-    private static Map<Integer, List<RenderInstruction>> ensureInstructionMap(
-        Map<Integer, List<RenderInstruction>> instructions) {
-        return instructions != null ? instructions : new HashMap<>();
+    private static Map<Integer, List<RenderDirective>> ensureDirectiveMap(
+        Map<Integer, List<RenderDirective>> directives) {
+        return directives != null ? directives : new HashMap<>();
     }
 
-    private static Map<Integer, List<RenderInstruction>> normalizeInstructions(
-        Map<Integer, List<RenderInstruction>> instructions) {
-        return (instructions == null || instructions.isEmpty()) ? null : instructions;
+    private static Map<Integer, List<RenderDirective>> normalizeDirectives(
+        Map<Integer, List<RenderDirective>> directives) {
+        if (directives == null || directives.isEmpty()) {
+            return null;
+        }
+        return directives;
     }
 }

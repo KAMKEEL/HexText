@@ -1,14 +1,16 @@
 package kamkeel.hextext.client.render.font;
 
+import kamkeel.hextext.api.rendering.RenderDirective;
+import kamkeel.hextext.api.rendering.RenderPlan;
 import kamkeel.hextext.client.render.ColorStateTracker;
 import kamkeel.hextext.client.render.FontRenderContext;
 import kamkeel.hextext.client.render.FontRendererUtils;
-import kamkeel.hextext.client.render.RenderInstruction;
-import kamkeel.hextext.client.render.RenderTextData;
-import kamkeel.hextext.client.render.RenderTextProcessor;
 import kamkeel.hextext.client.render.TextEffectController;
-import kamkeel.hextext.client.render.TokenHighlight;
 import kamkeel.hextext.client.render.TokenHighlightUtils;
+import kamkeel.hextext.api.rendering.HighlightSpan;
+import kamkeel.hextext.common.render.HighlightSpanImpl;
+import kamkeel.hextext.common.render.RenderDirectiveImpl;
+import kamkeel.hextext.common.render.RenderTextProcessor;
 import kamkeel.hextext.common.util.ColorCodeUtils;
 import kamkeel.hextext.common.util.StringUtils;
 import org.lwjgl.opengl.GL11;
@@ -22,11 +24,11 @@ public final class FontRendererRenderPipeline {
     private final FontRendererBridge bridge;
     private final ColorStateTracker colorState = new ColorStateTracker();
     private final TextEffectController effects = new TextEffectController();
-    private final List<TokenHighlight> pendingHighlights = new ArrayList<>();
+    private final List<HighlightSpan> pendingHighlights = new ArrayList<>();
 
     private static final int DEFAULT_OUTLINE_FALLBACK = 0x2E2E2E;
 
-    private RenderTextData renderData;
+    private RenderPlan renderData;
     private boolean shadowPass;
     private boolean renderingShadow;
     private int rawTokenSkip;
@@ -99,7 +101,7 @@ public final class FontRendererRenderPipeline {
                     if (text.charAt(index) != 167) {
                         float width = TokenHighlightUtils.measureLiteralWidth(bridge.getFontRenderer(), text, index, tokenLength);
                         if (width > 0.0f) {
-                            pendingHighlights.add(new TokenHighlight(bridge.getPosX(), bridge.getPosY(), width,
+                            pendingHighlights.add(new HighlightSpanImpl(bridge.getPosX(), bridge.getPosY(), width,
                                 TokenHighlightUtils.getTokenHighlightColor(text, index)));
                         }
                         rawTokenSkip = Math.max(tokenLength - 1, 0);
@@ -112,18 +114,20 @@ public final class FontRendererRenderPipeline {
             return;
         }
 
-        Map<Integer, List<RenderInstruction>> instructionsByIndex = renderData.getInstructions();
+        Map<Integer, List<RenderDirective>> instructionsByIndex = renderData.getInstructions();
         if (instructionsByIndex == null) {
             return;
         }
 
-        List<RenderInstruction> instructions = instructionsByIndex.remove(index);
+        List<RenderDirective> instructions = instructionsByIndex.remove(index);
         if (instructions == null) {
             return;
         }
 
-        for (RenderInstruction instruction : instructions) {
-            executeInstruction(instruction);
+        for (RenderDirective instruction : instructions) {
+            if (instruction instanceof RenderDirectiveImpl) {
+                executeInstruction((RenderDirectiveImpl) instruction);
+            }
         }
     }
 
@@ -251,10 +255,12 @@ public final class FontRendererRenderPipeline {
         return outlineColor;
     }
 
-    private void executeInstruction(RenderInstruction instruction) {
+    private void executeInstruction(RenderDirectiveImpl instruction) {
         boolean resetStyles = instruction.resetsFormatting();
 
-        switch (instruction.getType()) {
+        RenderDirectiveImpl.Type type = (RenderDirectiveImpl.Type) instruction.getType();
+
+        switch (type) {
             case APPLY_RGB:
                 int appliedRgb = colorState.applyRgb(instruction.getRgb(), instruction.shouldClearStack(), effects, renderingShadow);
                 setColorFromInt(appliedRgb);
