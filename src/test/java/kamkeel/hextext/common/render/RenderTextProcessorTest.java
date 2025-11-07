@@ -1,4 +1,4 @@
-package kamkeel.hextext.client.render;
+package kamkeel.hextext.common.render;
 
 import kamkeel.hextext.CommonProxy;
 import kamkeel.hextext.HexText;
@@ -6,6 +6,9 @@ import kamkeel.hextext.config.HexTextConfig;
 
 import org.junit.Test;
 import org.junit.Before;
+
+import kamkeel.hextext.api.rendering.RenderDirective;
+import kamkeel.hextext.api.rendering.RenderPlan;
 
 import java.util.List;
 import java.util.Map;
@@ -24,118 +27,119 @@ public class RenderTextProcessorTest {
 
     @Test
     public void testNonRawHexProcessing() {
-        RenderTextData data = RenderTextProcessor.prepare("&#FFAA11Hello", false);
+        RenderPlan data = RenderTextProcessor.prepare("&#FFAA11Hello", false);
         assertTrue(data.shouldReplaceText());
         assertEquals("Hello", data.getDisplayText());
         assertTrue(data.hasInstructions());
-        Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
+        Map<Integer, List<RenderDirective>> instructions = data.getInstructions();
         assertNotNull(instructions);
-        List<RenderInstruction> atZero = instructions.get(0);
+        List<RenderDirective> atZero = instructions.get(0);
         assertEquals(1, atZero.size());
-        RenderInstruction instruction = atZero.get(0);
-        assertEquals(RenderInstruction.Type.APPLY_RGB, instruction.getType());
+        RenderDirectiveImpl instruction = (RenderDirectiveImpl) atZero.get(0);
+        assertEquals(RenderDirectiveImpl.Type.APPLY_RGB, instruction.getType());
         assertEquals(0xFFAA11, instruction.getRgb());
         assertTrue(instruction.shouldClearStack());
     }
 
     @Test
     public void testRawVanillaFormatting() {
-        RenderTextData data = RenderTextProcessor.prepare("&aHello", true);
+        RenderPlan data = RenderTextProcessor.prepare("&aHello", true);
         assertFalse(data.shouldReplaceText());
         assertNull(data.getDisplayText());
         assertTrue(data.hasInstructions());
-        Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
+        Map<Integer, List<RenderDirective>> instructions = data.getInstructions();
         assertNotNull(instructions);
-        List<RenderInstruction> atZero = instructions.get(0);
+        List<RenderDirective> atZero = instructions.get(0);
         assertNotNull(atZero);
         assertEquals(1, atZero.size());
-        RenderInstruction instruction = atZero.get(0);
-        assertEquals(RenderInstruction.Type.APPLY_VANILLA_COLOR, instruction.getType());
+        RenderDirectiveImpl instruction = (RenderDirectiveImpl) atZero.get(0);
+        assertEquals(RenderDirectiveImpl.Type.APPLY_VANILLA_COLOR, instruction.getType());
         assertEquals(10, instruction.getParameter());
     }
 
     @Test
     public void testRawHexColor() {
-        RenderTextData data = RenderTextProcessor.prepare("&#ABCDEFWorld", true);
+        RenderPlan data = RenderTextProcessor.prepare("&#ABCDEFWorld", true);
         assertFalse(data.shouldReplaceText());
         assertNull(data.getDisplayText());
-        Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
+        Map<Integer, List<RenderDirective>> instructions = data.getInstructions();
         assertNotNull(instructions);
         assertEquals(1, instructions.size());
-        RenderInstruction instruction = instructions.get(0).get(0);
-        assertEquals(RenderInstruction.Type.APPLY_RGB, instruction.getType());
+        RenderDirectiveImpl instruction = (RenderDirectiveImpl) instructions.get(0).get(0);
+        assertEquals(RenderDirectiveImpl.Type.APPLY_RGB, instruction.getType());
         assertEquals(0xABCDEF, instruction.getRgb());
     }
 
     @Test
     public void testSectionSignHexProcessing() {
-        RenderTextData data = RenderTextProcessor.prepare("§#123456Hello", false);
+        RenderPlan data = RenderTextProcessor.prepare("§#123456Hello", false);
         assertTrue(data.shouldReplaceText());
         assertEquals("Hello", data.getDisplayText());
         assertTrue(data.hasInstructions());
-        Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
+        Map<Integer, List<RenderDirective>> instructions = data.getInstructions();
         assertNotNull(instructions);
-        List<RenderInstruction> atZero = instructions.get(0);
+        List<RenderDirective> atZero = instructions.get(0);
         assertNotNull(atZero);
         assertFalse(atZero.isEmpty());
-        RenderInstruction instruction = atZero.get(0);
-        assertEquals(RenderInstruction.Type.APPLY_RGB, instruction.getType());
+        RenderDirectiveImpl instruction = (RenderDirectiveImpl) atZero.get(0);
+        assertEquals(RenderDirectiveImpl.Type.APPLY_RGB, instruction.getType());
         assertEquals(0x123456, instruction.getRgb());
         assertTrue(instruction.shouldClearStack());
     }
 
     @Test
     public void testRawBoldFormatting() {
-        RenderTextData data = RenderTextProcessor.prepare("&lBold", true);
+        RenderPlan data = RenderTextProcessor.prepare("&lBold", true);
         assertFalse(data.shouldReplaceText());
         assertNull(data.getDisplayText());
-        Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
+        Map<Integer, List<RenderDirective>> instructions = data.getInstructions();
         assertNotNull(instructions);
-        List<RenderInstruction> atZero = instructions.get(0);
+        List<RenderDirective> atZero = instructions.get(0);
         assertNotNull(atZero);
         assertEquals(1, atZero.size());
-        RenderInstruction instruction = atZero.get(0);
-        assertEquals(RenderInstruction.Type.SET_BOLD, instruction.getType());
+        RenderDirectiveImpl instruction = (RenderDirectiveImpl) atZero.get(0);
+        assertEquals(RenderDirectiveImpl.Type.SET_BOLD, instruction.getType());
         assertTrue(instruction.isEnabled());
     }
 
     @Test
     public void testRawFormattingAfterPlainText() {
         String input = "Pre Stuff &lPost";
-        RenderTextData data = RenderTextProcessor.prepare(input, true);
+        RenderPlan data = RenderTextProcessor.prepare(input, true);
         assertFalse(data.shouldReplaceText());
         assertTrue(data.hasInstructions());
-        Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
+        Map<Integer, List<RenderDirective>> instructions = data.getInstructions();
         assertNotNull(instructions);
         int tokenIndex = input.indexOf('&');
         assertTrue("Expected instruction entry for formatting token", instructions.containsKey(tokenIndex));
-        List<RenderInstruction> atIndex = instructions.get(tokenIndex);
+        List<RenderDirective> atIndex = instructions.get(tokenIndex);
         assertNotNull(atIndex);
         assertFalse(atIndex.isEmpty());
-        assertEquals(RenderInstruction.Type.SET_BOLD, atIndex.get(0).getType());
+        assertEquals(RenderDirectiveImpl.Type.SET_BOLD, ((RenderDirectiveImpl) atIndex.get(0)).getType());
     }
 
     @Test
     public void testResetInstruction() {
-        RenderTextData data = RenderTextProcessor.prepare("&rReset", false);
+        RenderPlan data = RenderTextProcessor.prepare("&rReset", false);
         assertTrue(data.shouldReplaceText());
         assertEquals("§rReset", data.getDisplayText());
-        Map<Integer, List<RenderInstruction>> instructions = data.getInstructions();
+        Map<Integer, List<RenderDirective>> instructions = data.getInstructions();
         assertNotNull(instructions);
-        RenderInstruction instruction = instructions.get(0).get(0);
-        assertEquals(RenderInstruction.Type.RESET_TO_BASE, instruction.getType());
+        RenderDirectiveImpl instruction = (RenderDirectiveImpl) instructions.get(0).get(0);
+        assertEquals(RenderDirectiveImpl.Type.RESET_TO_BASE, instruction.getType());
     }
 
     @Test
     public void testRgbTagClearsFormatting() {
-        RenderTextData data = RenderTextProcessor.prepare("&lBold <123456>World", false);
+        RenderPlan data = RenderTextProcessor.prepare("&lBold <123456>World", false);
         assertTrue(data.hasInstructions());
         boolean foundPush = false;
-        for (List<RenderInstruction> instructionList : data.getInstructions().values()) {
-            for (RenderInstruction instruction : instructionList) {
-                if (instruction.getType() == RenderInstruction.Type.PUSH_RGB) {
+        for (List<RenderDirective> instructionList : data.getInstructions().values()) {
+            for (RenderDirective instruction : instructionList) {
+                RenderDirectiveImpl renderInstruction = (RenderDirectiveImpl) instruction;
+                if (renderInstruction.getType() == RenderDirectiveImpl.Type.PUSH_RGB) {
                     foundPush = true;
-                    assertTrue("Expected RGB push to clear formatting", instruction.resetsFormatting());
+                    assertTrue("Expected RGB push to clear formatting", renderInstruction.resetsFormatting());
                 }
             }
         }
@@ -144,15 +148,15 @@ public class RenderTextProcessorTest {
 
     @Test
     public void testRainbowInstructionNonRaw() {
-        RenderTextData data = RenderTextProcessor.prepare("&gRainbow", false);
+        RenderPlan data = RenderTextProcessor.prepare("&gRainbow", false);
         assertTrue(data.shouldReplaceText());
         assertEquals("Rainbow", data.getDisplayText());
         assertTrue(data.hasInstructions());
-        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        List<RenderDirective> instructions = data.getInstructions().get(0);
         assertNotNull(instructions);
         assertFalse(instructions.isEmpty());
-        RenderInstruction instruction = instructions.get(0);
-        assertEquals(RenderInstruction.Type.SET_RAINBOW, instruction.getType());
+        RenderDirectiveImpl instruction = (RenderDirectiveImpl) instructions.get(0);
+        assertEquals(RenderDirectiveImpl.Type.SET_RAINBOW, instruction.getType());
         assertTrue(instruction.isEnabled());
         assertEquals(0, instruction.getParameter());
         assertTrue(instruction.resetsFormatting());
@@ -160,39 +164,41 @@ public class RenderTextProcessorTest {
 
     @Test
     public void testNonRawVanillaColorProducesInstruction() {
-        RenderTextData data = RenderTextProcessor.prepare("&aGreen", false);
+        RenderPlan data = RenderTextProcessor.prepare("&aGreen", false);
         assertTrue(data.shouldReplaceText());
         assertEquals("§aGreen", data.getDisplayText());
         assertTrue(data.hasInstructions());
-        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        List<RenderDirective> instructions = data.getInstructions().get(0);
         assertNotNull(instructions);
         assertFalse(instructions.isEmpty());
-        assertEquals(RenderInstruction.Type.APPLY_VANILLA_COLOR, instructions.get(0).getType());
-        assertEquals(10, instructions.get(0).getParameter());
+        RenderDirectiveImpl instruction = (RenderDirectiveImpl) instructions.get(0);
+        assertEquals(RenderDirectiveImpl.Type.APPLY_VANILLA_COLOR, instruction.getType());
+        assertEquals(10, instruction.getParameter());
     }
 
     @Test
     public void testSectionSignEffectInstruction() {
-        RenderTextData data = RenderTextProcessor.prepare("§gWave", false);
+        RenderPlan data = RenderTextProcessor.prepare("§gWave", false);
         assertFalse(data.shouldReplaceText());
         assertTrue(data.hasInstructions());
-        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        List<RenderDirective> instructions = data.getInstructions().get(0);
         assertNotNull(instructions);
         assertFalse(instructions.isEmpty());
-        assertEquals(RenderInstruction.Type.SET_RAINBOW, instructions.get(0).getType());
+        assertEquals(RenderDirectiveImpl.Type.SET_RAINBOW, ((RenderDirectiveImpl) instructions.get(0)).getType());
     }
 
     @Test
     public void testDinnerboneInstructionRaw() {
-        RenderTextData data = RenderTextProcessor.prepare("&hFlip", true);
+        RenderPlan data = RenderTextProcessor.prepare("&hFlip", true);
         assertFalse(data.shouldReplaceText());
         assertTrue(data.hasInstructions());
-        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        List<RenderDirective> instructions = data.getInstructions().get(0);
         assertNotNull(instructions);
         boolean found = false;
-        for (RenderInstruction instruction : instructions) {
-            if (instruction.getType() == RenderInstruction.Type.SET_DINNERBONE) {
-                assertTrue(instruction.isEnabled());
+        for (RenderDirective instruction : instructions) {
+            RenderDirectiveImpl renderInstruction = (RenderDirectiveImpl) instruction;
+            if (renderInstruction.getType() == RenderDirectiveImpl.Type.SET_DINNERBONE) {
+                assertTrue(renderInstruction.isEnabled());
                 found = true;
             }
         }
@@ -201,27 +207,28 @@ public class RenderTextProcessorTest {
 
     @Test
     public void testRawResetInstructionProducesInstruction() {
-        RenderTextData data = RenderTextProcessor.prepare("&rTest", true);
+        RenderPlan data = RenderTextProcessor.prepare("&rTest", true);
         assertFalse(data.shouldReplaceText());
         assertTrue(data.hasInstructions());
-        List<RenderInstruction> instructions = data.getInstructions().get(0);
+        List<RenderDirective> instructions = data.getInstructions().get(0);
         assertNotNull(instructions);
         assertFalse(instructions.isEmpty());
-        RenderInstruction instruction = instructions.get(0);
-        assertEquals(RenderInstruction.Type.RESET_TO_BASE, instruction.getType());
+        RenderDirectiveImpl instruction = (RenderDirectiveImpl) instructions.get(0);
+        assertEquals(RenderDirectiveImpl.Type.RESET_TO_BASE, instruction.getType());
         assertTrue(instruction.resetsFormatting());
     }
 
     @Test
     public void testIgniteAndShakeInstructionsExist() {
-        RenderTextData data = RenderTextProcessor.prepare("&iFire &jShake", false);
+        RenderPlan data = RenderTextProcessor.prepare("&iFire &jShake", false);
         assertTrue(data.shouldReplaceText());
         assertEquals("Fire Shake", data.getDisplayText());
         assertTrue(data.hasInstructions());
         assertTrue(data.getInstructions().containsKey(0));
         boolean sawIgnite = false;
-        for (RenderInstruction instruction : data.getInstructions().get(0)) {
-            if (instruction.getType() == RenderInstruction.Type.SET_IGNITE) {
+        for (RenderDirective instruction : data.getInstructions().get(0)) {
+            RenderDirectiveImpl renderInstruction = (RenderDirectiveImpl) instruction;
+            if (renderInstruction.getType() == RenderDirectiveImpl.Type.SET_IGNITE) {
                 sawIgnite = true;
             }
         }
@@ -229,8 +236,9 @@ public class RenderTextProcessorTest {
         int shakeIndex = data.getDisplayText().indexOf('S');
         assertTrue(data.getInstructions().containsKey(shakeIndex));
         boolean sawShake = false;
-        for (RenderInstruction instruction : data.getInstructions().get(shakeIndex)) {
-            if (instruction.getType() == RenderInstruction.Type.SET_SHAKE) {
+        for (RenderDirective instruction : data.getInstructions().get(shakeIndex)) {
+            RenderDirectiveImpl renderInstruction = (RenderDirectiveImpl) instruction;
+            if (renderInstruction.getType() == RenderDirectiveImpl.Type.SET_SHAKE) {
                 sawShake = true;
             }
         }
@@ -240,7 +248,7 @@ public class RenderTextProcessorTest {
     @Test
     public void testHtmlRgbDisabledTreatsTagsAsText() {
         HexTextConfig.setEnableRgbHtmlFormat(false);
-        RenderTextData data = RenderTextProcessor.prepare("<123456>World", false);
+        RenderPlan data = RenderTextProcessor.prepare("<123456>World", false);
         assertFalse(data.hasInstructions());
         assertFalse(data.shouldReplaceText());
         assertNull(data.getDisplayText());
@@ -249,11 +257,11 @@ public class RenderTextProcessorTest {
     @Test
     public void testAmpersandDisabledTreatsTokensAsText() {
         HexTextConfig.setUniversalAmpersandEnabled(false);
-        RenderTextData data = RenderTextProcessor.prepare("&aGreen", false);
+        RenderPlan data = RenderTextProcessor.prepare("&aGreen", false);
         assertFalse(data.hasInstructions());
         assertFalse(data.shouldReplaceText());
         assertNull(data.getDisplayText());
-        RenderTextData rgbData = RenderTextProcessor.prepare("&#FFAA11Text", false);
+        RenderPlan rgbData = RenderTextProcessor.prepare("&#FFAA11Text", false);
         assertFalse(rgbData.hasInstructions());
         assertFalse(rgbData.shouldReplaceText());
         assertNull(rgbData.getDisplayText());

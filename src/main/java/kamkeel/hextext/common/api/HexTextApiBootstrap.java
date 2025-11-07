@@ -3,16 +3,25 @@ package kamkeel.hextext.common.api;
 import kamkeel.hextext.HexText;
 import kamkeel.hextext.api.HexTextApi;
 import kamkeel.hextext.api.HexTextApiProvider;
+import kamkeel.hextext.api.rendering.RenderPlan;
+import kamkeel.hextext.api.rendering.TextRenderService;
+import kamkeel.hextext.api.rendering.TokenHighlightService;
+import kamkeel.hextext.api.rendering.HighlightSpan;
 import kamkeel.hextext.api.sign.IHexTextSign;
 import kamkeel.hextext.api.sign.SignInteractionRegistry;
 import kamkeel.hextext.api.sign.SignSide;
-import kamkeel.hextext.api.sign.SignStateApi;
-import kamkeel.hextext.api.text.SignTextApi;
-import kamkeel.hextext.api.text.TextFormattingApi;
+import kamkeel.hextext.api.sign.SignStateService;
+import kamkeel.hextext.api.text.SignTextService;
+import kamkeel.hextext.api.text.TextFormatter;
+import kamkeel.hextext.api.text.TextSanitizer;
+import kamkeel.hextext.common.render.HighlightComputations;
+import kamkeel.hextext.common.render.HighlightSpanImpl;
+import kamkeel.hextext.common.render.RenderTextProcessor;
 import kamkeel.hextext.common.sign.HexTextSignInteractions;
 import kamkeel.hextext.common.sign.SignSideHelper;
 import kamkeel.hextext.common.util.ColorCodeUtils;
 import kamkeel.hextext.common.util.SignTextHelper;
+import kamkeel.hextext.common.util.StringUtils;
 import net.minecraft.tileentity.TileEntitySign;
 
 import java.util.Arrays;
@@ -38,9 +47,12 @@ public final class HexTextApiBootstrap {
     private static final class Provider implements HexTextApiProvider {
 
         private final SignInteractionRegistry signInteractions = new HexTextSignInteractions();
-        private final SignTextApi signText = new SignTextApiImpl();
-        private final TextFormattingApi textFormatting = new TextFormattingApiImpl();
-        private final SignStateApi signState = new SignStateApiImpl();
+        private final SignTextService signText = new SignTextServiceImpl();
+        private final TextFormatter textFormatter = new TextFormatterImpl();
+        private final TextSanitizer textSanitizer = new TextSanitizerImpl();
+        private final TextRenderService textRenderer = new TextRenderServiceImpl();
+        private final TokenHighlightService tokenHighlighter = new TokenHighlightServiceImpl();
+        private final SignStateService signState = new SignStateServiceImpl();
 
         @Override
         public String modVersion() {
@@ -53,21 +65,36 @@ public final class HexTextApiBootstrap {
         }
 
         @Override
-        public SignTextApi signText() {
+        public SignTextService signText() {
             return signText;
         }
 
         @Override
-        public TextFormattingApi textFormatting() {
-            return textFormatting;
+        public TextFormatter textFormatter() {
+            return textFormatter;
         }
 
         @Override
-        public SignStateApi signState() {
+        public TextSanitizer textSanitizer() {
+            return textSanitizer;
+        }
+
+        @Override
+        public TextRenderService textRenderer() {
+            return textRenderer;
+        }
+
+        @Override
+        public TokenHighlightService tokenHighlighter() {
+            return tokenHighlighter;
+        }
+
+        @Override
+        public SignStateService signState() {
             return signState;
         }
 
-        private final class SignTextApiImpl implements SignTextApi {
+        private final class SignTextServiceImpl implements SignTextService {
 
             @Override
             public int visibleCharacterLimit() {
@@ -105,7 +132,7 @@ public final class HexTextApiBootstrap {
             }
         }
 
-        private final class TextFormattingApiImpl implements TextFormattingApi {
+        private final class TextFormatterImpl implements TextFormatter {
 
             @Override
             public FormattingEnvironment captureEnvironment(boolean rawMode) {
@@ -187,7 +214,81 @@ public final class HexTextApiBootstrap {
             }
         }
 
-        private final class SignStateApiImpl implements SignStateApi {
+        private final class TextSanitizerImpl implements TextSanitizer {
+
+            @Override
+            public String normalizeForRawDisplay(String text) {
+                return StringUtils.normalizeForRawDisplay(text);
+            }
+
+            @Override
+            public String convertAmpersandsToSectionSigns(String text) {
+                return StringUtils.convertAmpersandsToSectionSigns(text);
+            }
+
+            @Override
+            public String convertSectionSignsToAmpersands(String text) {
+                return StringUtils.convertSectionSignsToAmpersands(text);
+            }
+
+            @Override
+            public String stripColorCodes(CharSequence input) {
+                return StringUtils.stripColorCodes(input);
+            }
+
+            @Override
+            public String stripExtras(CharSequence input) {
+                return StringUtils.stripExtras(input);
+            }
+
+            @Override
+            public String stripHexColors(CharSequence input) {
+                return StringUtils.stripHexColors(input);
+            }
+
+            @Override
+            public String stripColors(CharSequence input) {
+                return StringUtils.stripColors(input);
+            }
+
+            @Override
+            public String stripStyles(CharSequence input) {
+                return StringUtils.stripStyles(input);
+            }
+
+            @Override
+            public boolean containsFormattingCodes(CharSequence input) {
+                return StringUtils.containsFormattingCodes(input);
+            }
+        }
+
+        private final class TextRenderServiceImpl implements TextRenderService {
+
+            @Override
+            public RenderPlan prepare(String text, boolean rawMode) {
+                return RenderTextProcessor.prepare(text, rawMode);
+            }
+        }
+
+        private final class TokenHighlightServiceImpl implements TokenHighlightService {
+
+            @Override
+            public float measureLiteralWidth(WidthProvider provider, CharSequence text, int start, int length) {
+                return HighlightComputations.measureLiteralWidth(provider, text, start, length);
+            }
+
+            @Override
+            public int getTokenHighlightColor(CharSequence text, int index) {
+                return HighlightComputations.getTokenHighlightColor(text, index);
+            }
+
+            @Override
+            public HighlightSpan createHighlight(float x, float y, float width, int color) {
+                return new HighlightSpanImpl(x, y, width, color);
+            }
+        }
+
+        private final class SignStateServiceImpl implements SignStateService {
 
             @Override
             public boolean isHexTextSign(TileEntitySign sign) {

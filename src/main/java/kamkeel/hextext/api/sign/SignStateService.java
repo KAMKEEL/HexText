@@ -5,7 +5,7 @@ import net.minecraft.tileentity.TileEntitySign;
 /**
  * High-level helpers for interacting with HexText-enhanced sign tile entities.
  */
-public interface SignStateApi {
+public interface SignStateService {
 
     /**
      * Checks whether the supplied tile entity has been converted to a HexText sign.

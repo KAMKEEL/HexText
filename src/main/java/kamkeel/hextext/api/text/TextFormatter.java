@@ -3,7 +3,7 @@ package kamkeel.hextext.api.text;
 /**
  * Entry points for HexText's colour and formatting parsing helpers.
  */
-public interface TextFormattingApi {
+public interface TextFormatter {
 
     /**
      * Captures the formatting environment currently enforced by HexText.

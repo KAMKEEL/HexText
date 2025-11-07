@@ -3,7 +3,7 @@ package kamkeel.hextext.api.text;
 /**
  * Utility helpers that operate on sign text while respecting HexText formatting rules.
  */
-public interface SignTextApi {
+public interface SignTextService {
 
     /**
      * Maximum number of visible characters supported on a sign line.

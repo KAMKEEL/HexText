@@ -1,9 +1,12 @@
 package kamkeel.hextext.api;
 
+import kamkeel.hextext.api.rendering.TextRenderService;
+import kamkeel.hextext.api.rendering.TokenHighlightService;
 import kamkeel.hextext.api.sign.SignInteractionRegistry;
-import kamkeel.hextext.api.sign.SignStateApi;
-import kamkeel.hextext.api.text.SignTextApi;
-import kamkeel.hextext.api.text.TextFormattingApi;
+import kamkeel.hextext.api.sign.SignStateService;
+import kamkeel.hextext.api.text.SignTextService;
+import kamkeel.hextext.api.text.TextFormatter;
+import kamkeel.hextext.api.text.TextSanitizer;
 
 /**
  * Central entry point for consumers of the HexText API.
@@ -56,21 +59,42 @@ public final class HexTextApi {
     /**
      * Provides helpers for manipulating sign text in a HexText-friendly manner.
      */
-    public static SignTextApi signText() {
+    public static SignTextService signText() {
         return provider().signText();
     }
 
     /**
      * Provides colour and formatting parsing utilities.
      */
-    public static TextFormattingApi textFormatting() {
-        return provider().textFormatting();
+    public static TextFormatter textFormatter() {
+        return provider().textFormatter();
+    }
+
+    /**
+     * Provides common text normalisation helpers used across the mod.
+     */
+    public static TextSanitizer textSanitizer() {
+        return provider().textSanitizer();
+    }
+
+    /**
+     * Provides helpers for preparing text for the HexText render pipeline.
+     */
+    public static TextRenderService textRenderer() {
+        return provider().textRenderer();
+    }
+
+    /**
+     * Provides helpers for computing token highlight metadata.
+     */
+    public static TokenHighlightService tokenHighlighter() {
+        return provider().tokenHighlighter();
     }
 
     /**
      * Provides helpers for interacting with HexText-enhanced sign tile entities.
      */
-    public static SignStateApi signState() {
+    public static SignStateService signState() {
         return provider().signState();
     }
 
@@ -96,17 +120,32 @@ public final class HexTextApi {
         }
 
         @Override
-        public SignTextApi signText() {
+        public SignTextService signText() {
             throw failure();
         }
 
         @Override
-        public TextFormattingApi textFormatting() {
+        public TextFormatter textFormatter() {
             throw failure();
         }
 
         @Override
-        public SignStateApi signState() {
+        public TextSanitizer textSanitizer() {
+            throw failure();
+        }
+
+        @Override
+        public TextRenderService textRenderer() {
+            throw failure();
+        }
+
+        @Override
+        public TokenHighlightService tokenHighlighter() {
+            throw failure();
+        }
+
+        @Override
+        public SignStateService signState() {
             throw failure();
         }
 
