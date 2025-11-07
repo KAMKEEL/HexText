@@ -1,8 +1,8 @@
 package kamkeel.hextext.mixin.early.impl.sign;
 
 import kamkeel.hextext.HexText;
-import kamkeel.hextext.common.sign.IHexTextSign;
-import kamkeel.hextext.common.sign.SignSide;
+import kamkeel.hextext.api.sign.IHexTextSign;
+import kamkeel.hextext.api.sign.SignSide;
 import kamkeel.hextext.common.sign.SignUpdatePacket;
 import kamkeel.hextext.common.util.SignTextHelper;
 import kamkeel.hextext.common.util.StringUtils;

@@ -1,4 +1,4 @@
-package kamkeel.hextext.common.sign;
+package kamkeel.hextext.api.sign;
 
 /**
  * Represents one of the editable faces of a sign.

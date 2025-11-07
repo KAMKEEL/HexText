@@ -146,7 +146,7 @@ public final class ColorCodeUtils {
         if (env == null) {
             env = captureFormattingEnvironment(rawMode);
         }
-        return detectColorCodeLength(str, pos, rawMode, env.allowsHtmlFormatting(), env.allowsUniversalAmpersand());
+        return detectColorCodeLengthInternal(str, pos, rawMode, env.allowsHtmlFormatting(), env.allowsUniversalAmpersand());
     }
 
     public static int detectColorCodeLength(CharSequence str, int pos) {
@@ -161,8 +161,13 @@ public final class ColorCodeUtils {
         return detectColorCodeLength(str, pos, false, env);
     }
 
-    private static int detectColorCodeLength(CharSequence str, int pos, boolean rawMode,
-                                             boolean allowHtml, boolean allowAmpersand) {
+    public static int detectColorCodeLength(CharSequence str, int pos, boolean rawMode,
+                                            boolean allowHtml, boolean allowAmpersand) {
+        return detectColorCodeLengthInternal(str, pos, rawMode, allowHtml, allowAmpersand);
+    }
+
+    private static int detectColorCodeLengthInternal(CharSequence str, int pos, boolean rawMode,
+                                                     boolean allowHtml, boolean allowAmpersand) {
         if (str == null || pos < 0 || pos >= str.length() || rawMode) {
             return 0;
         }

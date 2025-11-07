@@ -1,5 +1,6 @@
 package kamkeel.hextext.common.sign;
 
+import kamkeel.hextext.api.sign.SignSide;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntitySign;

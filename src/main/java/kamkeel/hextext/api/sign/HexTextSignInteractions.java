@@ -22,6 +22,46 @@ import java.util.Set;
  */
 public final class HexTextSignInteractions {
 
+    private static final SignInteractionRegistry REGISTRY_ADAPTER = new SignInteractionRegistry() {
+        @Override
+        public void registerDefaults() {
+            HexTextSignInteractions.registerDefaults();
+        }
+
+        @Override
+        public void register(ItemStack stack, SignInteractionType... interactions) {
+            HexTextSignInteractions.register(stack, interactions);
+        }
+
+        @Override
+        public void register(Item item, int metadata, Set<SignInteractionType> interactions) {
+            HexTextSignInteractions.register(item, metadata, interactions);
+        }
+
+        @Override
+        public void unregister(Item item, int metadata, SignInteractionType... interactions) {
+            HexTextSignInteractions.unregister(item, metadata, interactions);
+        }
+
+        @Override
+        public boolean provides(ItemStack stack, SignInteractionType type) {
+            return HexTextSignInteractions.provides(stack, type);
+        }
+
+        @Override
+        public Set<SignInteractionType> getInteractions(ItemStack stack) {
+            return HexTextSignInteractions.getInteractions(stack);
+        }
+    };
+
+    /**
+     * Returns the registry adapter that exposes these helpers through the {@link SignInteractionRegistry}
+     * interface.
+     */
+    public static SignInteractionRegistry registry() {
+        return REGISTRY_ADAPTER;
+    }
+
     /**
      * Metadata value that matches every sub-type of the registered item.
      */
