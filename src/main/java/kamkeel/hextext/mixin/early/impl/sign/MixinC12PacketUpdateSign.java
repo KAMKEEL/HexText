@@ -1,6 +1,6 @@
 package kamkeel.hextext.mixin.early.impl.sign;
 
-import kamkeel.hextext.common.sign.SignSide;
+import kamkeel.hextext.api.sign.SignSide;
 import kamkeel.hextext.common.sign.SignUpdatePacket;
 import kamkeel.hextext.common.util.SignTextHelper;
 import net.minecraft.network.Packet;

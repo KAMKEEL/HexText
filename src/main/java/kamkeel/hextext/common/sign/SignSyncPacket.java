@@ -1,5 +1,7 @@
 package kamkeel.hextext.common.sign;
 
+import kamkeel.hextext.api.sign.SignSide;
+
 public interface SignSyncPacket {
 
     void setBackText(String[] lines);

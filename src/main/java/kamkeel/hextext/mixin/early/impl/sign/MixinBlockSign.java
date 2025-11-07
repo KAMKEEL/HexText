@@ -1,10 +1,10 @@
 package kamkeel.hextext.mixin.early.impl.sign;
 
 import kamkeel.hextext.HexText;
-import kamkeel.hextext.api.sign.HexTextSignInteractions;
+import kamkeel.hextext.api.HexTextApi;
+import kamkeel.hextext.api.sign.IHexTextSign;
 import kamkeel.hextext.api.sign.SignInteractionType;
-import kamkeel.hextext.common.sign.IHexTextSign;
-import kamkeel.hextext.common.sign.SignSide;
+import kamkeel.hextext.api.sign.SignSide;
 import kamkeel.hextext.common.sign.SignSideHelper;
 import kamkeel.hextext.common.util.ItemHelper;
 import net.minecraft.block.BlockContainer;
@@ -49,7 +49,7 @@ public abstract class MixinBlockSign extends BlockContainer {
         ItemStack stack = player.getCurrentEquippedItem();
 
         if (stack != null) {
-            Set<SignInteractionType> interactions = HexTextSignInteractions.getInteractions(stack);
+            Set<SignInteractionType> interactions = HexTextApi.signInteractions().getInteractions(stack);
             if (!interactions.isEmpty()) {
                 if (worldIn.isRemote) {
                     return true;

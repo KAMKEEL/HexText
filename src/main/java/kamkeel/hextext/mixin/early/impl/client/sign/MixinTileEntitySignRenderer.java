@@ -2,8 +2,8 @@ package kamkeel.hextext.mixin.early.impl.client.sign;
 
 import kamkeel.hextext.client.render.RenderSignPipeline;
 import kamkeel.hextext.client.render.font.GlowingTextRenderer;
-import kamkeel.hextext.common.sign.IHexTextSign;
-import kamkeel.hextext.common.sign.SignSide;
+import kamkeel.hextext.api.sign.IHexTextSign;
+import kamkeel.hextext.api.sign.SignSide;
 import kamkeel.hextext.common.util.StringUtils;
 import net.minecraft.block.Block;
 import net.minecraft.client.gui.FontRenderer;

@@ -4,8 +4,9 @@ import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
-import kamkeel.hextext.api.sign.HexTextSignInteractions;
+import kamkeel.hextext.api.HexTextApi;
 import kamkeel.hextext.client.config.HexTextConfigEventHandler;
+import kamkeel.hextext.common.api.HexTextApiBootstrap;
 import kamkeel.hextext.config.HexTextConfig;
 import kamkeel.hextext.network.HexTextNetwork;
 import kamkeel.hextext.network.ServerConfigSyncHandler;
@@ -29,13 +30,14 @@ public class CommonProxy {
     }
 
     public void preInit(FMLPreInitializationEvent ev) {
+        HexTextApiBootstrap.initialize();
         HexTextConfig.init(ev.getSuggestedConfigurationFile());
         HexTextNetwork.init();
         eventsInit();
     }
 
     public void init(FMLInitializationEvent ev) {
-        HexTextSignInteractions.registerDefaults();
+        HexTextApi.signInteractions().registerDefaults();
     }
 
     public void postInit(FMLPostInitializationEvent ev) {

@@ -1,4 +1,4 @@
-package kamkeel.hextext.common.sign;
+package kamkeel.hextext.api.sign;
 
 /**
  * Behaviour contract injected into {@link net.minecraft.tileentity.TileEntitySign} via mixin.
@@ -19,7 +19,7 @@ public interface IHexTextSign {
 
     String[] getLines(SignSide side);
 
-    public void setEditSide(SignSide side);
+    void setEditSide(SignSide side);
 
-    public SignSide getEditSide();
+    SignSide getEditSide();
 }
