@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import kamkeel.hextext.common.compat.AngelicaCompatibility;
+
 public final class HexTextEarlyMixins implements IMixinConfigPlugin {
 
     private static final MixinEnvironment.Side SIDE = MixinEnvironment.getCurrentEnvironment().getSide();
@@ -37,7 +39,9 @@ public final class HexTextEarlyMixins implements IMixinConfigPlugin {
     public List<String> getMixins() {
         List<String> mixins = new ArrayList<>();
         if (SIDE == MixinEnvironment.Side.CLIENT) {
-            mixins.add("client.MixinFontRenderer");
+            if (!AngelicaCompatibility.shouldDisableHexTextFontRendererMixin()) {
+                mixins.add("client.MixinFontRenderer");
+            }
             mixins.add("client.MixinGuiNewChat");
             mixins.add("client.MixinGuiTextField");
             mixins.add("client.MixinGuiChat");

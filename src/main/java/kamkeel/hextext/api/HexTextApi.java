@@ -1,5 +1,8 @@
 package kamkeel.hextext.api;
 
+import kamkeel.hextext.api.rendering.ColorService;
+import kamkeel.hextext.api.rendering.DynamicEffectService;
+import kamkeel.hextext.api.rendering.RenderingEnvironmentService;
 import kamkeel.hextext.api.rendering.TextRenderService;
 import kamkeel.hextext.api.rendering.TokenHighlightService;
 import kamkeel.hextext.api.sign.SignInteractionRegistry;
@@ -13,7 +16,7 @@ import kamkeel.hextext.api.text.TextSanitizer;
  */
 public final class HexTextApi {
 
-    public static final String API_VERSION = "1.0.0";
+    public static final String API_VERSION = "1.1.0";
 
     private static volatile HexTextApiProvider provider = UninitializedProvider.INSTANCE;
 
@@ -98,6 +101,27 @@ public final class HexTextApi {
         return provider().signState();
     }
 
+    /**
+     * Provides access to contextual information about the HexText rendering pipeline.
+     */
+    public static RenderingEnvironmentService renderEnvironment() {
+        return provider().renderEnvironment();
+    }
+
+    /**
+     * Provides deterministic helpers for computing HexText dynamic effect values.
+     */
+    public static DynamicEffectService dynamicEffects() {
+        return provider().dynamicEffects();
+    }
+
+    /**
+     * Provides common colour helper utilities used by the HexText renderer.
+     */
+    public static ColorService colors() {
+        return provider().colors();
+    }
+
     private static HexTextApiProvider provider() {
         HexTextApiProvider result = provider;
         if (result == UninitializedProvider.INSTANCE) {
@@ -146,6 +170,21 @@ public final class HexTextApi {
 
         @Override
         public SignStateService signState() {
+            throw failure();
+        }
+
+        @Override
+        public RenderingEnvironmentService renderEnvironment() {
+            throw failure();
+        }
+
+        @Override
+        public DynamicEffectService dynamicEffects() {
+            throw failure();
+        }
+
+        @Override
+        public ColorService colors() {
             throw failure();
         }
 
