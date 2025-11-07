@@ -3,7 +3,10 @@ package kamkeel.hextext.common.api;
 import kamkeel.hextext.HexText;
 import kamkeel.hextext.api.HexTextApi;
 import kamkeel.hextext.api.HexTextApiProvider;
+import kamkeel.hextext.api.rendering.ColorService;
+import kamkeel.hextext.api.rendering.DynamicEffectService;
 import kamkeel.hextext.api.rendering.RenderPlan;
+import kamkeel.hextext.api.rendering.RenderingEnvironmentService;
 import kamkeel.hextext.api.rendering.TextRenderService;
 import kamkeel.hextext.api.rendering.TokenHighlightService;
 import kamkeel.hextext.api.rendering.HighlightSpan;
@@ -20,8 +23,12 @@ import kamkeel.hextext.common.render.RenderTextProcessor;
 import kamkeel.hextext.common.sign.HexTextSignInteractions;
 import kamkeel.hextext.common.sign.SignSideHelper;
 import kamkeel.hextext.common.util.ColorCodeUtils;
+import kamkeel.hextext.common.util.ColorMath;
 import kamkeel.hextext.common.util.SignTextHelper;
 import kamkeel.hextext.common.util.StringUtils;
+import kamkeel.hextext.common.util.TextEffectMath;
+import kamkeel.hextext.config.HexTextConfig;
+import kamkeel.hextext.client.render.FontRenderContext;
 import net.minecraft.tileentity.TileEntitySign;
 
 import java.util.Arrays;
@@ -53,6 +60,9 @@ public final class HexTextApiBootstrap {
         private final TextRenderService textRenderer = new TextRenderServiceImpl();
         private final TokenHighlightService tokenHighlighter = new TokenHighlightServiceImpl();
         private final SignStateService signState = new SignStateServiceImpl();
+        private final RenderingEnvironmentService renderEnvironment = new RenderingEnvironmentServiceImpl();
+        private final DynamicEffectService dynamicEffects = new DynamicEffectServiceImpl();
+        private final ColorService colors = new ColorServiceImpl();
 
         @Override
         public String modVersion() {
@@ -92,6 +102,85 @@ public final class HexTextApiBootstrap {
         @Override
         public SignStateService signState() {
             return signState;
+        }
+
+        @Override
+        public RenderingEnvironmentService renderEnvironment() {
+            return renderEnvironment;
+        }
+
+        @Override
+        public DynamicEffectService dynamicEffects() {
+            return dynamicEffects;
+        }
+
+        @Override
+        public ColorService colors() {
+            return colors;
+        }
+
+        private final class RenderingEnvironmentServiceImpl implements RenderingEnvironmentService {
+
+            @Override
+            public boolean isRawTextRendering() {
+                return FontRenderContext.isRawTextRendering();
+            }
+
+            @Override
+            public void pushRawTextRendering() {
+                FontRenderContext.pushRawTextRendering();
+            }
+
+            @Override
+            public void popRawTextRendering() {
+                FontRenderContext.popRawTextRendering();
+            }
+        }
+
+        private final class DynamicEffectServiceImpl implements DynamicEffectService {
+
+            private static final float RAINBOW_SPREAD_DEGREES = 12.0f;
+            private static final float IGNITE_MIN_FACTOR = 0.35f;
+            private static final float SHAKE_VERTICAL_RANGE = 1.05f;
+
+            @Override
+            public int computeRainbowColor(long now, int glyphIndex, int anchorIndex) {
+                return TextEffectMath.computeRainbowColor(
+                    now,
+                    HexTextConfig.getRainbowSpeed(),
+                    glyphIndex,
+                    anchorIndex,
+                    RAINBOW_SPREAD_DEGREES
+                );
+            }
+
+            @Override
+            public int computeIgniteColor(long now, int baseColor) {
+                float brightness = TextEffectMath.computeIgniteBrightness(
+                    now,
+                    HexTextConfig.getIgniteInterval(),
+                    IGNITE_MIN_FACTOR
+                );
+                return ColorMath.scaleBrightness(baseColor, brightness);
+            }
+
+            @Override
+            public float computeShakeOffset(long now, int glyphIndex) {
+                long seed = TextEffectMath.computeShakeSeed(
+                    glyphIndex,
+                    now,
+                    HexTextConfig.getShakeInterval()
+                );
+                return TextEffectMath.computeShakeOffset(seed, SHAKE_VERTICAL_RANGE);
+            }
+        }
+
+        private final class ColorServiceImpl implements ColorService {
+
+            @Override
+            public int calculateShadowColor(int rgb) {
+                return ColorCodeUtils.calculateShadowColor(rgb);
+            }
         }
 
         private final class SignTextServiceImpl implements SignTextService {

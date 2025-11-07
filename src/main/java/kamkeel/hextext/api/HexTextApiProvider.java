@@ -1,5 +1,8 @@
 package kamkeel.hextext.api;
 
+import kamkeel.hextext.api.rendering.ColorService;
+import kamkeel.hextext.api.rendering.DynamicEffectService;
+import kamkeel.hextext.api.rendering.RenderingEnvironmentService;
 import kamkeel.hextext.api.rendering.TextRenderService;
 import kamkeel.hextext.api.rendering.TokenHighlightService;
 import kamkeel.hextext.api.sign.SignInteractionRegistry;
@@ -52,4 +55,19 @@ public interface HexTextApiProvider {
      * Returns the sign state helper implementation.
      */
     SignStateService signState();
+
+    /**
+     * Returns the rendering environment helper implementation.
+     */
+    RenderingEnvironmentService renderEnvironment();
+
+    /**
+     * Returns the dynamic effect helper implementation.
+     */
+    DynamicEffectService dynamicEffects();
+
+    /**
+     * Returns the colour helper implementation.
+     */
+    ColorService colors();
 }
