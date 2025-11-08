@@ -77,9 +77,7 @@ public final class AngelicaCompatibility {
             return true;
         }
 
-        LOGGER.warn(
-            "Angelica detected but unable to determine font renderer mixin state; disabling HexText mixin as a safeguard.");
-        return true;
+        return false;
     }
 
     private static boolean isAngelicaPresent() {
