@@ -52,19 +52,46 @@ public abstract class MixinS33PacketUpdateSign extends Packet implements SignSyn
 
     @Inject(method = "readPacketData", at = @At("TAIL"))
     private void hextext$readExtras(PacketBuffer data, CallbackInfo ci) {
-        hextext$backLines = new String[4];
-        for (int i = 0; i < hextext$backLines.length; i++) {
-            try {
-                hextext$backLines[i] = data.readStringFromBuffer(50);
-            } catch (IOException exception) {
-                throw new RuntimeException("Failed to read HexText back text", exception);
-            }
+        if (!data.isReadable()) {
+            hextext$backLines = new String[]{"", "", "", ""};
+            hextext$glowFront = false;
+            hextext$glowBack = false;
+            hextext$outlineFront = false;
+            hextext$outlineBack = false;
+            hextext$waxed = false;
+            return;
         }
-        hextext$glowFront = data.readBoolean();
-        hextext$glowBack = data.readBoolean();
-        hextext$outlineFront = data.readBoolean();
-        hextext$outlineBack = data.readBoolean();
-        hextext$waxed = data.readBoolean();
+
+        int startIndex = data.readerIndex();
+        String[] lines = new String[4];
+        try {
+            for (int i = 0; i < lines.length; i++) {
+                lines[i] = data.readStringFromBuffer(50);
+            }
+            hextext$backLines = lines;
+
+            if (data.readableBytes() >= 5) {
+                hextext$glowFront = data.readBoolean();
+                hextext$glowBack = data.readBoolean();
+                hextext$outlineFront = data.readBoolean();
+                hextext$outlineBack = data.readBoolean();
+                hextext$waxed = data.readBoolean();
+            } else {
+                hextext$glowFront = false;
+                hextext$glowBack = false;
+                hextext$outlineFront = false;
+                hextext$outlineBack = false;
+                hextext$waxed = false;
+            }
+        } catch (IndexOutOfBoundsException | IOException exception) {
+            data.readerIndex(startIndex);
+            hextext$backLines = new String[]{"", "", "", ""};
+            hextext$glowFront = false;
+            hextext$glowBack = false;
+            hextext$outlineFront = false;
+            hextext$outlineBack = false;
+            hextext$waxed = false;
+        }
     }
 
     @Override

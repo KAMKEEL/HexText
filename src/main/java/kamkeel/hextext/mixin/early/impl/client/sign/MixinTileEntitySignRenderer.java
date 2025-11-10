@@ -1,5 +1,6 @@
 package kamkeel.hextext.mixin.early.impl.client.sign;
 
+import kamkeel.hextext.HexText;
 import kamkeel.hextext.client.render.RenderSignPipeline;
 import kamkeel.hextext.client.render.font.GlowingTextRenderer;
 import kamkeel.hextext.api.sign.IHexTextSign;
@@ -37,6 +38,10 @@ public abstract class MixinTileEntitySignRenderer extends TileEntitySpecialRende
 
     @Inject(method = "renderTileEntityAt(Lnet/minecraft/tileentity/TileEntitySign;DDDF)V", at = @At("HEAD"), cancellable = true)
     private void hextext$renderSign(TileEntitySign sign, double x, double y, double z, float partialTicks, CallbackInfo ci) {
+        if (!HexText.getActiveProxy().isRemoteHexTextPresent()) {
+            return;
+        }
+
         Block block = sign.getBlockType();
         GL11.glPushMatrix();
         float scale = 0.6666667F;

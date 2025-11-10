@@ -1,14 +1,19 @@
 package kamkeel.hextext.client;
 
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import kamkeel.hextext.CommonProxy;
 import kamkeel.hextext.client.config.ClientConfig;
+import kamkeel.hextext.client.event.ClientConnectionEventHandler;
 
 public class ClientProxy extends CommonProxy {
 
     private final ClientConfig clientConfig = new ClientConfig();
+    private final ClientConnectionEventHandler connectionEventHandler = new ClientConnectionEventHandler(this, clientConfig);
+    private boolean clientEventsRegistered;
+    private boolean remoteServerHasHexText = true;
 
     public static void eventsInit() {
 
@@ -24,6 +29,7 @@ public class ClientProxy extends CommonProxy {
     public void init(FMLInitializationEvent ev) {
         super.init(ev);
         eventsInit();
+        registerClientEvents();
     }
 
     @Override
@@ -64,7 +70,24 @@ public class ClientProxy extends CommonProxy {
     @Override
     public void applyServerConfig(boolean universalAmpersand, boolean chatAmpersands, boolean signAmpersands,
         boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat) {
+        remoteServerHasHexText = true;
         clientConfig.apply(universalAmpersand, chatAmpersands, signAmpersands, repairAmpersands, allowSignEditing,
             enableHtmlFormat);
+    }
+
+    @Override
+    public boolean isRemoteHexTextPresent() {
+        return remoteServerHasHexText;
+    }
+
+    public void setRemoteServerHasHexText(boolean hasHexText) {
+        this.remoteServerHasHexText = hasHexText;
+    }
+
+    private void registerClientEvents() {
+        if (!clientEventsRegistered) {
+            FMLCommonHandler.instance().bus().register(connectionEventHandler);
+            clientEventsRegistered = true;
+        }
     }
 }

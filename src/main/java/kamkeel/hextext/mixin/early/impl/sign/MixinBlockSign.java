@@ -33,6 +33,10 @@ public abstract class MixinBlockSign extends BlockContainer {
             return false;
         }
 
+        if (!HexText.getActiveProxy().isRemoteHexTextPresent()) {
+            return false;
+        }
+
         TileEntity tileEntity = worldIn.getTileEntity(x, y, z);
         if (!(tileEntity instanceof TileEntitySign)) {
             return false;

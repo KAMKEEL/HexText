@@ -1,5 +1,6 @@
 package kamkeel.hextext.mixin.early.impl.client.sign;
 
+import kamkeel.hextext.HexText;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntitySign;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,6 +17,10 @@ public abstract class MixinTileEntitySignClient {
 
     @Inject(method = "readFromNBT", at = @At("RETURN"))
     private void hextext$enableClientEdit(NBTTagCompound compound, CallbackInfo ci) {
+        if (!HexText.getActiveProxy().isRemoteHexTextPresent()) {
+            return;
+        }
+
         boolean waxed = compound.getBoolean("HexTextWaxed");
         setEditable(!waxed);
     }

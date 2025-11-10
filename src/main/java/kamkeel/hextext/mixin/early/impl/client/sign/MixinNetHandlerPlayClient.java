@@ -1,5 +1,6 @@
 package kamkeel.hextext.mixin.early.impl.client.sign;
 
+import kamkeel.hextext.HexText;
 import kamkeel.hextext.api.sign.IHexTextSign;
 import kamkeel.hextext.api.sign.SignSide;
 import kamkeel.hextext.common.sign.SignSyncPacket;
@@ -23,6 +24,10 @@ public abstract class MixinNetHandlerPlayClient {
 
     @Inject(method = "handleUpdateSign", at = @At("TAIL"))
     private void hextext$applySyncData(S33PacketUpdateSign packet, CallbackInfo ci) {
+        if (!HexText.getActiveProxy().isRemoteHexTextPresent()) {
+            return;
+        }
+
         TileEntity tileEntity = gameController.theWorld.getTileEntity(packet.func_149346_c(),
             packet.func_149345_d(), packet.func_149344_e());
         if (!(tileEntity instanceof TileEntitySign)) {

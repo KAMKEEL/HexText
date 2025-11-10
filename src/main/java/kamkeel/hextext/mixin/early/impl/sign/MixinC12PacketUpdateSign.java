@@ -1,5 +1,6 @@
 package kamkeel.hextext.mixin.early.impl.sign;
 
+import kamkeel.hextext.HexText;
 import kamkeel.hextext.api.sign.SignSide;
 import kamkeel.hextext.common.sign.SignUpdatePacket;
 import kamkeel.hextext.common.util.SignTextHelper;
@@ -45,11 +46,18 @@ public abstract class MixinC12PacketUpdateSign extends Packet implements SignUpd
         if (field_149590_d == null) {
             return;
         }
+        if (!HexText.getActiveProxy().isRemoteHexTextPresent()) {
+            return;
+        }
         data.writeByte(this.side.ordinal());
     }
 
     @Inject(method = "readPacketData", at = @At("HEAD"), cancellable = true)
     private void hextext$clampPacketLines(PacketBuffer data, CallbackInfo ci) {
+        if (!HexText.getActiveProxy().isRemoteHexTextPresent()) {
+            return;
+        }
+
         this.field_149593_a = data.readInt();
         this.field_149591_b = data.readShort();
         this.field_149592_c = data.readInt();

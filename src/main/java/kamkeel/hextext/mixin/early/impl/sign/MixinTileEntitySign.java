@@ -1,5 +1,6 @@
 package kamkeel.hextext.mixin.early.impl.sign;
 
+import kamkeel.hextext.HexText;
 import kamkeel.hextext.api.sign.IHexTextSign;
 import kamkeel.hextext.api.sign.SignSide;
 import kamkeel.hextext.common.sign.SignSyncPacket;
@@ -45,6 +46,10 @@ public abstract class MixinTileEntitySign extends TileEntity implements IHexText
 
     @Inject(method = "readFromNBT", at = @At("RETURN"))
     private void hextext$clampLoadedLines(NBTTagCompound compound, CallbackInfo ci) {
+        if (!HexText.getActiveProxy().isRemoteHexTextPresent()) {
+            return;
+        }
+
         if (signText != null) {
             hextext$clampLines(signText);
         }
@@ -65,6 +70,10 @@ public abstract class MixinTileEntitySign extends TileEntity implements IHexText
 
     @Inject(method = "writeToNBT", at = @At("RETURN"))
     private void hextext$writeCustomData(NBTTagCompound compound, CallbackInfo ci) {
+        if (!HexText.getActiveProxy().isRemoteHexTextPresent()) {
+            return;
+        }
+
         compound.setBoolean("HexTextWaxed", isWaxed);
         compound.setBoolean("HexTextGlowFront", glowStates[SignSide.FRONT.ordinal()]);
         compound.setBoolean("HexTextGlowBack", glowStates[SignSide.BACK.ordinal()]);
@@ -148,6 +157,10 @@ public abstract class MixinTileEntitySign extends TileEntity implements IHexText
 
     @Inject(method = "getDescriptionPacket", at = @At("RETURN"))
     private void hextext$appendCustomSyncData(CallbackInfoReturnable<Packet> cir) {
+        if (!HexText.getActiveProxy().isRemoteHexTextPresent()) {
+            return;
+        }
+
         Packet packet = cir.getReturnValue();
         if (!(packet instanceof S33PacketUpdateSign)) {
             return;

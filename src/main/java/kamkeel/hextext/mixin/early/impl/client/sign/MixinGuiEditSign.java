@@ -125,11 +125,19 @@ public abstract class MixinGuiEditSign extends GuiScreen {
         )
     )
     private String[] hextext$useCustomSignBuffer(TileEntitySign sign) {
+        if (!HexText.getActiveProxy().isRemoteHexTextPresent()) {
+            return this.tileSign.signText;
+        }
+
         return this.editLines;
     }
 
     @Redirect(method = "keyTyped", at = @At(value = "INVOKE", target = "Ljava/lang/String;length()I", ordinal = 2))
     private int hextext$measureVisibleLength(String line) {
+        if (!HexText.getActiveProxy().isRemoteHexTextPresent()) {
+            return line.length();
+        }
+
         return SignTextHelper.visibleLength(line);
     }
 

@@ -29,6 +29,10 @@ public abstract class MixinNetHandlerPlayServer {
 
     @Inject(method = "processUpdateSign", at = @At("HEAD"), cancellable = true)
     private void hextext$processUpdateSign(C12PacketUpdateSign packet, CallbackInfo ci) {
+        if (!HexText.getActiveProxy().isRemoteHexTextPresent()) {
+            return;
+        }
+
         WorldServer world = playerEntity.getServerForPlayer();
         int x = packet.func_149588_c();
         int y = packet.func_149586_d();

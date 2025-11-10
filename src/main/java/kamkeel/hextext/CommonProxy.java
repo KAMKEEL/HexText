@@ -71,4 +71,8 @@ public class CommonProxy {
         boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat) {
         // Server already owns the authoritative configuration, so nothing further needs to happen here.
     }
+
+    public boolean isRemoteHexTextPresent() {
+        return true;
+    }
 }
