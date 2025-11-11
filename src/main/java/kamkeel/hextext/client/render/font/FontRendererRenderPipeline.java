@@ -57,11 +57,11 @@ public final class FontRendererRenderPipeline {
 
         int initialColor = resolveInitialColor();
         colorState.begin(initialColor, shadow);
-        bridge.setTextColor(initialColor);
+        bridge.hexText$setTextColor(initialColor);
         effects.begin(initialColor);
 
         if (rawMode) {
-            bridge.resetFormattingStyles();
+            bridge.hexText$resetFormattingStyles();
         }
 
         if (!shadow && rawMode) {
@@ -99,9 +99,9 @@ public final class FontRendererRenderPipeline {
                 }
                 if (tokenLength > 0) {
                     if (text.charAt(index) != 167) {
-                        float width = TokenHighlightUtils.measureLiteralWidth(bridge.getFontRenderer(), text, index, tokenLength);
+                        float width = TokenHighlightUtils.measureLiteralWidth(bridge.hexText$getFontRenderer(), text, index, tokenLength);
                         if (width > 0.0f) {
-                            pendingHighlights.add(new HighlightSpanImpl(bridge.getPosX(), bridge.getPosY(), width,
+                            pendingHighlights.add(new HighlightSpanImpl(bridge.hexText$getPosX(), bridge.hexText$getPosY(), width,
                                 TokenHighlightUtils.getTokenHighlightColor(text, index)));
                         }
                         rawTokenSkip = Math.max(tokenLength - 1, 0);
@@ -147,19 +147,19 @@ public final class FontRendererRenderPipeline {
     public void end() {
         renderData = null;
         if (!renderingShadow && !pendingHighlights.isEmpty()) {
-            TokenHighlightUtils.drawHighlights(pendingHighlights, bridge.getFontHeight());
+            TokenHighlightUtils.drawHighlights(pendingHighlights, bridge.hexText$getFontHeight());
             pendingHighlights.clear();
         }
     }
 
     public int computeStringWidth(String text) {
         boolean rawMode = FontRenderContext.isRawTextRendering();
-        return Math.round(FontRendererUtils.calculateMaxLineWidth(bridge.getFontRenderer(), text, rawMode));
+        return Math.round(FontRendererUtils.calculateMaxLineWidth(bridge.hexText$getFontRenderer(), text, rawMode));
     }
 
     public int computeLineBreakIndex(String text, int maxWidth) {
         boolean rawMode = FontRenderContext.isRawTextRendering();
-        return FontRendererUtils.computeLineBreakIndex(bridge.getFontRenderer(), text, maxWidth, rawMode);
+        return FontRendererUtils.computeLineBreakIndex(bridge.hexText$getFontRenderer(), text, maxWidth, rawMode);
     }
 
     public String trimStringToWidth(String text, int width, boolean reverse) {
@@ -169,10 +169,10 @@ public final class FontRendererRenderPipeline {
 
         boolean rawMode = FontRenderContext.isRawTextRendering();
         if (!reverse) {
-            int endIndex = FontRendererUtils.computeLineBreakIndex(bridge.getFontRenderer(), text, width, rawMode);
+            int endIndex = FontRendererUtils.computeLineBreakIndex(bridge.hexText$getFontRenderer(), text, width, rawMode);
             return text.substring(0, Math.min(endIndex, text.length()));
         }
-        return FontRendererUtils.trimStringFromEnd(bridge.getFontRenderer(), text, width, rawMode);
+        return FontRendererUtils.trimStringFromEnd(bridge.hexText$getFontRenderer(), text, width, rawMode);
     }
 
     public String wrapFormattedString(String text, int width) {
@@ -180,7 +180,7 @@ public final class FontRendererRenderPipeline {
             return "";
         }
         boolean rawMode = FontRenderContext.isRawTextRendering();
-        return FontRendererUtils.wrapFormattedString(bridge.getFontRenderer(), text, width, rawMode);
+        return FontRendererUtils.wrapFormattedString(bridge.hexText$getFontRenderer(), text, width, rawMode);
     }
 
     public String extractFormatFromString(String text) {
@@ -190,13 +190,13 @@ public final class FontRendererRenderPipeline {
     public float renderGlyph(char glyph, boolean italic, boolean unicode, int defaultIndex, char unicodeChar,
                              GlyphRenderer glyphRenderer) {
         updateOutlineTracking();
-        int baseColor = bridge.getTextColor();
+        int baseColor = bridge.hexText$getTextColor();
         if (effects.hasActiveEffects()) {
             int targetColor = effects.computeColor(visibleGlyphIndex);
             int appliedColor = shadowPass ? ColorCodeUtils.calculateShadowColor(targetColor) : targetColor;
             setColorFromInt(appliedColor);
-            effects.beforeGlyph(bridge.getFontRenderer(), glyph, visibleGlyphIndex, bridge.getPosX(), bridge.getPosY(),
-                bridge.getFontHeight());
+            effects.beforeGlyph(bridge.hexText$getFontRenderer(), glyph, visibleGlyphIndex, bridge.hexText$getPosX(), bridge.hexText$getPosY(),
+                bridge.hexText$getFontHeight());
             float width = renderGlyphWithColor(appliedColor, italic, unicode, defaultIndex, unicodeChar, glyphRenderer);
             effects.afterGlyph();
             return width;
@@ -244,7 +244,7 @@ public final class FontRendererRenderPipeline {
         float red = (float) ((rgb >> 16) & 255) / 255.0f;
         float green = (float) ((rgb >> 8) & 255) / 255.0f;
         float blue = (float) (rgb & 255) / 255.0f;
-        bridge.applyColorComponents(red, green, blue, bridge.getAlpha());
+        bridge.hexText$applyColorComponents(red, green, blue, bridge.hexText$getAlpha());
     }
 
     private int resolveOutlineColor(int baseColor) {
@@ -266,7 +266,7 @@ public final class FontRendererRenderPipeline {
                 setColorFromInt(appliedRgb);
                 break;
             case APPLY_VANILLA_COLOR:
-                int vanillaColor = colorState.applyVanillaColor(instruction.getParameter(), bridge.getColorCodePalette(),
+                int vanillaColor = colorState.applyVanillaColor(instruction.getParameter(), bridge.hexText$getColorCodePalette(),
                     instruction.shouldClearStack(), effects, renderingShadow);
                 setColorFromInt(vanillaColor);
                 break;
@@ -283,19 +283,19 @@ public final class FontRendererRenderPipeline {
                 setColorFromInt(baseColor);
                 break;
             case SET_RANDOM:
-                bridge.setRandomStyle(instruction.isEnabled());
+                bridge.hexText$setRandomStyle(instruction.isEnabled());
                 break;
             case SET_BOLD:
-                bridge.setBoldStyle(instruction.isEnabled());
+                bridge.hexText$setBoldStyle(instruction.isEnabled());
                 break;
             case SET_STRIKETHROUGH:
-                bridge.setStrikethroughStyle(instruction.isEnabled());
+                bridge.hexText$setStrikethroughStyle(instruction.isEnabled());
                 break;
             case SET_UNDERLINE:
-                bridge.setUnderlineStyle(instruction.isEnabled());
+                bridge.hexText$setUnderlineStyle(instruction.isEnabled());
                 break;
             case SET_ITALIC:
-                bridge.setItalicStyle(instruction.isEnabled());
+                bridge.hexText$setItalicStyle(instruction.isEnabled());
                 break;
             case SET_RAINBOW:
                 if (instruction.shouldClearStack()) {
@@ -304,7 +304,7 @@ public final class FontRendererRenderPipeline {
                 effects.resetDynamicEffects();
                 effects.setRainbow(instruction.isEnabled(), visibleGlyphIndex);
                 if (!renderingShadow) {
-                    effects.updateBaseColor(bridge.getTextColor());
+                    effects.updateBaseColor(bridge.hexText$getTextColor());
                 }
                 resetStyles = true;
                 break;
@@ -313,7 +313,7 @@ public final class FontRendererRenderPipeline {
                 break;
             case SET_IGNITE:
                 if (instruction.isEnabled() && !renderingShadow) {
-                    effects.updateBaseColor(bridge.getTextColor());
+                    effects.updateBaseColor(bridge.hexText$getTextColor());
                 }
                 effects.setIgnite(instruction.isEnabled());
                 break;
@@ -323,18 +323,18 @@ public final class FontRendererRenderPipeline {
         }
 
         if (resetStyles) {
-            bridge.resetFormattingStyles();
+            bridge.hexText$resetFormattingStyles();
         }
     }
 
     private void setColorFromInt(int rgb) {
         int masked = rgb & 0xFFFFFF;
-        bridge.setTextColor(masked);
+        bridge.hexText$setTextColor(masked);
         colorState.setCurrentColor(masked);
         float red = (float) (rgb >> 16 & 255) / 255.0F;
         float green = (float) (rgb >> 8 & 255) / 255.0F;
         float blue = (float) (rgb & 255) / 255.0F;
-        bridge.applyColorComponents(red, green, blue, bridge.getAlpha());
+        bridge.hexText$applyColorComponents(red, green, blue, bridge.hexText$getAlpha());
     }
 
     private void updateOutlineTracking() {
@@ -349,9 +349,9 @@ public final class FontRendererRenderPipeline {
             hasPendingRenderColor = false;
             return pendingRenderColor & 0xFFFFFF;
         }
-        int r = Math.round(bridge.getRedComponent() * 255.0f);
-        int g = Math.round(bridge.getGreenComponent() * 255.0f);
-        int b = Math.round(bridge.getBlueComponent() * 255.0f);
+        int r = Math.round(bridge.hexText$getRedComponent() * 255.0f);
+        int g = Math.round(bridge.hexText$getGreenComponent() * 255.0f);
+        int b = Math.round(bridge.hexText$getBlueComponent() * 255.0f);
         return (r << 16) | (g << 8) | b;
     }
 }

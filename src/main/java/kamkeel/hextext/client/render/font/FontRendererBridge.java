@@ -4,39 +4,39 @@ import net.minecraft.client.gui.FontRenderer;
 
 public interface FontRendererBridge {
 
-    FontRenderer getFontRenderer();
+    FontRenderer hexText$getFontRenderer();
 
-    void setRandomStyle(boolean enabled);
+    void hexText$setRandomStyle(boolean enabled);
 
-    void setBoldStyle(boolean enabled);
+    void hexText$setBoldStyle(boolean enabled);
 
-    void setStrikethroughStyle(boolean enabled);
+    void hexText$setStrikethroughStyle(boolean enabled);
 
-    void setUnderlineStyle(boolean enabled);
+    void hexText$setUnderlineStyle(boolean enabled);
 
-    void setItalicStyle(boolean enabled);
+    void hexText$setItalicStyle(boolean enabled);
 
-    void setTextColor(int color);
+    void hexText$setTextColor(int color);
 
-    int getTextColor();
+    int hexText$getTextColor();
 
-    float getAlpha();
+    float hexText$getAlpha();
 
-    float getRedComponent();
+    float hexText$getRedComponent();
 
-    float getBlueComponent();
+    float hexText$getBlueComponent();
 
-    float getGreenComponent();
+    float hexText$getGreenComponent();
 
-    int[] getColorCodePalette();
+    int[] hexText$getColorCodePalette();
 
-    float getPosX();
+    float hexText$getPosX();
 
-    float getPosY();
+    float hexText$getPosY();
 
-    int getFontHeight();
+    int hexText$getFontHeight();
 
-    void applyColorComponents(float red, float green, float blue, float alpha);
+    void hexText$applyColorComponents(float red, float green, float blue, float alpha);
 
-    void resetFormattingStyles();
+    void hexText$resetFormattingStyles();
 }

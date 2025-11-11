@@ -1,5 +1,8 @@
 package kamkeel.hextext.mixin.early.impl.client;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import kamkeel.hextext.HexText;
 import kamkeel.hextext.client.render.font.FontRendererBridge;
 import kamkeel.hextext.client.render.font.FontRendererRenderPipeline;
@@ -127,13 +130,16 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
         return hextext$pipeline.adjustRenderText(text);
     }
 
-    @Inject(method = "renderStringAtPos", at = @At(value = "INVOKE_ASSIGN", target = "Ljava/lang/String;charAt(I)C"),
-        locals = LocalCapture.CAPTURE_FAILHARD)
-    private void hextext$applyInstructions(String text, boolean shadow, CallbackInfo ci, int index, char current) {
-        if(this.hexText$DoNotModify || HexText.getActiveProxy() == null)
-            return;
-
-        hextext$pipeline.applyInstructions(text, index, current);
+    @WrapOperation(
+        method = "renderStringAtPos(Ljava/lang/String;Z)V",
+        at = @At(value = "INVOKE", target = "Ljava/lang/String;charAt(I)C")
+    )
+    private char hextext$onCharAt(String s, int index, Operation<Character> original) {
+        char c = original.call(s, index);
+        if (!this.hexText$DoNotModify && HexText.getActiveProxy() != null) {
+            this.hextext$pipeline.applyInstructions(s, index, c);
+        }
+        return c;
     }
 
     @Inject(method = "renderStringAtPos", at = @At("TAIL"))
@@ -212,109 +218,109 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
 
     @Override
     @Unique
-    public FontRenderer getFontRenderer() {
+    public FontRenderer hexText$getFontRenderer() {
         return (FontRenderer) (Object) this;
     }
 
     @Override
     @Unique
-    public void setRandomStyle(boolean enabled) {
+    public void hexText$setRandomStyle(boolean enabled) {
         this.randomStyle = enabled;
     }
 
     @Override
     @Unique
-    public void setBoldStyle(boolean enabled) {
+    public void hexText$setBoldStyle(boolean enabled) {
         this.boldStyle = enabled;
     }
 
     @Override
     @Unique
-    public void setStrikethroughStyle(boolean enabled) {
+    public void hexText$setStrikethroughStyle(boolean enabled) {
         this.strikethroughStyle = enabled;
     }
 
     @Override
     @Unique
-    public void setUnderlineStyle(boolean enabled) {
+    public void hexText$setUnderlineStyle(boolean enabled) {
         this.underlineStyle = enabled;
     }
 
     @Override
     @Unique
-    public void setItalicStyle(boolean enabled) {
+    public void hexText$setItalicStyle(boolean enabled) {
         this.italicStyle = enabled;
     }
 
     @Override
     @Unique
-    public void setTextColor(int color) {
+    public void hexText$setTextColor(int color) {
         this.textColor = color;
     }
 
     @Override
     @Unique
-    public int getTextColor() {
+    public int hexText$getTextColor() {
         return this.textColor;
     }
 
     @Override
     @Unique
-    public float getAlpha() {
+    public float hexText$getAlpha() {
         return this.alpha;
     }
 
     @Override
     @Unique
-    public float getRedComponent() {
+    public float hexText$getRedComponent() {
         return this.red;
     }
 
     @Override
     @Unique
-    public float getBlueComponent() {
+    public float hexText$getBlueComponent() {
         return this.blue;
     }
 
     @Override
     @Unique
-    public float getGreenComponent() {
+    public float hexText$getGreenComponent() {
         return this.green;
     }
 
     @Override
     @Unique
-    public int[] getColorCodePalette() {
+    public int[] hexText$getColorCodePalette() {
         return this.colorCode;
     }
 
     @Override
     @Unique
-    public float getPosX() {
+    public float hexText$getPosX() {
         return this.posX;
     }
 
     @Override
     @Unique
-    public float getPosY() {
+    public float hexText$getPosY() {
         return this.posY;
     }
 
     @Override
     @Unique
-    public int getFontHeight() {
+    public int hexText$getFontHeight() {
         return this.FONT_HEIGHT;
     }
 
     @Override
     @Unique
-    public void applyColorComponents(float r, float g, float b, float a) {
+    public void hexText$applyColorComponents(float r, float g, float b, float a) {
         setColor(r, g, b, a);
     }
 
     @Override
     @Unique
-    public void resetFormattingStyles() {
+    public void hexText$resetFormattingStyles() {
         this.randomStyle = false;
         this.boldStyle = false;
         this.strikethroughStyle = false;
