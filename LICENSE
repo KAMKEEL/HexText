@@ -1,115 +1,55 @@
 # HexText License
 
-HexText is distributed under a **reasonably open license**.
-You are free to use, share, and adapt the mod as long as you follow the terms below.
-If you’re simply playing with it, this license doesn’t concern you—enjoy the mod!
+#### License Overview
 
----
+This license is heavily inspired by CoFH Core's License so all credit to them for making it.
+You'll notice that this repository does not have a license! By default, that means "All Rights Reserved."
 
-## TL;DR
+That is indeed the case. If you'd like to extend this mod as a fork for your own versioning just go to the [Discord](https://discord.com/invite/pQqRTvFeJ5) and ask.
 
-### ✅ You **CAN**
+The don't be a Jerk License.
+
+#### Info / Help
+
+[Discord](https://discord.com/invite/pQqRTvFeJ5)
+
+#### Notice
+
+Contribution to this repository means that you are granting us rights over the code that you choose to contribute. If
+you do not agree with that, do not contribute.
+
+So, why is this here? Well, the rights are reserved, but what that really means is that we choose what to do with the
+rights. So here you go.
+
+#### You CAN
+
 - Fork and modify the code.
 - Submit Pull Requests to this repository.
 - Copy portions of this code for use in other projects.
-- Write your own code that depends on HexText (e.g., addon mods, integrations).
+- Write your own code that uses this code as a dependency. (addon mods!)
 
-### ❌ You **CANNOT**
-- Redistribute HexText in its entirety, whether source or compiled.
-- Create or distribute code that contains **50% or more Functionally Equivalent Statements\*** from this repository.
+#### You CANNOT
 
-### ⚖️ You **MUST**
-- Maintain a **visible public repository** of your code if it uses, derives from, or copies any part of HexText.
-  You retain full rights to your own code, but it must remain open and visible.
+- Redistribute this in its entirety as source or compiled code.
+- Create or distribute code which contains 50% or more Functionally Equivalent Statements* from this repository.
 
----
+#### You MUST
 
-## General Clauses
+- Maintain a visible repository of your code which is inspired by, derived from, or copied from this code. Basically, if
+  you use it, pay it forward. You keep rights to your OWN code, but you still must make your source visible.
+- Not be a jerk**. Seriously, if you're a jerk, you can't use this code. That's part of the agreement.
 
-### Personal Permission
-Direct permission may be granted **only** by **KAMKEEL**.
-Permission does not imply endorsement.
+#### Notes, License & Copyright
 
-### Waiver
-Any restrictive clause in this license may be waived by personal permission (see above).
+*A Functionally Equivalent Statement is a code fragment which, regardless of whitespace and object names, achieves the
+same result within the context of a Minecraft mod or addon. Basically you can't copy the code, rename the variables, add
+whitespace and say it's different. It's not.
 
-### Extensive Clause
-This license applies to **HexText**, the **HexText website**, legacy versions, and **all code, assets, or binaries** found in this repository unless otherwise stated.
+**A jerk is anyone who attempts to or intends to claim partial or total ownership of the original or repackaged code
+and/or attempts to or intends to redistribute original or repackaged code without prior express written permission from
+the owner (KAMKEEL).
 
-### Informal Clause
-This license is **non-enforceable in court**.
-I have no intention of suing anyone for violations.
-At worst, I’ll ask you to correct your mistake.
-However, if you use public distribution platforms (like CurseForge), your project may be taken down for non-compliance.
-Also—don’t be a jerk.
+Essentially, take this and learn from it! Create addon mods that depend on it! If you see something we can improve, tell
+us. Submit a Pull Request. The one catch: don't steal! If you were to take this and call it your own, you'd basically be a big jerk.
 
----
-
-## If You Want to **Distribute** HexText
-
-“Distribution” means making available binaries, assets, or source code from the original sources as part of your modpack or other package.
-
-### Attribution
-You must credit **KAMKEEL** as the creator of HexText.
-If you modify the mod, you must clearly indicate that changes were made.
-A link back is optional but appreciated.
-
-### Redistribution
-You may **not** redistribute the entire source code unless it has been **heavily modified** as a whole.
-No more than **50%** of the original codebase may be redistributed without express permission from **KAMKEEL**.
-
-### Non-Monetary
-You may **not** charge for access to the mod, directly or indirectly.
-This includes:
-- Ad-gated links (e.g., adf.ly or similar).
-- Download hosts with ads that slow or block access.
-- Paywalls of any kind.
-
-Charging for in-game items or cosmetic features on a server does **not** count as distribution, but must still comply with Mojang’s Terms of Service.
-
----
-
-## If You Want to **Feature** HexText
-
-“Featuring” means showcasing HexText without distributing it (e.g., YouTube, streams, reviews).
-
-### Thief Clause
-Do not claim authorship of HexText.
-Crediting **KAMKEEL** makes you cooler—but isn’t required.
-
----
-
-## If You Want to **Use HexText Code or Assets**
-
-Usage of HexText’s code or assets falls under the **Extensive Clause**.
-
-### External Clause
-Some portions of the codebase may have alternative licenses; you must respect them.
-
-### Attribution
-You must credit **KAMKEEL** as the creator of HexText.
-If you modify any part of the code or assets, clearly state that you have done so.
-A link back is optional but appreciated.
-
-### Copyleft
-Your project must be **open source**, allowing redistribution and modification.
-Include a clause similar to this one in your own license.
-
----
-
-\* **Functionally Equivalent Statements:**
-Code that performs the same tasks in the same way, even if rewritten or refactored, counts toward this equivalence threshold.
-
----
-
-### Summary
-
-Use it.
-Build with it.
-Share your work.
-Just don’t redistribute HexText wholesale, sell it, or hide your code.
-
----
-
-**Copyright © 2025 KAMKEEL**
-[HexText GitHub Repository](https://github.com/KAMKEEL/HexText)
+Don't be a jerk.
