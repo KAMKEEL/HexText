@@ -9,6 +9,6 @@ group= "kamkeel.hextext"
 
 tasks.runServer { setWorkingDir(file("run/server")) }
 
-version = "1.2-beta"
+version = "1.2"
 group= "kamkeel.hextext"
 archivesBaseName = "hextext"
