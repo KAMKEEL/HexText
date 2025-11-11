@@ -74,9 +74,9 @@ public abstract class MixinC12PacketUpdateSign extends Packet implements SignUpd
 
         int b;
         try {
-            b = data.readByte();              // we wrote ordinal()
+            b = data.readByte(); // we wrote ordinal()
         } catch (IndexOutOfBoundsException e) {
-            b = 0;                            // compatibility: default FRONT if byte absent
+            b = 0; // default to front side if not present
         }
         this.side = (b == SignSide.BACK.ordinal()) ? SignSide.BACK : SignSide.FRONT;
 

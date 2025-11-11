@@ -18,18 +18,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(GuiTextField.class)
 public abstract class MixinGuiTextField extends Gui {
 
-//    @Unique
-//    private boolean hextext$legacy$rawPushed;
-//
-//    @Inject(method = "drawTextBox", at = @At("HEAD"))
-//    private void hextext$legacy$beginRawMode(CallbackInfo ci) {
-//        if(HexText.getActiveProxy() == null)
-//            return;
-//
-//        FontRenderContext.pushRawTextRendering();
-//        hextext$legacy$rawPushed = true;
-//    }
-//
     @Inject(method = "drawTextBox", at = @At("RETURN"))
     private void hextext$legacy$endRawMode(CallbackInfo ci) {
         if(HexText.getActiveProxy() == null)
@@ -40,12 +28,4 @@ public abstract class MixinGuiTextField extends Gui {
             HexText.rawRenderingEnabled = false;
         }
     }
-//
-//    @Inject(method = "getText", at = @At("RETURN"), cancellable = true)
-//    private void hextext$legacy$endRawMode(CallbackInfoReturnable<String> cir) {
-//        if(!HexText.getActiveProxy().allowUniversalAmpersand())
-//            return;
-//
-//        cir.setReturnValue(StringUtils.convertAmpersandsToSectionSigns(cir.getReturnValue()));
-//    }
 }
