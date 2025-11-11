@@ -1,8 +1,8 @@
 ## 👋 Welcome to the HexText Repository.
 
-HexText extends Minecraft's font renderer with a modern colour pipeline that understands full RGB
-hex codes, nested colour spans, and a handful of animated text effects. This document summarises the
-available formatting tokens and how they interact so you can take full advantage of the system.
+HexText upgrades Minecraft’s font renderer with full RGB color support, nested color spans, and a few animated text effects.
+If you’ve ever wanted more color control or wanted your text to move, glow, or shake, this mod will do it. It also adds a
+better handling for Signs, Anvils and Chat if installed on the server.
 
 ----------------
 
@@ -16,8 +16,8 @@ available formatting tokens and how they interact so you can take full advantage
 ----------------
 
 ### ⬇️ Downloads
-- **Modrinth**: [NONE]()
-- **CurseForge**: [NONE]()
+- **Modrinth**: [Link](https://legacy.curseforge.com/minecraft/mc-mods/hex-text)
+- **CurseForge**: [Link](https://legacy.curseforge.com/minecraft/mc-mods/hex-text)
 
 ### 🔹 Installation
 This mod requires **UniMixins** to run. It can be installed on both the Server and Client.
@@ -26,10 +26,8 @@ This mod requires **UniMixins** to run. It can be installed on both the Server a
 
 ## Standard Minecraft formatting
 
-All of the vanilla `§` style formatting codes continue to work exactly as they do in base Minecraft.
-When using HexText you may prefer to write them with an ampersand for easier typing; if the server
-permits ampersand formatting HexText will normalise them for the game at render time. The supported
-codes are:
+All the regular Minecraft § codes still work exactly like before.
+If you prefer typing & instead, HexText will handle it automatically if your server allows it.
 
 | Token        | Description                                     |
 | ------------ | ----------------------------------------------- |
@@ -104,5 +102,3 @@ HexText exposes several server-side toggles via the `server` category of its con
 * `ampersandsInSigns` – converts ampersand formatting tokens to section signs while editing signs.
 * `ampersandsInRepairs` – converts ampersand formatting tokens to section signs when renaming items
   in anvils.
-
-These options make it easy to tailor HexText's behaviour to a server's moderation or gameplay needs.
