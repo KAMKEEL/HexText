@@ -78,7 +78,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
     private boolean hexText$DoNotModify = false;
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void angelica$injectBatcher(GameSettings settings, ResourceLocation fontLocation, TextureManager texManager,
+    private void hextext$initPipeline(GameSettings settings, ResourceLocation fontLocation, TextureManager texManager,
                                         boolean unicodeMode, CallbackInfo ci) {
         hextext$pipeline = new FontRendererRenderPipeline(this);
         if (hextext$isSubclassOfFontRenderer())
