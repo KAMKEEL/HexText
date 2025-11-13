@@ -66,85 +66,35 @@ public final class RenderTextProcessor {
                 char lower = Character.toLowerCase(next);
 
                 if (ColorCodeUtils.isFormattingCode(lower)) {
-                    if (ColorCodeUtils.isEffectCode(lower)) {
+                    FormatCategory category = classifyFormatting(lower);
+                    if (category != null) {
                         directives = ensureDirectiveMap(directives);
                         List<RenderDirective> bucket =
                             directives.computeIfAbsent(directiveIndex, key -> new ArrayList<>());
-                        switch (lower) {
-                            case 'g':
-                                bucket.add(RenderDirectiveImpl.setRainbow(true, directiveIndex));
-                                break;
-                            case 'h':
-                                bucket.add(RenderDirectiveImpl.setDinnerbone(true));
-                                break;
-                            case 'i':
-                                bucket.add(RenderDirectiveImpl.setIgnite(true));
-                                break;
-                            case 'j':
-                                bucket.add(RenderDirectiveImpl.setShake(true));
-                                break;
-                            default:
-                                break;
+                        emitFormattingDirective(bucket, category, lower, directiveIndex);
+
+                        boolean usingLiteral = rawMode || usingSectionSign;
+                        if (usingLiteral) {
+                            sanitized.append(current);
+                            if (category.consumesTrailingCode()) {
+                                sanitized.append(next);
+                                i++;
+                            }
+                            continue;
                         }
-                        if (rawMode || usingSectionSign) {
-                            sanitized.append(current).append(next);
-                        } else {
+
+                        if (category.keepWhenUsingAmpersand()) {
+                            sanitized.append('§');
                             modified = true;
+                            continue;
                         }
-                        i++;
-                        continue;
-                    }
 
-                    boolean isReset = ColorCodeUtils.isResetCode(lower);
-                    boolean isColor = ColorCodeUtils.isMinecraftColorCode(lower);
-                    boolean isStyle = ColorCodeUtils.isStyleCode(lower);
-
-                    directives = ensureDirectiveMap(directives);
-                    List<RenderDirective> bucket =
-                        directives.computeIfAbsent(directiveIndex, key -> new ArrayList<>());
-
-                    if (isColor) {
-                        int colorIndex = ColorCodeUtils.getMinecraftColorIndex(lower);
-                        if (colorIndex >= 0) {
-                            bucket.add(RenderDirectiveImpl.applyVanillaColor(colorIndex));
-                        }
-                    } else if (isReset) {
-                        bucket.add(RenderDirectiveImpl.resetToBase());
-                    } else if (isStyle) {
-                        switch (lower) {
-                            case 'k':
-                                bucket.add(RenderDirectiveImpl.setRandom(true));
-                                break;
-                            case 'l':
-                                bucket.add(RenderDirectiveImpl.setBold(true));
-                                break;
-                            case 'm':
-                                bucket.add(RenderDirectiveImpl.setStrikethrough(true));
-                                break;
-                            case 'n':
-                                bucket.add(RenderDirectiveImpl.setUnderline(true));
-                                break;
-                            case 'o':
-                                bucket.add(RenderDirectiveImpl.setItalic(true));
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-
-                    if (rawMode) {
-                        sanitized.append(current).append(next);
-                        i++;
-                        continue;
-                    }
-
-                    if (usingSectionSign) {
-                        sanitized.append(current);
-                    } else {
-                        sanitized.append('§');
                         modified = true;
+                        if (category.consumesTrailingCode()) {
+                            i++;
+                        }
+                        continue;
                     }
-                    continue;
                 }
             }
 
@@ -202,11 +152,118 @@ public final class RenderTextProcessor {
         return directives != null ? directives : new HashMap<>();
     }
 
+    private static FormatCategory classifyFormatting(char lower) {
+        if (ColorCodeUtils.isMinecraftColorCode(lower)) {
+            return FormatCategory.COLOR;
+        }
+        if (ColorCodeUtils.isResetCode(lower)) {
+            return FormatCategory.RESET;
+        }
+        if (ColorCodeUtils.isStyleCode(lower)) {
+            return FormatCategory.STYLE;
+        }
+        if (lower == 'g') {
+            return FormatCategory.RAINBOW;
+        }
+        if (ColorCodeUtils.isEffectCode(lower)) {
+            return FormatCategory.EFFECT;
+        }
+        return null;
+    }
+
+    private static void emitFormattingDirective(List<RenderDirective> bucket, FormatCategory category, char lower,
+        int directiveIndex) {
+        switch (category) {
+            case COLOR:
+                int colorIndex = ColorCodeUtils.getMinecraftColorIndex(lower);
+                if (colorIndex >= 0) {
+                    bucket.add(RenderDirectiveImpl.applyVanillaColor(colorIndex));
+                }
+                break;
+            case RESET:
+                bucket.add(RenderDirectiveImpl.resetToBase());
+                break;
+            case STYLE:
+                applyStyleDirective(bucket, lower);
+                break;
+            case EFFECT:
+                applyEffectDirective(bucket, lower);
+                break;
+            case RAINBOW:
+                bucket.add(RenderDirectiveImpl.setRainbow(true, directiveIndex));
+                break;
+            default:
+                break;
+        }
+    }
+
+    private static void applyStyleDirective(List<RenderDirective> bucket, char lower) {
+        switch (lower) {
+            case 'k':
+                bucket.add(RenderDirectiveImpl.setRandom(true));
+                break;
+            case 'l':
+                bucket.add(RenderDirectiveImpl.setBold(true));
+                break;
+            case 'm':
+                bucket.add(RenderDirectiveImpl.setStrikethrough(true));
+                break;
+            case 'n':
+                bucket.add(RenderDirectiveImpl.setUnderline(true));
+                break;
+            case 'o':
+                bucket.add(RenderDirectiveImpl.setItalic(true));
+                break;
+            default:
+                break;
+        }
+    }
+
+    private static void applyEffectDirective(List<RenderDirective> bucket, char lower) {
+        switch (lower) {
+            case 'h':
+                bucket.add(RenderDirectiveImpl.setDinnerbone(true));
+                break;
+            case 'i':
+                bucket.add(RenderDirectiveImpl.setIgnite(true));
+                break;
+            case 'j':
+                bucket.add(RenderDirectiveImpl.setShake(true));
+                break;
+            default:
+                break;
+        }
+    }
+
     private static Map<Integer, List<RenderDirective>> normalizeDirectives(
         Map<Integer, List<RenderDirective>> directives) {
         if (directives == null || directives.isEmpty()) {
             return null;
         }
         return directives;
+    }
+
+    private enum FormatCategory {
+        COLOR(true, false),
+        RESET(true, false),
+        STYLE(true, false),
+        EFFECT(false, true),
+        RAINBOW(false, true);
+
+        private final boolean keepWhenAmpersand;
+        private final boolean consumesTrailingCode;
+
+        FormatCategory(boolean keepWhenAmpersand, boolean consumesTrailingCode) {
+            this.keepWhenAmpersand = keepWhenAmpersand;
+            this.consumesTrailingCode = consumesTrailingCode;
+        }
+
+        boolean keepWhenUsingAmpersand() {
+            return keepWhenAmpersand;
+        }
+
+        boolean consumesTrailingCode() {
+            return consumesTrailingCode;
+        }
     }
 }

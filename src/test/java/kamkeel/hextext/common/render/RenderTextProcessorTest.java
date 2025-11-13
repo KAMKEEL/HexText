@@ -286,6 +286,52 @@ public class RenderTextProcessorTest {
     }
 
     @Test
+    public void testStyleAndEffectsRemainAfterReorderingAmpersand() {
+        RenderPlan sequential = RenderTextProcessor.prepare("&e&l&i&jOk", false);
+        assertTrue(sequential.shouldReplaceText());
+        assertEquals("\u00A7e\u00A7lOk", sequential.getDisplayText());
+        assertInstructionTypes(sequential, 0, RenderDirectiveImpl.Type.APPLY_VANILLA_COLOR);
+        assertInstructionTypes(sequential, 2, RenderDirectiveImpl.Type.SET_BOLD);
+        assertInstructionTypes(sequential, 4, RenderDirectiveImpl.Type.SET_IGNITE, RenderDirectiveImpl.Type.SET_SHAKE);
+
+        RenderPlan interleaved = RenderTextProcessor.prepare("&e&j&i&lOk", false);
+        assertTrue(interleaved.shouldReplaceText());
+        assertEquals("\u00A7e\u00A7lOk", interleaved.getDisplayText());
+        assertInstructionTypes(interleaved, 0, RenderDirectiveImpl.Type.APPLY_VANILLA_COLOR);
+        assertInstructionTypes(interleaved, 2, RenderDirectiveImpl.Type.SET_SHAKE, RenderDirectiveImpl.Type.SET_IGNITE,
+            RenderDirectiveImpl.Type.SET_BOLD);
+    }
+
+    @Test
+    public void testStyleAndEffectsRemainAfterReorderingSectionSign() {
+        RenderPlan plan = RenderTextProcessor.prepare("§e§l§i§jOk", false);
+        assertFalse(plan.shouldReplaceText());
+        assertNull(plan.getDisplayText());
+        assertInstructionTypes(plan, 0, RenderDirectiveImpl.Type.APPLY_VANILLA_COLOR);
+        assertInstructionTypes(plan, 2, RenderDirectiveImpl.Type.SET_BOLD);
+        assertInstructionTypes(plan, 4, RenderDirectiveImpl.Type.SET_IGNITE);
+        assertInstructionTypes(plan, 6, RenderDirectiveImpl.Type.SET_SHAKE);
+    }
+
+    @Test
+    public void testRainbowResetsFormattingLikeColor() {
+        RenderPlan plan = RenderTextProcessor.prepare("&g&lOk", false);
+        assertTrue(plan.shouldReplaceText());
+        assertEquals("\u00A7lOk", plan.getDisplayText());
+        Map<Integer, List<RenderDirective>> instructions = plan.getInstructions();
+        assertNotNull(instructions);
+        List<RenderDirective> rainbowBucket = instructions.get(0);
+        assertNotNull(rainbowBucket);
+        assertTrue("Expected rainbow directive first", !rainbowBucket.isEmpty());
+        RenderDirectiveImpl rainbow = (RenderDirectiveImpl) rainbowBucket.get(0);
+        assertEquals(RenderDirectiveImpl.Type.SET_RAINBOW, rainbow.getType());
+        assertTrue(rainbow.shouldClearStack());
+        assertTrue(rainbow.resetsFormatting());
+        assertEquals("Expected bold instruction to follow rainbow", RenderDirectiveImpl.Type.SET_BOLD,
+            ((RenderDirectiveImpl) rainbowBucket.get(1)).getType());
+    }
+
+    @Test
     public void testRainbowFormattingProducesSectionSignOutput() {
         RenderPlan plan = RenderTextProcessor.prepare("&g&l&iTesting", false);
         assertTrue(plan.shouldReplaceText());
@@ -327,6 +373,18 @@ public class RenderTextProcessorTest {
         assertTrue("Expected bold instruction", sawBold);
         assertTrue("Expected ignite instruction", sawIgnite);
         assertTrue("Expected shake instruction", sawShake);
+    }
+
+    private void assertInstructionTypes(RenderPlan plan, int index, RenderDirectiveImpl.Type... expectedTypes) {
+        Map<Integer, List<RenderDirective>> instructions = plan.getInstructions();
+        assertNotNull("Expected instructions map", instructions);
+        List<RenderDirective> bucket = instructions.get(index);
+        assertNotNull("Expected bucket at index " + index, bucket);
+        assertEquals("Unexpected directive count at index " + index, expectedTypes.length, bucket.size());
+        for (int i = 0; i < expectedTypes.length; i++) {
+            RenderDirectiveImpl directive = (RenderDirectiveImpl) bucket.get(i);
+            assertEquals("Unexpected directive order at index " + index, expectedTypes[i], directive.getType());
+        }
     }
 
     @Test
