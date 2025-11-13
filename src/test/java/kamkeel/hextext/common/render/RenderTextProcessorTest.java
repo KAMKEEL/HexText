@@ -285,6 +285,13 @@ public class RenderTextProcessorTest {
         assertEffectCombination("&g&j&i&lHello");
     }
 
+    @Test
+    public void testRainbowFormattingProducesSectionSignOutput() {
+        RenderPlan plan = RenderTextProcessor.prepare("&g&l&iTesting", false);
+        assertTrue(plan.shouldReplaceText());
+        assertEquals("\u00A7lTesting", plan.getDisplayText());
+    }
+
     private void assertEffectCombination(String input) {
         RenderPlan plan = RenderTextProcessor.prepare(input, false);
         assertTrue("Expected render plan to include instructions", plan.hasInstructions());

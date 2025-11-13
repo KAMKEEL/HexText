@@ -100,8 +100,12 @@ public final class RenderTextProcessor {
                     boolean isStyle = ColorCodeUtils.isStyleCode(lower);
 
                     directives = ensureDirectiveMap(directives);
+                    int bucketIndex = directiveIndex;
+                    if (isStyle && !rawMode) {
+                        bucketIndex = directiveIndex + 1;
+                    }
                     List<RenderDirective> bucket =
-                        directives.computeIfAbsent(directiveIndex, key -> new ArrayList<>());
+                        directives.computeIfAbsent(bucketIndex, key -> new ArrayList<>());
 
                     if (isColor) {
                         int colorIndex = ColorCodeUtils.getMinecraftColorIndex(lower);
