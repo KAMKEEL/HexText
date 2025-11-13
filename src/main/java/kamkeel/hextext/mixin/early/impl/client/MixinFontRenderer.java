@@ -2,7 +2,6 @@ package kamkeel.hextext.mixin.early.impl.client;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.llamalad7.mixinextras.sugar.Local;
 import kamkeel.hextext.HexText;
 import kamkeel.hextext.client.render.font.FontRendererBridge;
 import kamkeel.hextext.client.render.font.FontRendererRenderPipeline;
@@ -22,7 +21,6 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(FontRenderer.class)
 public abstract class MixinFontRenderer implements FontRendererBridge {
@@ -128,6 +126,14 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
             return text;
 
         return hextext$pipeline.adjustRenderText(text);
+    }
+
+    @Redirect(
+        method = "renderStringAtPos(Ljava/lang/String;Z)V",
+        at = @At(value = "INVOKE", target = "Ljava/lang/String;indexOf(I)I", ordinal = 0)
+    )
+    private int hextext$indexOf(String instance, int i) {
+        return "0123456789abcdefklmnorghij".indexOf(i);
     }
 
     @WrapOperation(
