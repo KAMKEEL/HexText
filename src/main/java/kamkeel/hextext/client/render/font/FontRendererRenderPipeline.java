@@ -16,8 +16,10 @@ import kamkeel.hextext.common.util.StringUtils;
 import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class FontRendererRenderPipeline {
 
@@ -25,6 +27,7 @@ public final class FontRendererRenderPipeline {
     private final ColorStateTracker colorState = new ColorStateTracker();
     private final TextEffectController effects = new TextEffectController();
     private final List<HighlightSpan> pendingHighlights = new ArrayList<>();
+    private final Set<Long> pendingHighlightKeys = new HashSet<>();
 
     private static final int DEFAULT_OUTLINE_FALLBACK = 0x2E2E2E;
 
@@ -69,6 +72,7 @@ public final class FontRendererRenderPipeline {
         } else {
             pendingHighlights.clear();
         }
+        pendingHighlightKeys.clear();
 
         rawTokenSkip = 0;
         visibleGlyphIndex = 0;
@@ -95,14 +99,18 @@ public final class FontRendererRenderPipeline {
                 }
                 int tokenLength = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, index, env);
                 if (tokenLength == 0) {
-                    tokenLength = detectRawAmpersandTokenLength(text, index);
+                    tokenLength = ColorCodeUtils.detectAmpersandFormattingCodeLength(text, index);
                 }
                 if (tokenLength > 0) {
                     if (text.charAt(index) != 167) {
                         float width = TokenHighlightUtils.measureLiteralWidth(bridge.hexText$getFontRenderer(), text, index, tokenLength);
                         if (width > 0.0f) {
-                            pendingHighlights.add(new HighlightSpanImpl(bridge.hexText$getPosX(), bridge.hexText$getPosY(), width,
-                                TokenHighlightUtils.getTokenHighlightColor(text, index)));
+                            float left = bridge.hexText$getPosX();
+                            long key = packHighlightKey(left, width);
+                            if (pendingHighlightKeys.add(key)) {
+                                pendingHighlights.add(new HighlightSpanImpl(left, bridge.hexText$getPosY(), width,
+                                    TokenHighlightUtils.getTokenHighlightColor(text, index)));
+                            }
                         }
                         rawTokenSkip = Math.max(tokenLength - 1, 0);
                     }
@@ -131,25 +139,13 @@ public final class FontRendererRenderPipeline {
         }
     }
 
-    private static int detectRawAmpersandTokenLength(CharSequence text, int index) {
-        if (text == null || index < 0 || index >= text.length() - 1) {
-            return 0;
-        }
-        if (text.charAt(index) != '&') {
-            return 0;
-        }
-        if (text.charAt(index + 1) == '#') {
-            return index + 8 <= text.length() && ColorCodeUtils.isValidHexString(text, index + 2) ? 8 : 0;
-        }
-        return ColorCodeUtils.isFormattingCode(text.charAt(index + 1)) ? 2 : 0;
-    }
-
     public void end() {
         renderData = null;
         if (!renderingShadow && !pendingHighlights.isEmpty()) {
             TokenHighlightUtils.drawHighlights(pendingHighlights, bridge.hexText$getFontHeight());
             pendingHighlights.clear();
         }
+        pendingHighlightKeys.clear();
     }
 
     public int computeStringWidth(String text) {
@@ -353,5 +349,11 @@ public final class FontRendererRenderPipeline {
         int g = Math.round(bridge.hexText$getGreenComponent() * 255.0f);
         int b = Math.round(bridge.hexText$getBlueComponent() * 255.0f);
         return (r << 16) | (g << 8) | b;
+    }
+
+    private static long packHighlightKey(float left, float width) {
+        int leftBits = Float.floatToIntBits(left);
+        int widthBits = Float.floatToIntBits(width);
+        return ((long) leftBits << 32) | (widthBits & 0xFFFFFFFFL);
     }
 }

@@ -115,6 +115,73 @@ public final class ColorCodeUtils {
         return Character.toLowerCase(c) == 'r';
     }
 
+    public static boolean isHexColorToken(CharSequence input, int index, int codeLen) {
+        if (input == null || codeLen <= 0 || index < 0 || index + codeLen > input.length()) {
+            return false;
+        }
+
+        char start = input.charAt(index);
+        if (codeLen == 8 && (start == '&' || start == 167)) {
+            return true;
+        }
+
+        if (start == '<') {
+            return codeLen == 8 || codeLen == 9;
+        }
+
+        if (codeLen == 2 && (start == '&' || start == 167)) {
+            char fmt = Character.toLowerCase(input.charAt(index + 1));
+            return isMinecraftColorCode(fmt) || fmt == 'g';
+        }
+
+        return false;
+    }
+
+    public static boolean isStandardColorToken(CharSequence input, int index, int codeLen) {
+        if (input == null || codeLen != 2 || index < 0 || index + codeLen > input.length()) {
+            return false;
+        }
+
+        char start = input.charAt(index);
+        if (start != '&' && start != 167) {
+            return false;
+        }
+
+        char fmt = Character.toLowerCase(input.charAt(index + 1));
+        return isMinecraftColorCode(fmt) || fmt == 'g';
+    }
+
+    public static boolean isStyleOrEffectToken(CharSequence input, int index, int codeLen) {
+        if (input == null || codeLen != 2 || index < 0 || index + codeLen > input.length()) {
+            return false;
+        }
+
+        char start = input.charAt(index);
+        if (start != '&' && start != 167) {
+            return false;
+        }
+
+        char fmt = Character.toLowerCase(input.charAt(index + 1));
+        return isStyleCode(fmt) || isEffectCode(fmt);
+    }
+
+    public static int detectAmpersandFormattingCodeLength(CharSequence text, int index) {
+        if (text == null || index < 0 || index >= text.length() - 1) {
+            return 0;
+        }
+
+        if (text.charAt(index) != '&') {
+            return 0;
+        }
+
+        char next = text.charAt(index + 1);
+        if (next == '#') {
+            return index + 8 <= text.length() && isValidHexString(text, index + 2) ? 8 : 0;
+        }
+
+        return isFormattingCode(next) ? 2 : 0;
+    }
+
     public static int parseHexColor(String hex) {
         if (!isValidHexString(hex)) {
             return -1;

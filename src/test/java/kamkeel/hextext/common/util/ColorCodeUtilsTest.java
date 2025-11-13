@@ -82,4 +82,24 @@ public class ColorCodeUtilsTest {
         assertEquals(-1, ColorCodeUtils.indexOfNextFormattingCode("Plain", 0));
         assertEquals(-1, ColorCodeUtils.indexOfNextFormattingCode("Hello &aWorld", 20));
     }
+
+    @Test
+    public void testDetectAmpersandFormattingCodeLength() {
+        assertEquals(2, ColorCodeUtils.detectAmpersandFormattingCodeLength("&a", 0));
+        assertEquals(8, ColorCodeUtils.detectAmpersandFormattingCodeLength("&#ABCDEF", 0));
+        assertEquals(0, ColorCodeUtils.detectAmpersandFormattingCodeLength("&x", 0));
+        assertEquals(0, ColorCodeUtils.detectAmpersandFormattingCodeLength("&", 0));
+    }
+
+    @Test
+    public void testTokenClassificationHelpers() {
+        assertTrue(ColorCodeUtils.isStandardColorToken("&a", 0, 2));
+        assertFalse(ColorCodeUtils.isStandardColorToken("&x", 0, 2));
+        assertTrue(ColorCodeUtils.isHexColorToken("&#123456", 0, 8));
+        assertTrue(ColorCodeUtils.isHexColorToken("<123456>", 0, 8));
+        assertTrue(ColorCodeUtils.isHexColorToken("</123456>", 0, 9));
+        assertTrue(ColorCodeUtils.isStyleOrEffectToken("&l", 0, 2));
+        assertTrue(ColorCodeUtils.isStyleOrEffectToken("&j", 0, 2));
+        assertFalse(ColorCodeUtils.isStyleOrEffectToken("&r", 0, 2));
+    }
 }

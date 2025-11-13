@@ -246,6 +246,39 @@ public class RenderTextProcessorTest {
     }
 
     @Test
+    public void testEffectsStackWithStylesAndColours() {
+        RenderPlan data = RenderTextProcessor.prepare("&4&l&jTest", false);
+        assertTrue(data.hasInstructions());
+
+        boolean sawColor = false;
+        boolean sawBold = false;
+        boolean sawShake = false;
+
+        for (List<RenderDirective> instructionList : data.getInstructions().values()) {
+            for (RenderDirective instruction : instructionList) {
+                RenderDirectiveImpl renderInstruction = (RenderDirectiveImpl) instruction;
+                switch (renderInstruction.getType()) {
+                    case APPLY_VANILLA_COLOR:
+                        sawColor = true;
+                        break;
+                    case SET_BOLD:
+                        sawBold |= renderInstruction.isEnabled();
+                        break;
+                    case SET_SHAKE:
+                        sawShake |= renderInstruction.isEnabled();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        assertTrue("Expected vanilla colour instruction", sawColor);
+        assertTrue("Expected bold instruction", sawBold);
+        assertTrue("Expected shake instruction", sawShake);
+    }
+
+    @Test
     public void testHtmlRgbDisabledTreatsTagsAsText() {
         HexTextConfig.setEnableRgbHtmlFormat(false);
         RenderPlan data = RenderTextProcessor.prepare("<123456>World", false);
