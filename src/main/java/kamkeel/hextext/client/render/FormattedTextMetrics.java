@@ -45,6 +45,23 @@ public final class FormattedTextMetrics {
                     index += codeLen;
                     continue;
                 }
+            } else {
+                // RAW MODE:
+                // We still render the formatting codes literally (e.g. "&l"),
+                // but we want their *style* effect (bold) to influence widths.
+                if (index + 1 < length) {
+                    char marker = text.charAt(index);
+                    if (marker == 167 || marker == '&') { // '§' or '&'
+                        char fmt = Character.toLowerCase(text.charAt(index + 1));
+                        if (ColorCodeUtils.isFormattingCode(fmt)) {
+                            if (fmt == 'l') {
+                                isBold = true;
+                            } else if (fmt == 'r' || ColorCodeUtils.isMinecraftColorCode(fmt)) {
+                                isBold = false;
+                            }
+                        }
+                    }
+                }
             }
 
             char character = text.charAt(index);
@@ -100,6 +117,21 @@ public final class FormattedTextMetrics {
                     index += codeLen;
                     lastSafePosition = index;
                     continue;
+                }
+            } else {
+                // RAW MODE: respect style/color codes for measuring, but don't strip them.
+                if (index + 1 < length) {
+                    char marker = text.charAt(index);
+                    if (marker == 167 || marker == '&') {
+                        char fmt = Character.toLowerCase(text.charAt(index + 1));
+                        if (ColorCodeUtils.isFormattingCode(fmt)) {
+                            if (fmt == 'l') {
+                                isBold = true;
+                            } else if (fmt == 'r' || ColorCodeUtils.isMinecraftColorCode(fmt)) {
+                                isBold = false;
+                            }
+                        }
+                    }
                 }
             }
 
