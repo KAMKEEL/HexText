@@ -279,6 +279,50 @@ public class RenderTextProcessorTest {
     }
 
     @Test
+    public void testEffectOrderDoesNotMatter() {
+        assertEffectCombination("&g&l&i&jHello");
+        assertEffectCombination("&g&i&l&jHello");
+        assertEffectCombination("&g&j&i&lHello");
+    }
+
+    private void assertEffectCombination(String input) {
+        RenderPlan plan = RenderTextProcessor.prepare(input, false);
+        assertTrue("Expected render plan to include instructions", plan.hasInstructions());
+
+        boolean sawRainbow = false;
+        boolean sawBold = false;
+        boolean sawIgnite = false;
+        boolean sawShake = false;
+
+        for (List<RenderDirective> bucket : plan.getInstructions().values()) {
+            for (RenderDirective directive : bucket) {
+                RenderDirectiveImpl renderInstruction = (RenderDirectiveImpl) directive;
+                switch (renderInstruction.getType()) {
+                    case SET_RAINBOW:
+                        sawRainbow |= renderInstruction.isEnabled();
+                        break;
+                    case SET_BOLD:
+                        sawBold |= renderInstruction.isEnabled();
+                        break;
+                    case SET_IGNITE:
+                        sawIgnite |= renderInstruction.isEnabled();
+                        break;
+                    case SET_SHAKE:
+                        sawShake |= renderInstruction.isEnabled();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        assertTrue("Expected rainbow instruction", sawRainbow);
+        assertTrue("Expected bold instruction", sawBold);
+        assertTrue("Expected ignite instruction", sawIgnite);
+        assertTrue("Expected shake instruction", sawShake);
+    }
+
+    @Test
     public void testHtmlRgbDisabledTreatsTagsAsText() {
         HexTextConfig.setEnableRgbHtmlFormat(false);
         RenderPlan data = RenderTextProcessor.prepare("<123456>World", false);
