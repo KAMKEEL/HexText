@@ -150,7 +150,7 @@ public class RenderTextProcessorTest {
     public void testRainbowInstructionNonRaw() {
         RenderPlan data = RenderTextProcessor.prepare("&gRainbow", false);
         assertTrue(data.shouldReplaceText());
-        assertEquals("Rainbow", data.getDisplayText());
+        assertEquals("§gRainbow", data.getDisplayText());
         assertTrue(data.hasInstructions());
         List<RenderDirective> instructions = data.getInstructions().get(0);
         assertNotNull(instructions);
@@ -265,5 +265,46 @@ public class RenderTextProcessorTest {
         assertFalse(rgbData.hasInstructions());
         assertFalse(rgbData.shouldReplaceText());
         assertNull(rgbData.getDisplayText());
+    }
+
+    @Test
+    public void testEffectsStackWithStyles() {
+        RenderPlan data = RenderTextProcessor.prepare("&4&l&jTest", true);
+        assertTrue(data.hasInstructions());
+        Map<Integer, List<RenderDirective>> instructions = data.getInstructions();
+        assertNotNull(instructions);
+
+        List<RenderDirective> colorDirectives = instructions.get(0);
+        assertNotNull("Expected colour directive at index 0", colorDirectives);
+        boolean sawColor = false;
+        for (RenderDirective directive : colorDirectives) {
+            RenderDirectiveImpl renderDirective = (RenderDirectiveImpl) directive;
+            if (renderDirective.getType() == RenderDirectiveImpl.Type.APPLY_VANILLA_COLOR) {
+                sawColor = true;
+            }
+        }
+        assertTrue("Missing vanilla colour directive", sawColor);
+
+        List<RenderDirective> boldDirectives = instructions.get(2);
+        assertNotNull("Expected bold directive at index 2", boldDirectives);
+        boolean sawBold = false;
+        for (RenderDirective directive : boldDirectives) {
+            RenderDirectiveImpl renderDirective = (RenderDirectiveImpl) directive;
+            if (renderDirective.getType() == RenderDirectiveImpl.Type.SET_BOLD) {
+                sawBold = true;
+            }
+        }
+        assertTrue("Missing bold directive", sawBold);
+
+        List<RenderDirective> shakeDirectives = instructions.get(4);
+        assertNotNull("Expected shake directive at index 4", shakeDirectives);
+        boolean sawShake = false;
+        for (RenderDirective directive : shakeDirectives) {
+            RenderDirectiveImpl renderDirective = (RenderDirectiveImpl) directive;
+            if (renderDirective.getType() == RenderDirectiveImpl.Type.SET_SHAKE) {
+                sawShake = true;
+            }
+        }
+        assertTrue("Missing shake directive", sawShake);
     }
 }

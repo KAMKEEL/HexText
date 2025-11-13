@@ -66,14 +66,12 @@ public final class RenderTextProcessor {
                 char lower = Character.toLowerCase(next);
 
                 if (ColorCodeUtils.isFormattingCode(lower)) {
-                    if (ColorCodeUtils.isEffectCode(lower)) {
+                    boolean isEffect = ColorCodeUtils.isEffectCode(lower);
+                    if (isEffect) {
                         directives = ensureDirectiveMap(directives);
                         List<RenderDirective> bucket =
                             directives.computeIfAbsent(directiveIndex, key -> new ArrayList<>());
                         switch (lower) {
-                            case 'g':
-                                bucket.add(RenderDirectiveImpl.setRainbow(true, directiveIndex));
-                                break;
                             case 'h':
                                 bucket.add(RenderDirectiveImpl.setDinnerbone(true));
                                 break;
@@ -96,14 +94,17 @@ public final class RenderTextProcessor {
                     }
 
                     boolean isReset = ColorCodeUtils.isResetCode(lower);
-                    boolean isColor = ColorCodeUtils.isMinecraftColorCode(lower);
+                    boolean isRainbow = ColorCodeUtils.isRainbowCode(lower);
+                    boolean isColor = isRainbow || ColorCodeUtils.isMinecraftColorCode(lower);
                     boolean isStyle = ColorCodeUtils.isStyleCode(lower);
 
                     directives = ensureDirectiveMap(directives);
                     List<RenderDirective> bucket =
                         directives.computeIfAbsent(directiveIndex, key -> new ArrayList<>());
 
-                    if (isColor) {
+                    if (isRainbow) {
+                        bucket.add(RenderDirectiveImpl.setRainbow(true, directiveIndex));
+                    } else if (isColor) {
                         int colorIndex = ColorCodeUtils.getMinecraftColorIndex(lower);
                         if (colorIndex >= 0) {
                             bucket.add(RenderDirectiveImpl.applyVanillaColor(colorIndex));

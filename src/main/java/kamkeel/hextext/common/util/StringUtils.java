@@ -1,7 +1,5 @@
 package kamkeel.hextext.common.util;
 
-import kamkeel.hextext.HexText;
-
 import java.util.ArrayDeque;
 
 /**
@@ -66,7 +64,7 @@ public final class StringUtils {
             char current = text.charAt(index);
 
             if (current == '&') {
-                int codeLen = detectAmpersandFormattingCodeLength(text, index);
+                int codeLen = ColorCodeUtils.detectAmpersandFormattingCodeLength(text, index);
                 if (codeLen == 2 || codeLen == 8) {
                     if (builder == null) {
                         builder = new StringBuilder(text.length());
@@ -87,19 +85,6 @@ public final class StringUtils {
         }
 
         return builder == null ? text : builder.toString();
-    }
-
-    private static int detectAmpersandFormattingCodeLength(CharSequence text, int index) {
-        if (text == null || index < 0 || index >= text.length() - 1) {
-            return 0;
-        }
-
-        char next = text.charAt(index + 1);
-        if (next == '#') {
-            return index + 8 <= text.length() && ColorCodeUtils.isValidHexString(text, index + 2) ? 8 : 0;
-        }
-
-        return ColorCodeUtils.isFormattingCode(next) ? 2 : 0;
     }
 
     /**
@@ -179,7 +164,7 @@ public final class StringUtils {
                 } else if (codeLen == 2) {
                     char fmt = Character.toLowerCase(str.charAt(i + 1));
 
-                    if (ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g') {
+                    if (ColorCodeUtils.isMinecraftColorCode(fmt) || ColorCodeUtils.isRainbowCode(fmt)) {
                         currentColorCode = code;
                         colorStack.clear();
                         styleCodes.setLength(0);
@@ -214,28 +199,13 @@ public final class StringUtils {
         if (input == null) {
             return null;
         }
-
-        StringBuilder builder = null;
-        int index = 0;
-        ColorCodeUtils.FormattingEnvironment env = ColorCodeUtils.captureFormattingEnvironment(false);
-        while (index < input.length()) {
-            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index, env);
-            if (codeLen > 0) {
-                if (builder == null) {
-                    builder = new StringBuilder(input.length());
-                    builder.append(input, 0, index);
-                }
-                index += codeLen;
-                continue;
+        return stripTokens(input, new TokenPredicate() {
+            @Override
+            public boolean remove(CharSequence sequence, int index, int length,
+                                   ColorCodeUtils.FormattingEnvironment env) {
+                return true;
             }
-
-            if (builder != null) {
-                builder.append(input.charAt(index));
-            }
-            index++;
-        }
-
-        return builder == null ? input.toString() : builder.toString();
+        });
     }
 
     /**
@@ -254,36 +224,14 @@ public final class StringUtils {
         if (input == null) {
             return null;
         }
-
-        StringBuilder builder = null;
-        int index = 0;
-        ColorCodeUtils.FormattingEnvironment env = ColorCodeUtils.captureFormattingEnvironment(false);
-        while (index < input.length()) {
-            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index, env);
-            if (codeLen > 0) {
-                if (isHexColorToken(input, index, codeLen)) {
-                    if (builder == null) {
-                        builder = new StringBuilder(input.length());
-                        builder.append(input, 0, index);
-                    }
-                    index += codeLen;
-                    continue;
-                }
-
-                if (builder != null) {
-                    builder.append(input, index, index + codeLen);
-                }
-                index += codeLen;
-                continue;
+        return stripTokens(input, new TokenPredicate() {
+            @Override
+            public boolean remove(CharSequence sequence, int index, int length,
+                                   ColorCodeUtils.FormattingEnvironment env) {
+                TokenCategory category = classifyToken(sequence, index, length, env);
+                return category == TokenCategory.HEX_COLOR || category == TokenCategory.STANDARD_COLOR;
             }
-
-            if (builder != null) {
-                builder.append(input.charAt(index));
-            }
-            index++;
-        }
-
-        return builder == null ? input.toString() : builder.toString();
+        });
     }
 
     /**
@@ -294,36 +242,13 @@ public final class StringUtils {
         if (input == null) {
             return null;
         }
-
-        StringBuilder builder = null;
-        int index = 0;
-        ColorCodeUtils.FormattingEnvironment env = ColorCodeUtils.captureFormattingEnvironment(false);
-        while (index < input.length()) {
-            int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index, env);
-            if (codeLen > 0) {
-                if (isStandardColorToken(input, index, codeLen)) {
-                    if (builder == null) {
-                        builder = new StringBuilder(input.length());
-                        builder.append(input, 0, index);
-                    }
-                    index += codeLen;
-                    continue;
-                }
-
-                if (builder != null) {
-                    builder.append(input, index, index + codeLen);
-                }
-                index += codeLen;
-                continue;
+        return stripTokens(input, new TokenPredicate() {
+            @Override
+            public boolean remove(CharSequence sequence, int index, int length,
+                                   ColorCodeUtils.FormattingEnvironment env) {
+                return classifyToken(sequence, index, length, env) == TokenCategory.STANDARD_COLOR;
             }
-
-            if (builder != null) {
-                builder.append(input.charAt(index));
-            }
-            index++;
-        }
-
-        return builder == null ? input.toString() : builder.toString();
+        });
     }
 
     /**
@@ -334,23 +259,35 @@ public final class StringUtils {
         if (input == null) {
             return null;
         }
+        return stripTokens(input, new TokenPredicate() {
+            @Override
+            public boolean remove(CharSequence sequence, int index, int length,
+                                   ColorCodeUtils.FormattingEnvironment env) {
+                return classifyToken(sequence, index, length, env) == TokenCategory.STYLE_OR_EFFECT;
+            }
+        });
+    }
 
+    /**
+     * @return {@code true} when the input contains any formatting codes understood by HexText.
+     */
+    public static boolean containsFormattingCodes(CharSequence input) {
+        return ColorCodeUtils.containsFormattingCodes(input);
+    }
+
+    private static String stripTokens(CharSequence input, TokenPredicate predicate) {
         StringBuilder builder = null;
         int index = 0;
         ColorCodeUtils.FormattingEnvironment env = ColorCodeUtils.captureFormattingEnvironment(false);
+
         while (index < input.length()) {
             int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(input, index, env);
             if (codeLen > 0) {
-                if (isStyleOrEffectToken(input, index, codeLen)) {
-                    if (builder == null) {
-                        builder = new StringBuilder(input.length());
-                        builder.append(input, 0, index);
-                    }
-                    index += codeLen;
-                    continue;
+                if (builder == null) {
+                    builder = new StringBuilder(input.length());
+                    builder.append(input, 0, index);
                 }
-
-                if (builder != null) {
+                if (!predicate.remove(input, index, codeLen, env)) {
                     builder.append(input, index, index + codeLen);
                 }
                 index += codeLen;
@@ -366,64 +303,45 @@ public final class StringUtils {
         return builder == null ? input.toString() : builder.toString();
     }
 
-    /**
-     * @return {@code true} when the input contains any formatting codes understood by HexText.
-     */
-    public static boolean containsFormattingCodes(CharSequence input) {
-        return ColorCodeUtils.containsFormattingCodes(input);
-    }
+    private static TokenCategory classifyToken(CharSequence input, int index, int codeLen,
+                                               ColorCodeUtils.FormattingEnvironment env) {
+        if (codeLen <= 0 || index < 0 || index >= input.length()) {
+            return TokenCategory.OTHER;
+        }
 
-    private static boolean isHexColorToken(CharSequence input, int index, int codeLen) {
         char start = input.charAt(index);
+
         if (codeLen == 8 && (start == '&' || start == 167)) {
-            return true;
+            return TokenCategory.HEX_COLOR;
         }
 
-        final boolean htmlFormat = HexText.getActiveProxy() == null || HexText.getActiveProxy().allowHtmlFormatting();
-        final boolean ampersandFormat = HexText.getActiveProxy() == null
-            || HexText.getActiveProxy().allowUniversalAmpersand();
-
-        if (htmlFormat && codeLen == 8 && start == '<') {
-            return true;
+        boolean htmlAllowed = env == null || env.allowsHtmlFormatting();
+        if (htmlAllowed && start == '<' && (codeLen == 8 || codeLen == 9)) {
+            return TokenCategory.HEX_COLOR;
         }
 
-        if (htmlFormat && codeLen == 9 && start == '<') {
-            return true;
-        }
-
-        if (codeLen == 2 && ((start == '&' && ampersandFormat) || start == 167)) {
+        boolean ampersandAllowed = env == null || env.allowsUniversalAmpersand();
+        if (codeLen == 2 && ((start == '&' && ampersandAllowed) || start == 167)) {
             char fmt = Character.toLowerCase(input.charAt(index + 1));
-            return ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g';
-        }
-
-        return false;
-    }
-
-    private static boolean isStyleOrEffectToken(CharSequence input, int index, int codeLen) {
-        if (codeLen == 2) {
-            char start = input.charAt(index);
-            final boolean ampersandFormat = HexText.getActiveProxy() == null
-                || HexText.getActiveProxy().allowUniversalAmpersand();
-            if ((start == '&' && ampersandFormat) || start == 167) {
-                char fmt = Character.toLowerCase(input.charAt(index + 1));
-                return ColorCodeUtils.isStyleCode(fmt) || ColorCodeUtils.isEffectCode(fmt);
+            if (ColorCodeUtils.isMinecraftColorCode(fmt) || ColorCodeUtils.isRainbowCode(fmt)) {
+                return TokenCategory.STANDARD_COLOR;
+            }
+            if (ColorCodeUtils.isStyleCode(fmt) || ColorCodeUtils.isEffectCode(fmt)) {
+                return TokenCategory.STYLE_OR_EFFECT;
             }
         }
 
-        return false;
+        return TokenCategory.OTHER;
     }
 
-    private static boolean isStandardColorToken(CharSequence input, int index, int codeLen) {
-        if (codeLen == 2) {
-            char start = input.charAt(index);
-            final boolean ampersandFormat = HexText.getActiveProxy() == null
-                || HexText.getActiveProxy().allowUniversalAmpersand();
-            if ((start == '&' && ampersandFormat) || start == 167) {
-                char fmt = Character.toLowerCase(input.charAt(index + 1));
-                return ColorCodeUtils.isMinecraftColorCode(fmt) || fmt == 'g';
-            }
-        }
+    private interface TokenPredicate {
+        boolean remove(CharSequence sequence, int index, int length, ColorCodeUtils.FormattingEnvironment env);
+    }
 
-        return false;
+    private enum TokenCategory {
+        HEX_COLOR,
+        STANDARD_COLOR,
+        STYLE_OR_EFFECT,
+        OTHER
     }
 }

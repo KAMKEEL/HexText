@@ -66,6 +66,20 @@ public class ColorCodeUtilsTest {
     }
 
     @Test
+    public void testRainbowClassification() {
+        assertTrue(ColorCodeUtils.isRainbowCode('g'));
+        assertFalse(ColorCodeUtils.isEffectCode('g'));
+        assertFalse(ColorCodeUtils.isRainbowCode('h'));
+    }
+
+    @Test
+    public void testDetectAmpersandFormattingCodeLength() {
+        assertEquals(2, ColorCodeUtils.detectAmpersandFormattingCodeLength("&aTest", 0));
+        assertEquals(8, ColorCodeUtils.detectAmpersandFormattingCodeLength("&#123456Test", 0));
+        assertEquals(0, ColorCodeUtils.detectAmpersandFormattingCodeLength("&x", 0));
+    }
+
+    @Test
     public void testCalculateShadowColor() {
         assertEquals(0x1E1E1E, ColorCodeUtils.calculateShadowColor(0x7A7A7A));
     }

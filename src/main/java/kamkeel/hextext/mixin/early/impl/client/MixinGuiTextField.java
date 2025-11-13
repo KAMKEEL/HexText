@@ -79,6 +79,25 @@ public abstract class MixinGuiTextField extends Gui {
     }
 
     /**
+     * Skip drawing the prefix when raw mode rendering is active so subsequent full-string rendering
+     * does not apply token highlights twice.
+     */
+    @Redirect(
+        method = "drawTextBox",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/FontRenderer;drawStringWithShadow(Ljava/lang/String;III)I",
+            ordinal = 0
+        )
+    )
+    private int hextext$skipPrefixInRaw(FontRenderer fontRenderer, String prefix, int x, int y, int color) {
+        if (HexText.getActiveProxy() != null && HexText.rawRenderingEnabled) {
+            return x;
+        }
+        return fontRenderer.drawStringWithShadow(prefix, x, y, color);
+    }
+
+    /**
      * In raw chat mode, when GuiTextField draws the suffix (text after cursor),
      * instead draw the full visible substring `s` so earlier colour codes still
      * affect the text after the cursor.

@@ -75,23 +75,19 @@ public final class ColorCodeUtils {
     }
 
     public static boolean isFormattingCode(char c) {
-        char lower = Character.toLowerCase(c);
-        return isMinecraftColorCode(lower)
-            || lower == 'g'
-            || lower == 'h'
-            || lower == 'i'
-            || lower == 'j'
-            || isStyleCode(lower)
-            || isResetCode(lower);
+        return categorizeFormatCode(c) != FormatCodeCategory.NONE;
     }
 
     public static boolean isMinecraftColorCode(char c) {
-        char lower = Character.toLowerCase(c);
-        return (lower >= '0' && lower <= '9') || (lower >= 'a' && lower <= 'f');
+        return categorizeFormatCode(c) == FormatCodeCategory.MINECRAFT_COLOR;
+    }
+
+    public static boolean isRainbowCode(char c) {
+        return categorizeFormatCode(c) == FormatCodeCategory.RAINBOW;
     }
 
     public static int getMinecraftColorIndex(char c) {
-        char lower = Character.toLowerCase(c);
+        char lower = normalizeFormatCodeChar(c);
         if (lower >= '0' && lower <= '9') {
             return lower - '0';
         }
@@ -102,17 +98,15 @@ public final class ColorCodeUtils {
     }
 
     public static boolean isStyleCode(char c) {
-        char lower = Character.toLowerCase(c);
-        return lower == 'k' || lower == 'l' || lower == 'm' || lower == 'n' || lower == 'o';
+        return categorizeFormatCode(c) == FormatCodeCategory.STYLE;
     }
 
     public static boolean isEffectCode(char c) {
-        char lower = Character.toLowerCase(c);
-        return lower == 'g' || lower == 'h' || lower == 'i' || lower == 'j';
+        return categorizeFormatCode(c) == FormatCodeCategory.EFFECT;
     }
 
     public static boolean isResetCode(char c) {
-        return Character.toLowerCase(c) == 'r';
+        return categorizeFormatCode(c) == FormatCodeCategory.RESET;
     }
 
     public static int parseHexColor(String hex) {
@@ -175,28 +169,14 @@ public final class ColorCodeUtils {
         char c = str.charAt(pos);
 
         if (c == 167) {
-            if (pos + 2 <= str.length() && str.charAt(pos + 1) == '#'
-                && pos + 8 <= str.length() && isValidHexString(str, pos + 2)) {
-                return 8;
-            }
-            if (pos + 1 < str.length() && isFormattingCode(str.charAt(pos + 1))) {
-                return 2;
-            }
-            return 0;
+            return detectPrefixedFormattingCode(str, pos);
         }
 
         if (c == '&') {
             if (!allowAmpersand) {
                 return 0;
             }
-            if (pos + 2 <= str.length() && str.charAt(pos + 1) == '#'
-                && pos + 8 <= str.length() && isValidHexString(str, pos + 2)) {
-                return 8;
-            }
-            if (pos + 1 < str.length() && isFormattingCode(str.charAt(pos + 1))) {
-                return 2;
-            }
-            return 0;
+            return detectPrefixedFormattingCode(str, pos);
         }
 
         if (allowHtml && c == '<' && pos + 9 <= str.length() && str.charAt(pos + 1) == '/'
@@ -212,8 +192,65 @@ public final class ColorCodeUtils {
         return 0;
     }
 
+    public static int detectAmpersandFormattingCodeLength(CharSequence text, int index) {
+        if (text == null || index < 0 || index >= text.length()) {
+            return 0;
+        }
+        if (text.charAt(index) != '&') {
+            return 0;
+        }
+        return detectPrefixedFormattingCode(text, index);
+    }
+
     public static int calculateShadowColor(int rgb) {
         return (rgb & 0xFCFCFC) >> 2;
+    }
+
+    private enum FormatCodeCategory {
+        NONE,
+        MINECRAFT_COLOR,
+        RAINBOW,
+        STYLE,
+        EFFECT,
+        RESET
+    }
+
+    private static FormatCodeCategory categorizeFormatCode(char c) {
+        char lower = normalizeFormatCodeChar(c);
+        if (lower >= '0' && lower <= '9') {
+            return FormatCodeCategory.MINECRAFT_COLOR;
+        }
+        if (lower >= 'a' && lower <= 'f') {
+            return FormatCodeCategory.MINECRAFT_COLOR;
+        }
+        if (lower == 'g') {
+            return FormatCodeCategory.RAINBOW;
+        }
+        if (lower == 'k' || lower == 'l' || lower == 'm' || lower == 'n' || lower == 'o') {
+            return FormatCodeCategory.STYLE;
+        }
+        if (lower == 'h' || lower == 'i' || lower == 'j') {
+            return FormatCodeCategory.EFFECT;
+        }
+        if (lower == 'r') {
+            return FormatCodeCategory.RESET;
+        }
+        return FormatCodeCategory.NONE;
+    }
+
+    private static char normalizeFormatCodeChar(char c) {
+        return Character.toLowerCase(c);
+    }
+
+    private static int detectPrefixedFormattingCode(CharSequence str, int pos) {
+        if (str == null || pos < 0 || pos + 1 >= str.length()) {
+            return 0;
+        }
+        char next = str.charAt(pos + 1);
+        if (next == '#') {
+            return pos + 8 <= str.length() && isValidHexString(str, pos + 2) ? 8 : 0;
+        }
+        return isFormattingCode(next) ? 2 : 0;
     }
 
     public static int hsvToRgb(float hue, float saturation, float value) {
