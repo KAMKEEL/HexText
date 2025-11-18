@@ -94,6 +94,7 @@ public final class FormattedTextMetrics {
         }
 
         int lastSafePosition = 0;
+        int lastSpacePosition = -1;    // **index of last space character**
         float currentWidth = 0.0f;
         boolean isBold = false;
         final int length = text.length();
@@ -140,6 +141,10 @@ public final class FormattedTextMetrics {
                 return index;
             }
 
+            if (character == ' ') {
+                lastSpacePosition = index;
+            }
+
             float charWidth = charWidthFunc.getWidth(character);
             if (charWidth < 0.0f) {
                 charWidth = 0.0f;
@@ -155,9 +160,12 @@ public final class FormattedTextMetrics {
             }
 
             if (nextWidth > maxWidth) {
+                // Prefer breaking at the last space, otherwise fall back to lastSafePosition
+                if (lastSpacePosition >= 0) {
+                    return lastSpacePosition; // your wrapper will see ' ' at breakPoint and skip it
+                }
                 return Math.min(lastSafePosition, length);
             }
-
             currentWidth = nextWidth;
             index++;
             lastSafePosition = index;
