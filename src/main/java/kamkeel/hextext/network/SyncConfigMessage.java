@@ -80,15 +80,19 @@ public class SyncConfigMessage implements IMessage {
     public static class Handler implements IMessageHandler<SyncConfigMessage, IMessage> {
 
         @Override
-        public IMessage onMessage(final SyncConfigMessage message, final MessageContext ctx) {
+        public IMessage onMessage(SyncConfigMessage message, MessageContext ctx) {
             if (ctx.side != Side.CLIENT) {
                 return null;
             }
 
             if (HexText.getActiveProxy() instanceof ClientProxy) {
-                ((ClientProxy) HexText.getActiveProxy()).applyServerConfig(message.allowUniversalAmpersand(),
-                    message.convertAmpersandsInChat(), message.convertAmpersandsOnSigns(),
-                    message.convertAmpersandsInRepairs(), message.allowSignEditing(), message.enableHtmlFormat());
+                ((ClientProxy) HexText.getActiveProxy()).applyServerConfig(
+                    message.allowUniversalAmpersand(),
+                    message.convertAmpersandsInChat(),
+                    message.convertAmpersandsOnSigns(),
+                    message.convertAmpersandsInRepairs(),
+                    message.allowSignEditing(),
+                    message.enableHtmlFormat());
             }
             return null;
         }

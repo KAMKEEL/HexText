@@ -21,18 +21,15 @@ public class ClientConnectionEventHandler {
 
     @SubscribeEvent
     public void onClientConnected(FMLNetworkEvent.ClientConnectedToServerEvent event) {
-        if (event.isLocal) {
-            clientConfig.resetToLocalConfig();
-            clientProxy.setRemoteServerHasHexText(true);
-        } else {
-            clientConfig.apply(false, false, false, false, false, false);
-            clientProxy.setRemoteServerHasHexText(false);
-        }
+        // Mark that we haven't received a HexText sync packet yet.
+        // The server will send a sync packet if it has HexText installed.
+        clientProxy.setRemoteServerHasHexText(false);
     }
 
     @SubscribeEvent
     public void onClientDisconnected(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
-        clientConfig.resetToLocalConfig();
+        // Reset current values back to the original local config values
+        clientConfig.resetToOriginal();
         clientProxy.setRemoteServerHasHexText(true);
     }
 }
