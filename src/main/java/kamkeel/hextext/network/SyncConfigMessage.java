@@ -7,6 +7,7 @@ import cpw.mods.fml.relauncher.Side;
 import io.netty.buffer.ByteBuf;
 import kamkeel.hextext.HexText;
 import kamkeel.hextext.client.ClientProxy;
+import net.minecraft.client.Minecraft;
 
 /**
  * Synchronises server-controlled configuration toggles to clients when they join.
@@ -85,11 +86,22 @@ public class SyncConfigMessage implements IMessage {
                 return null;
             }
 
-            if (HexText.getActiveProxy() instanceof ClientProxy) {
-                ((ClientProxy) HexText.getActiveProxy()).applyServerConfig(message.allowUniversalAmpersand(),
-                    message.convertAmpersandsInChat(), message.convertAmpersandsOnSigns(),
-                    message.convertAmpersandsInRepairs(), message.allowSignEditing(), message.enableHtmlFormat());
-            }
+            // Schedule config application on the main thread to ensure it runs after
+            // connection events have been processed, avoiding race conditions.
+            Minecraft.getMinecraft().func_152344_a(new Runnable() {
+                @Override
+                public void run() {
+                    if (HexText.getActiveProxy() instanceof ClientProxy) {
+                        ((ClientProxy) HexText.getActiveProxy()).applyServerConfig(
+                            message.allowUniversalAmpersand(),
+                            message.convertAmpersandsInChat(),
+                            message.convertAmpersandsOnSigns(),
+                            message.convertAmpersandsInRepairs(),
+                            message.allowSignEditing(),
+                            message.enableHtmlFormat());
+                    }
+                }
+            });
             return null;
         }
     }

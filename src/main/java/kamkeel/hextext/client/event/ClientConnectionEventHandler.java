@@ -21,13 +21,10 @@ public class ClientConnectionEventHandler {
 
     @SubscribeEvent
     public void onClientConnected(FMLNetworkEvent.ClientConnectedToServerEvent event) {
-        if (event.isLocal) {
-            clientConfig.resetToLocalConfig();
-            clientProxy.setRemoteServerHasHexText(true);
-        } else {
-            clientConfig.apply(false, false, false, false, false, false);
-            clientProxy.setRemoteServerHasHexText(false);
-        }
+        // Always start with all configs disabled and wait for the server to sync its settings.
+        // Even single-player worlds run an integrated server that will send the sync message.
+        clientConfig.apply(false, false, false, false, false, false);
+        clientProxy.setRemoteServerHasHexText(false);
     }
 
     @SubscribeEvent
