@@ -15,20 +15,14 @@ public class ClientProxy extends CommonProxy {
     private boolean clientEventsRegistered;
     private boolean remoteServerHasHexText = true;
 
-    public static void eventsInit() {
-
-    }
-
     @Override
     public void preInit(FMLPreInitializationEvent ev) {
         super.preInit(ev);
-
     }
 
     @Override
     public void init(FMLInitializationEvent ev) {
         super.init(ev);
-        eventsInit();
         registerClientEvents();
     }
 
@@ -69,7 +63,7 @@ public class ClientProxy extends CommonProxy {
 
     @Override
     public void applyServerConfig(boolean universalAmpersand, boolean chatAmpersands, boolean signAmpersands,
-        boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat) {
+                                  boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat) {
         remoteServerHasHexText = true;
         clientConfig.apply(universalAmpersand, chatAmpersands, signAmpersands, repairAmpersands, allowSignEditing,
             enableHtmlFormat);
@@ -82,6 +76,10 @@ public class ClientProxy extends CommonProxy {
 
     public void setRemoteServerHasHexText(boolean hasHexText) {
         this.remoteServerHasHexText = hasHexText;
+    }
+
+    public ClientConfig getClientConfig() {
+        return clientConfig;
     }
 
     private void registerClientEvents() {

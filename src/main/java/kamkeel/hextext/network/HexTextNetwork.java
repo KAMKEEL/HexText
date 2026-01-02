@@ -10,26 +10,13 @@ import kamkeel.hextext.HexText;
  */
 public final class HexTextNetwork {
 
-    private static final SimpleNetworkWrapper CHANNEL =
-        NetworkRegistry.INSTANCE.newSimpleChannel(HexText.ID);
-
-    private static boolean initialised;
+    public static SimpleNetworkWrapper channel;
 
     private HexTextNetwork() {
     }
 
     public static void init() {
-        if (initialised) {
-            return;
-        }
-
-        int discriminator = 0;
-        CHANNEL.registerMessage(SyncConfigMessage.Handler.class, SyncConfigMessage.class, discriminator++, Side.CLIENT);
-
-        initialised = true;
-    }
-
-    public static SimpleNetworkWrapper channel() {
-        return CHANNEL;
+        channel = NetworkRegistry.INSTANCE.newSimpleChannel(HexText.ID);
+        channel.registerMessage(SyncConfigHandler.class, SyncConfigMessage.class, 0, Side.CLIENT);
     }
 }
