@@ -11,9 +11,9 @@ import kamkeel.hextext.client.event.ClientConnectionEventHandler;
 public class ClientProxy extends CommonProxy {
 
     private final ClientConfig clientConfig = new ClientConfig();
-    private final ClientConnectionEventHandler connectionEventHandler = new ClientConnectionEventHandler(this, clientConfig);
+    private final ClientConnectionEventHandler connectionEventHandler = new ClientConnectionEventHandler();
     private boolean clientEventsRegistered;
-    private boolean remoteServerHasHexText = true;
+    private boolean remoteServerHasHexText = false;
 
     @Override
     public void preInit(FMLPreInitializationEvent ev) {
@@ -74,12 +74,9 @@ public class ClientProxy extends CommonProxy {
         return remoteServerHasHexText;
     }
 
+    @Override
     public void setRemoteServerHasHexText(boolean hasHexText) {
         this.remoteServerHasHexText = hasHexText;
-    }
-
-    public ClientConfig getClientConfig() {
-        return clientConfig;
     }
 
     private void registerClientEvents() {

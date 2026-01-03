@@ -2,6 +2,7 @@ package kamkeel.hextext.network;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import io.netty.buffer.ByteBuf;
+import kamkeel.hextext.HexText;
 import kamkeel.hextext.config.HexTextConfig;
 
 /**

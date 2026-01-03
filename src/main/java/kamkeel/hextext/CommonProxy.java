@@ -24,7 +24,11 @@ public class CommonProxy {
     public static void eventsInit() {
         if (!eventsRegistered) {
             FMLCommonHandler.instance().bus().register(CONFIG_EVENT_HANDLER);
+            MinecraftForge.EVENT_BUS.register(CONFIG_EVENT_HANDLER);
+
+            FMLCommonHandler.instance().bus().register(SERVER_CONFIG_SYNC_HANDLER);
             MinecraftForge.EVENT_BUS.register(SERVER_CONFIG_SYNC_HANDLER);
+
             eventsRegistered = true;
         }
     }
@@ -75,4 +79,6 @@ public class CommonProxy {
     public boolean isRemoteHexTextPresent() {
         return true;
     }
+
+    public void setRemoteServerHasHexText(boolean hasHexText){}
 }

@@ -17,24 +17,15 @@ public class SyncConfigHandler implements IMessageHandler<SyncConfigMessage, IMe
     @SideOnly(Side.CLIENT)
     @Override
     public IMessage onMessage(final SyncConfigMessage message, MessageContext ctx) {
-        // Schedule on main thread to ensure proper ordering with connection events.
-        // The connection event schedules first (it fires before packets can arrive),
-        // so this will always run after the connection handler has reset configs.
-        Minecraft.getMinecraft().func_152344_a(new Runnable() {
-            @Override
-            public void run() {
-                if (HexText.getActiveProxy() instanceof ClientProxy) {
-                    ((ClientProxy) HexText.getActiveProxy()).applyServerConfig(
-                        message.universalAmpersand,
-                        message.chatAmpersands,
-                        message.signAmpersands,
-                        message.repairAmpersands,
-                        message.allowSignEditing,
-                        message.enableHtmlFormat
-                    );
-                }
-            }
-        });
+        HexText.getActiveProxy().applyServerConfig(
+            message.universalAmpersand,
+            message.chatAmpersands,
+            message.signAmpersands,
+            message.repairAmpersands,
+            message.allowSignEditing,
+            message.enableHtmlFormat
+        );
+        HexText.getActiveProxy().setRemoteServerHasHexText(true);
         return null;
     }
 }
