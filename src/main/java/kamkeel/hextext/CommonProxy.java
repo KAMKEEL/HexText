@@ -10,6 +10,7 @@ import kamkeel.hextext.common.api.HexTextApiBootstrap;
 import kamkeel.hextext.config.HexTextConfig;
 import kamkeel.hextext.network.HexTextNetwork;
 import kamkeel.hextext.network.ServerConfigSyncHandler;
+import kamkeel.hextext.permissions.HexTextPermissions;
 import net.minecraftforge.common.MinecraftForge;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,6 +37,7 @@ public class CommonProxy {
     public void preInit(FMLPreInitializationEvent ev) {
         HexTextApiBootstrap.initialize();
         HexTextConfig.init(ev.getSuggestedConfigurationFile());
+        new HexTextPermissions(); // Initialize permission system with Bukkit detection
         HexTextNetwork.init();
         eventsInit();
     }

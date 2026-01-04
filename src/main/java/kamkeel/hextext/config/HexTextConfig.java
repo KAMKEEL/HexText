@@ -77,9 +77,16 @@ public final class HexTextConfig {
         configuration.addCustomCategoryComment(CATEGORY_EFFECTS,
             "Timing controls for HexText's dynamic formatting effects.");
         configuration.addCustomCategoryComment(CATEGORY_SERVER,
-            "Server-side behavioural toggles for HexText formatting and sign editing.");
+            "Server-side behavioural toggles for HexText formatting and sign editing.\n" +
+            "These settings define the DEFAULT behaviour for ALL players.\n" +
+            "When Bukkit permissions are available (e.g., MCPC+, Cauldron, Thermos),\n" +
+            "individual player permissions can override these defaults.\n" +
+            "See permission nodes: hextext.sign.*, hextext.format.*");
         configuration.addCustomCategoryComment(CATEGORY_SIGN_MODIFIERS,
-            "Enable or disable the built-in HexText sign modifier items.");
+            "Enable or disable the built-in HexText sign modifier items.\n" +
+            "These settings define the DEFAULT behaviour for ALL players.\n" +
+            "When Bukkit permissions are available, individual player permissions\n" +
+            "can override these defaults using: hextext.sign.modifier.*");
 
         rainbowSpeed = clamp(configuration.getFloat(
             "rainbowCycleDurationMs",
@@ -112,70 +119,80 @@ public final class HexTextConfig {
             "enableRgbHtmlFormat",
             CATEGORY_SERVER,
             DEFAULT_ENABLE_RGB_HTML_FORMAT,
-            "Allow the <RRGGBB> and </RRGGBB> HTML-style colour tags to be parsed."
+            "DEFAULT: Allow the <RRGGBB> and </RRGGBB> HTML-style colour tags to be parsed.\n" +
+            "Permission override: hextext.format.html"
         );
 
         allowSignEditing = configuration.getBoolean(
             "allowSignEditing",
             CATEGORY_SERVER,
             DEFAULT_ALLOW_SIGN_EDITING,
-            "Permit players to open the sign editor by right-clicking with an empty hand."
+            "DEFAULT: Permit players to open the sign editor by right-clicking with an empty hand.\n" +
+            "Permission override: hextext.sign.edit"
         );
 
         universalAmpersand = configuration.getBoolean(
             "universalAmpersandFormatting",
             CATEGORY_SERVER,
             DEFAULT_UNIVERSAL_AMPERSAND,
-            "Allow & as an alternative to the section sign when entering formatting codes."
+            "DEFAULT: Allow & as an alternative to the section sign when entering formatting codes.\n" +
+            "This enables ampersand conversion globally when set to true."
         );
 
         chatAmpersandConversion = configuration.getBoolean(
             "ampersandsInChat",
             CATEGORY_SERVER,
             DEFAULT_CHAT_AMPERSAND_CONVERSION,
-            "Convert & formatting tokens to section signs when sending chat or commands."
+            "DEFAULT: Convert & formatting tokens to section signs when sending chat or commands.\n" +
+            "Permission override: hextext.format.ampersand.chat"
         );
 
         signAmpersandConversion = configuration.getBoolean(
             "ampersandsInSigns",
             CATEGORY_SERVER,
             DEFAULT_SIGN_AMPERSAND_CONVERSION,
-            "Convert & formatting tokens to section signs when editing signs."
+            "DEFAULT: Convert & formatting tokens to section signs when editing signs.\n" +
+            "Permission override: hextext.format.ampersand.sign"
         );
 
         repairAmpersandConversion = configuration.getBoolean(
             "ampersandsInRepairs",
             CATEGORY_SERVER,
             DEFAULT_REPAIR_AMPERSAND_CONVERSION,
-            "Convert & formatting tokens to section signs when renaming items in anvils."
+            "DEFAULT: Convert & formatting tokens to section signs when renaming items in anvils.\n" +
+            "Permission override: hextext.format.ampersand.repair"
         );
 
         enableGlowstoneDustGlow = configuration.getBoolean(
             "enableGlowstoneDustGlowModifier",
             CATEGORY_SIGN_MODIFIERS,
             DEFAULT_GLOWSTONE_DUST_GLOW,
-            "Allow glowstone dust to apply the glowing text modifier to signs."
+            "DEFAULT: Allow glowstone dust to apply the glowing text modifier to signs.\n" +
+            "Permission override: hextext.sign.modifier.glow"
         );
 
         enableRedstoneDustOutline = configuration.getBoolean(
             "enableRedstoneDustOutlineModifier",
             CATEGORY_SIGN_MODIFIERS,
             DEFAULT_REDSTONE_DUST_OUTLINE,
-            "Allow redstone dust to apply the outlined text modifier to signs."
+            "DEFAULT: Allow redstone dust to apply the outlined text modifier to signs.\n" +
+            "Permission override: hextext.sign.modifier.outline"
         );
 
         enableSlimeballWax = configuration.getBoolean(
             "enableSlimeballWaxModifier",
             CATEGORY_SIGN_MODIFIERS,
             DEFAULT_SLIMEBALL_WAX,
-            "Allow slimeballs to wax signs and preserve their current styling."
+            "DEFAULT: Allow slimeballs to wax signs and preserve their current styling.\n" +
+            "Permission override: hextext.sign.modifier.wax"
         );
 
         enableInkSacCleanse = configuration.getBoolean(
             "enableInkSacCleanseModifier",
             CATEGORY_SIGN_MODIFIERS,
             DEFAULT_INK_SAC_CLEANSE,
-            "Allow ink sacs to cleanse glowing and outlined effects from signs."
+            "DEFAULT: Allow ink sacs to cleanse glowing and outlined effects from signs.\n" +
+            "Permission override: hextext.sign.modifier.cleanse"
         );
 
         if (configuration.hasChanged()) {

@@ -6,6 +6,8 @@ import kamkeel.hextext.api.sign.SignSide;
 import kamkeel.hextext.common.sign.SignUpdatePacket;
 import kamkeel.hextext.common.util.SignTextHelper;
 import kamkeel.hextext.common.util.StringUtils;
+import kamkeel.hextext.config.HexTextConfig;
+import kamkeel.hextext.permissions.HexTextPermissions;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.play.client.C12PacketUpdateSign;
@@ -26,6 +28,39 @@ public abstract class MixinNetHandlerPlayServer {
 
     @Shadow
     public EntityPlayerMP playerEntity;
+
+    /**
+     * Checks if the player can edit signs.
+     * Uses config as default, with Bukkit permissions as override.
+     */
+    private boolean canEditSign() {
+        if (HexTextPermissions.enabled()) {
+            return HexTextPermissions.hasPermission(playerEntity, HexTextPermissions.SIGN_EDIT);
+        }
+        return HexTextConfig.isSignEditingAllowed();
+    }
+
+    /**
+     * Checks if the player can use ampersand formatting in chat.
+     * Uses config as default, with Bukkit permissions as override.
+     */
+    private boolean canUseAmpersandInChat() {
+        if (HexTextPermissions.enabled()) {
+            return HexTextPermissions.hasPermission(playerEntity, HexTextPermissions.FORMAT_AMPERSAND_CHAT);
+        }
+        return HexText.getActiveProxy().convertAmpersandsInChat();
+    }
+
+    /**
+     * Checks if the player can use ampersand formatting in repairs.
+     * Uses config as default, with Bukkit permissions as override.
+     */
+    private boolean canUseAmpersandInRepair() {
+        if (HexTextPermissions.enabled()) {
+            return HexTextPermissions.hasPermission(playerEntity, HexTextPermissions.FORMAT_AMPERSAND_REPAIR);
+        }
+        return HexText.getActiveProxy().convertAmpersandsInRepairs();
+    }
 
     @Inject(method = "processUpdateSign", at = @At("HEAD"), cancellable = true)
     private void hextext$processUpdateSign(C12PacketUpdateSign packet, CallbackInfo ci) {
@@ -55,6 +90,12 @@ public abstract class MixinNetHandlerPlayServer {
             return;
         }
 
+        // Check HexText permission for sign editing
+        if (!canEditSign()) {
+            ci.cancel();
+            return;
+        }
+
         SignSide side = ((SignUpdatePacket) packet).getSide();
         IHexTextSign state = (IHexTextSign) sign;
         String[] dest = state.getLines(side);
@@ -69,14 +110,14 @@ public abstract class MixinNetHandlerPlayServer {
 
     @Redirect(method = "processChatMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ChatAllowedCharacters;isAllowedCharacter(C)Z"))
     public boolean hexText$processChatConvert(char character){
-        if(HexText.getActiveProxy().convertAmpersandsInChat() && character == StringUtils.SECTION_SIGN)
+        if(canUseAmpersandInChat() && character == StringUtils.SECTION_SIGN)
             return true;
         return ChatAllowedCharacters.isAllowedCharacter(character);
     }
 
     @ModifyArg(method = "processVanilla250Packet", at = @At(value = "INVOKE", target = "Lnet/minecraft/inventory/ContainerRepair;updateItemName(Ljava/lang/String;)V"))
     public String hexText$processRepairConvert(String original){
-        if(!HexText.getActiveProxy().convertAmpersandsInRepairs())
+        if(!canUseAmpersandInRepair())
             return original;
         return StringUtils.convertAmpersandsToSectionSigns(original);
     }

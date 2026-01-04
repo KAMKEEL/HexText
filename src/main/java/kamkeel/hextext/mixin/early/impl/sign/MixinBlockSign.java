@@ -7,6 +7,8 @@ import kamkeel.hextext.api.sign.SignInteractionType;
 import kamkeel.hextext.api.sign.SignSide;
 import kamkeel.hextext.common.sign.SignSideHelper;
 import kamkeel.hextext.common.util.ItemHelper;
+import kamkeel.hextext.config.HexTextConfig;
+import kamkeel.hextext.permissions.HexTextPermissions;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.BlockSign;
 import net.minecraft.block.material.Material;
@@ -26,6 +28,65 @@ public abstract class MixinBlockSign extends BlockContainer {
 
     protected MixinBlockSign(Material p_i45386_1_) {
         super(p_i45386_1_);
+    }
+
+    /**
+     * Checks if a player can use a specific sign modifier.
+     * Uses config as default, with Bukkit permissions as override.
+     *
+     * @param player The player to check
+     * @param type The sign interaction type
+     * @return true if allowed, false otherwise
+     */
+    private boolean canUseSignModifier(EntityPlayer player, SignInteractionType type) {
+        boolean configDefault;
+        HexTextPermissions.Permission permission;
+
+        switch (type) {
+            case GLOW:
+                configDefault = HexTextConfig.isGlowstoneDustGlowEnabled();
+                permission = HexTextPermissions.SIGN_MODIFIER_GLOW;
+                break;
+            case OUTLINE:
+                configDefault = HexTextConfig.isRedstoneDustOutlineEnabled();
+                permission = HexTextPermissions.SIGN_MODIFIER_OUTLINE;
+                break;
+            case WAX:
+                configDefault = HexTextConfig.isSlimeballWaxEnabled();
+                permission = HexTextPermissions.SIGN_MODIFIER_WAX;
+                break;
+            case CLEANSE:
+                configDefault = HexTextConfig.isInkSacCleanseEnabled();
+                permission = HexTextPermissions.SIGN_MODIFIER_CLEANSE;
+                break;
+            default:
+                return true;
+        }
+
+        // If Bukkit permissions are enabled, use permission check
+        if (HexTextPermissions.enabled()) {
+            return HexTextPermissions.hasPermission(player, permission);
+        }
+
+        // Otherwise use config default
+        return configDefault;
+    }
+
+    /**
+     * Checks if a player can edit signs.
+     * Uses config as default, with Bukkit permissions as override.
+     *
+     * @param player The player to check
+     * @return true if allowed, false otherwise
+     */
+    private boolean canEditSign(EntityPlayer player) {
+        // If Bukkit permissions are enabled, use permission check
+        if (HexTextPermissions.enabled()) {
+            return HexTextPermissions.hasPermission(player, HexTextPermissions.SIGN_EDIT);
+        }
+
+        // Otherwise use config default
+        return HexTextConfig.isSignEditingAllowed();
     }
 
     public boolean onBlockActivated(World worldIn, int x, int y, int z, EntityPlayer player, int side, float subX, float subY, float subZ) {
@@ -62,7 +123,7 @@ public abstract class MixinBlockSign extends BlockContainer {
                 boolean consumed = false;
                 boolean updated = false;
 
-                if (interactions.contains(SignInteractionType.CLEANSE)) {
+                if (interactions.contains(SignInteractionType.CLEANSE) && canUseSignModifier(player, SignInteractionType.CLEANSE)) {
                     boolean changed = false;
                     changed |= hexTextSign.setGlowing(clickedSide, false);
                     changed |= hexTextSign.setOutlined(clickedSide, false);
@@ -75,7 +136,7 @@ public abstract class MixinBlockSign extends BlockContainer {
                     }
                 }
 
-                if (interactions.contains(SignInteractionType.WAX) && !hexTextSign.isWaxed()) {
+                if (interactions.contains(SignInteractionType.WAX) && !hexTextSign.isWaxed() && canUseSignModifier(player, SignInteractionType.WAX)) {
                     hexTextSign.setWaxed(true);
                     updated = true;
                     if (!consumed) {
@@ -84,7 +145,7 @@ public abstract class MixinBlockSign extends BlockContainer {
                     }
                 }
 
-                if (interactions.contains(SignInteractionType.GLOW)) {
+                if (interactions.contains(SignInteractionType.GLOW) && canUseSignModifier(player, SignInteractionType.GLOW)) {
                     boolean changed = hexTextSign.setGlowing(clickedSide, true);
                     if (changed) {
                         updated = true;
@@ -95,7 +156,7 @@ public abstract class MixinBlockSign extends BlockContainer {
                     }
                 }
 
-                if (interactions.contains(SignInteractionType.OUTLINE)) {
+                if (interactions.contains(SignInteractionType.OUTLINE) && canUseSignModifier(player, SignInteractionType.OUTLINE)) {
                     boolean changed = hexTextSign.setOutlined(clickedSide, true);
                     if (changed) {
                         updated = true;
@@ -118,7 +179,7 @@ public abstract class MixinBlockSign extends BlockContainer {
             return false;
         }
 
-        if (!HexText.getActiveProxy().allowSignEditing()) {
+        if (!canEditSign(player)) {
             return false;
         }
 
