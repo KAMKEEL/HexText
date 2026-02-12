@@ -54,7 +54,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
     @Shadow
     private int[] colorCode;
 
-    @Shadow
+    @Shadow(remap = false)
     protected abstract void setColor(float r, float g, float b, float a);
 
     @Shadow
@@ -103,7 +103,7 @@ public abstract class MixinFontRenderer implements FontRendererBridge {
         }
     };
 
-    @Inject(method = "renderString", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;setColor(FFFF)V", shift = At.Shift.AFTER))
+    @Inject(method = "renderString", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;setColor(FFFF)V", shift = At.Shift.AFTER, remap = false))
     private void hextext$capturePreparedColor(String text, int x, int y, int color, boolean dropShadow,
                                               CallbackInfoReturnable<Integer> cir) {
         if(this.hexText$DoNotModify || HexText.getActiveProxy() == null)
