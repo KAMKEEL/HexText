@@ -1,5 +1,6 @@
 package kamkeel.hextext.config;
 
+import kamkeel.hextext.common.sign.SignBanHelper;
 import net.minecraftforge.common.config.Configuration;
 
 import java.io.File;
@@ -14,6 +15,8 @@ public final class HexTextConfig {
     public static final String CATEGORY_SERVER = "server";
     public static final String CATEGORY_SIGN_MODIFIERS =
         CATEGORY_SERVER + Configuration.CATEGORY_SPLITTER + "signModifiers";
+    public static final String CATEGORY_SIGN_PROTECTION =
+        CATEGORY_SERVER + Configuration.CATEGORY_SPLITTER + "signProtection";
 
     private static final float DEFAULT_RAINBOW_SPEED = 3000.0f;
     private static final int DEFAULT_SHAKE_INTERVAL = 50;
@@ -33,6 +36,26 @@ public final class HexTextConfig {
     private static final boolean DEFAULT_REDSTONE_DUST_OUTLINE = true;
     private static final boolean DEFAULT_SLIMEBALL_WAX = true;
     private static final boolean DEFAULT_INK_SAC_CLEANSE = true;
+
+    private static final String[] DEFAULT_BANNED_SIGN_PATTERNS = {
+        "\\[Free\\]",
+        "\\[Kit\\]",
+        "\\[Disposal\\]",
+        "\\[Heal\\]",
+        "\\[Cost\\]",
+        "\\[Time\\]",
+        "\\[Weather\\]",
+        "\\[Warp\\]",
+        "\\[Spawnmob\\]",
+        "\\[Enchant\\]",
+        "\\[Repair\\]",
+        "\\[Info\\]",
+        "\\[Gamemode\\]",
+        "\\[Trade\\]",
+        "\\[Buy\\]",
+        "\\[Sell\\]",
+        "\\[Balance\\]"
+    };
 
     private static final float MIN_RAINBOW_SPEED = 1.0f;
     private static final int MIN_SHAKE_INTERVAL = 1;
@@ -62,6 +85,8 @@ public final class HexTextConfig {
     private static boolean enableSlimeballWax = DEFAULT_SLIMEBALL_WAX;
     private static boolean enableInkSacCleanse = DEFAULT_INK_SAC_CLEANSE;
 
+    private static String[] bannedSignPatterns = DEFAULT_BANNED_SIGN_PATTERNS;
+
     private HexTextConfig() {
     }
 
@@ -87,6 +112,8 @@ public final class HexTextConfig {
             "Server-side behavioural toggles for HexText formatting and sign editing.");
         configuration.addCustomCategoryComment(CATEGORY_SIGN_MODIFIERS,
             "Enable or disable the built-in HexText sign modifier items.");
+        configuration.addCustomCategoryComment(CATEGORY_SIGN_PROTECTION,
+            "Regex patterns that protect signs from being edited. Signs containing text matching any pattern become uneditable.");
 
         requireSneakToEditSign = configuration.getBoolean(
             "requireSneakToEditSign",
@@ -192,6 +219,15 @@ public final class HexTextConfig {
             "Allow ink sacs to cleanse glowing and outlined effects from signs."
         );
 
+        bannedSignPatterns = configuration.getStringList(
+            "bannedSignPatterns",
+            CATEGORY_SIGN_PROTECTION,
+            DEFAULT_BANNED_SIGN_PATTERNS,
+            "Regex patterns matched against sign text (formatting codes stripped, case-insensitive). Signs containing a match on any line cannot be edited."
+        );
+
+        SignBanHelper.setPatterns(bannedSignPatterns);
+
         if (configuration.hasChanged()) {
             configuration.save();
         }
@@ -253,6 +289,10 @@ public final class HexTextConfig {
         return enableInkSacCleanse;
     }
 
+    public static String[] getBannedSignPatterns() {
+        return bannedSignPatterns;
+    }
+
     public static Configuration getConfiguration() {
         return configuration;
     }
@@ -281,6 +321,11 @@ public final class HexTextConfig {
         repairAmpersandConversion = enabled;
     }
 
+    public static void setBannedSignPatterns(String[] patterns) {
+        bannedSignPatterns = patterns != null ? patterns : new String[0];
+        SignBanHelper.setPatterns(bannedSignPatterns);
+    }
+
     public static void resetToDefaults() {
         rainbowSpeed = DEFAULT_RAINBOW_SPEED;
         shakeInterval = DEFAULT_SHAKE_INTERVAL;
@@ -296,6 +341,8 @@ public final class HexTextConfig {
         enableRedstoneDustOutline = DEFAULT_REDSTONE_DUST_OUTLINE;
         enableSlimeballWax = DEFAULT_SLIMEBALL_WAX;
         enableInkSacCleanse = DEFAULT_INK_SAC_CLEANSE;
+        bannedSignPatterns = DEFAULT_BANNED_SIGN_PATTERNS;
+        SignBanHelper.setPatterns(bannedSignPatterns);
     }
 
     private static float clamp(float value, float min, float max) {

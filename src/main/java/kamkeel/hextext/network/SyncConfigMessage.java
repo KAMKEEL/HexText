@@ -1,5 +1,6 @@
 package kamkeel.hextext.network;
 
+import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import io.netty.buffer.ByteBuf;
 import kamkeel.hextext.HexText;
@@ -16,18 +17,21 @@ public class SyncConfigMessage implements IMessage {
     public boolean repairAmpersands;
     public boolean allowSignEditing;
     public boolean enableHtmlFormat;
+    public String[] bannedSignPatterns = new String[0];
 
     public SyncConfigMessage() {
     }
 
     public SyncConfigMessage(boolean universalAmpersand, boolean chatAmpersands, boolean signAmpersands,
-                             boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat) {
+                             boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat,
+                             String[] bannedSignPatterns) {
         this.universalAmpersand = universalAmpersand;
         this.chatAmpersands = chatAmpersands;
         this.signAmpersands = signAmpersands;
         this.repairAmpersands = repairAmpersands;
         this.allowSignEditing = allowSignEditing;
         this.enableHtmlFormat = enableHtmlFormat;
+        this.bannedSignPatterns = bannedSignPatterns != null ? bannedSignPatterns : new String[0];
     }
 
     /**
@@ -40,7 +44,8 @@ public class SyncConfigMessage implements IMessage {
             HexTextConfig.isSignAmpersandConversionEnabled(),
             HexTextConfig.isRepairAmpersandConversionEnabled(),
             HexTextConfig.isSignEditingAllowed(),
-            HexTextConfig.isRgbHtmlFormatEnabled()
+            HexTextConfig.isRgbHtmlFormatEnabled(),
+            HexTextConfig.getBannedSignPatterns()
         );
     }
 
@@ -52,6 +57,14 @@ public class SyncConfigMessage implements IMessage {
         repairAmpersands = buf.readBoolean();
         allowSignEditing = buf.readBoolean();
         enableHtmlFormat = buf.readBoolean();
+
+        if (buf.isReadable()) {
+            int count = buf.readInt();
+            bannedSignPatterns = new String[count];
+            for (int i = 0; i < count; i++) {
+                bannedSignPatterns[i] = ByteBufUtils.readUTF8String(buf);
+            }
+        }
     }
 
     @Override
@@ -62,5 +75,10 @@ public class SyncConfigMessage implements IMessage {
         buf.writeBoolean(repairAmpersands);
         buf.writeBoolean(allowSignEditing);
         buf.writeBoolean(enableHtmlFormat);
+
+        buf.writeInt(bannedSignPatterns.length);
+        for (String pattern : bannedSignPatterns) {
+            ByteBufUtils.writeUTF8String(buf, pattern);
+        }
     }
 }

@@ -72,7 +72,8 @@ public class CommonProxy {
     }
 
     public void applyServerConfig(boolean universalAmpersand, boolean chatAmpersands, boolean signAmpersands,
-        boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat) {
+        boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat,
+        String[] bannedSignPatterns) {
         // Server already owns the authoritative configuration, so nothing further needs to happen here.
     }
 

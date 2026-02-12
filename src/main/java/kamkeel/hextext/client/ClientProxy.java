@@ -63,10 +63,11 @@ public class ClientProxy extends CommonProxy {
 
     @Override
     public void applyServerConfig(boolean universalAmpersand, boolean chatAmpersands, boolean signAmpersands,
-                                  boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat) {
+                                  boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat,
+                                  String[] bannedSignPatterns) {
         remoteServerHasHexText = true;
         clientConfig.apply(universalAmpersand, chatAmpersands, signAmpersands, repairAmpersands, allowSignEditing,
-            enableHtmlFormat);
+            enableHtmlFormat, bannedSignPatterns);
     }
 
     @Override

@@ -23,7 +23,8 @@ public class SyncConfigHandler implements IMessageHandler<SyncConfigMessage, IMe
             message.signAmpersands,
             message.repairAmpersands,
             message.allowSignEditing,
-            message.enableHtmlFormat
+            message.enableHtmlFormat,
+            message.bannedSignPatterns
         );
         HexText.getActiveProxy().setRemoteServerHasHexText(true);
         return null;

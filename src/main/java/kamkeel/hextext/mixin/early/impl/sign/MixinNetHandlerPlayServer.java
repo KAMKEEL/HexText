@@ -3,6 +3,7 @@ package kamkeel.hextext.mixin.early.impl.sign;
 import kamkeel.hextext.HexText;
 import kamkeel.hextext.api.sign.IHexTextSign;
 import kamkeel.hextext.api.sign.SignSide;
+import kamkeel.hextext.common.sign.SignBanHelper;
 import kamkeel.hextext.common.sign.SignUpdatePacket;
 import kamkeel.hextext.common.util.SignTextHelper;
 import kamkeel.hextext.common.util.StringUtils;
@@ -51,6 +52,12 @@ public abstract class MixinNetHandlerPlayServer {
         TileEntitySign sign = (TileEntitySign) tileEntity;
         if (!sign.func_145914_a() || sign.func_145911_b() != playerEntity) {
             playerEntity.playerNetServerHandler.kickPlayerFromServer("You are not permitted to use this sign!");
+            ci.cancel();
+            return;
+        }
+
+        if (SignBanHelper.isSignBanned(sign)) {
+            sign.func_145912_a(null);
             ci.cancel();
             return;
         }

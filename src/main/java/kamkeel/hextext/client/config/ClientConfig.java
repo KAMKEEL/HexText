@@ -1,5 +1,6 @@
 package kamkeel.hextext.client.config;
 
+import kamkeel.hextext.common.sign.SignBanHelper;
 import kamkeel.hextext.config.HexTextConfig;
 
 /**
@@ -40,13 +41,15 @@ public class ClientConfig {
     }
 
     public void apply(boolean universalAmpersand, boolean chatAmpersands, boolean signAmpersands,
-        boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat) {
+        boolean repairAmpersands, boolean allowSignEditing, boolean enableHtmlFormat,
+        String[] bannedSignPatterns) {
         this.universalAmpersand = universalAmpersand;
         this.chatAmpersands = chatAmpersands;
         this.signAmpersands = signAmpersands;
         this.repairAmpersands = repairAmpersands;
         this.allowSignEditing = allowSignEditing;
         this.enableHtmlFormat = enableHtmlFormat;
+        SignBanHelper.setPatterns(bannedSignPatterns);
     }
 
     public void resetToLocalConfig() {
@@ -56,7 +59,8 @@ public class ClientConfig {
             HexTextConfig.isSignAmpersandConversionEnabled(),
             HexTextConfig.isRepairAmpersandConversionEnabled(),
             HexTextConfig.isSignEditingAllowed(),
-            HexTextConfig.isRgbHtmlFormatEnabled()
+            HexTextConfig.isRgbHtmlFormatEnabled(),
+            HexTextConfig.getBannedSignPatterns()
         );
     }
 }

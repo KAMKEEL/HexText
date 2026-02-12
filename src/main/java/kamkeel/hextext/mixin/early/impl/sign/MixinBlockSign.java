@@ -5,6 +5,7 @@ import kamkeel.hextext.api.HexTextApi;
 import kamkeel.hextext.api.sign.IHexTextSign;
 import kamkeel.hextext.api.sign.SignInteractionType;
 import kamkeel.hextext.api.sign.SignSide;
+import kamkeel.hextext.common.sign.SignBanHelper;
 import kamkeel.hextext.common.sign.SignSideHelper;
 import kamkeel.hextext.common.util.ItemHelper;
 import kamkeel.hextext.config.HexTextConfig;
@@ -123,6 +124,10 @@ public abstract class MixinBlockSign extends BlockContainer {
         }
 
         if (!HexText.getActiveProxy().allowSignEditing()) {
+            return false;
+        }
+
+        if (SignBanHelper.isSignBanned(sign)) {
             return false;
         }
 

@@ -5,6 +5,7 @@ import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import kamkeel.hextext.HexText;
 import kamkeel.hextext.api.sign.IHexTextSign;
+import kamkeel.hextext.common.sign.SignBanHelper;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntitySign;
@@ -44,6 +45,10 @@ public class SignEditRequestHandler implements IMessageHandler<SignEditRequestMe
         IHexTextSign hexTextSign = (IHexTextSign) sign;
 
         if (hexTextSign.isWaxed()) {
+            return null;
+        }
+
+        if (SignBanHelper.isSignBanned(sign)) {
             return null;
         }
 
