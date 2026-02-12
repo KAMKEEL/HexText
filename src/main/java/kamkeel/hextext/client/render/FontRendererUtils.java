@@ -29,6 +29,11 @@ public final class FontRendererUtils {
             character -> getCharWidth(renderer, character, rawMode), 0.0f, 1.0f);
     }
 
+    public static int computeTrimIndex(FontRenderer renderer, String text, int maxWidth, boolean rawMode) {
+        return FormattedTextMetrics.computeTrimIndex(text, maxWidth, rawMode,
+            character -> getCharWidth(renderer, character, rawMode), 0.0f, 1.0f);
+    }
+
     public static String trimStringFromEnd(FontRenderer renderer, String text, int width, boolean rawMode) {
         if (text == null || text.isEmpty()) {
             return "";
@@ -124,6 +129,7 @@ public final class FontRendererUtils {
         }
 
         int breakPoint = computeLineBreakIndex(renderer, text, wrapWidth, rawMode);
+
         if (breakPoint >= text.length()) {
             return text;
         }
@@ -132,10 +138,10 @@ public final class FontRendererUtils {
         char breakChar = text.charAt(breakPoint);
         boolean skipChar = breakChar == ' ' || breakChar == '\n';
 
-        String remainder = StringUtils.extractFormatFromString(firstPart)
-            + text.substring(breakPoint + (skipChar ? 1 : 0));
+        String formatPrefix = StringUtils.extractFormatFromString(firstPart);
+        String remainder = formatPrefix + text.substring(breakPoint + (skipChar ? 1 : 0));
 
-        if (remainder.length() == text.length()) {
+        if (remainder.length() >= text.length()) {
             return firstPart + "\n" + remainder;
         }
 

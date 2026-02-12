@@ -153,7 +153,7 @@ public final class FontRendererRenderPipeline {
 
         boolean rawMode = FontRenderContext.isRawTextRendering();
         if (!reverse) {
-            int endIndex = FontRendererUtils.computeLineBreakIndex(bridge.hexText$getFontRenderer(), text, width, rawMode);
+            int endIndex = FontRendererUtils.computeTrimIndex(bridge.hexText$getFontRenderer(), text, width, rawMode);
             return text.substring(0, Math.min(endIndex, text.length()));
         }
         return FontRendererUtils.trimStringFromEnd(bridge.hexText$getFontRenderer(), text, width, rawMode);

@@ -89,6 +89,17 @@ public final class FormattedTextMetrics {
 
     public static int computeLineBreakIndex(CharSequence text, int maxWidth, boolean rawMode,
                                             CharWidthFunction charWidthFunc, float glyphSpacing, float boldExtra) {
+        return computeBreakIndex(text, maxWidth, rawMode, charWidthFunc, glyphSpacing, boldExtra, true);
+    }
+
+    public static int computeTrimIndex(CharSequence text, int maxWidth, boolean rawMode,
+                                       CharWidthFunction charWidthFunc, float glyphSpacing, float boldExtra) {
+        return computeBreakIndex(text, maxWidth, rawMode, charWidthFunc, glyphSpacing, boldExtra, false);
+    }
+
+    private static int computeBreakIndex(CharSequence text, int maxWidth, boolean rawMode,
+                                          CharWidthFunction charWidthFunc, float glyphSpacing, float boldExtra,
+                                          boolean preferSpaceBreak) {
         if (text == null || text.length() == 0 || maxWidth <= 0) {
             return 0;
         }
@@ -141,7 +152,7 @@ public final class FormattedTextMetrics {
                 return index;
             }
 
-            if (character == ' ') {
+            if (preferSpaceBreak && character == ' ') {
                 lastSpacePosition = index;
             }
 
@@ -161,7 +172,7 @@ public final class FormattedTextMetrics {
 
             if (nextWidth > maxWidth) {
                 // Prefer breaking at the last space, otherwise fall back to lastSafePosition
-                if (lastSpacePosition >= 0) {
+                if (preferSpaceBreak && lastSpacePosition >= 0) {
                     return lastSpacePosition; // your wrapper will see ' ' at breakPoint and skip it
                 }
                 return Math.min(lastSafePosition, length);
