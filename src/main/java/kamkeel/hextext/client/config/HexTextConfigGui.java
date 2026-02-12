@@ -28,6 +28,7 @@ public class HexTextConfigGui extends GuiConfig {
         }
 
         List<IConfigElement> elements = new ArrayList<IConfigElement>();
+        elements.add(new ConfigElement(config.getCategory(HexTextConfig.CATEGORY_CLIENT)));
         elements.add(new ConfigElement(config.getCategory(HexTextConfig.CATEGORY_EFFECTS)));
         return elements;
     }

@@ -18,5 +18,6 @@ public final class HexTextNetwork {
     public static void init() {
         channel = NetworkRegistry.INSTANCE.newSimpleChannel(HexText.ID);
         channel.registerMessage(SyncConfigHandler.class, SyncConfigMessage.class, 0, Side.CLIENT);
+        channel.registerMessage(SignEditRequestHandler.class, SignEditRequestMessage.class, 1, Side.SERVER);
     }
 }

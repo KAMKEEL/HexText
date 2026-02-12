@@ -7,6 +7,9 @@ import kamkeel.hextext.api.sign.SignInteractionType;
 import kamkeel.hextext.api.sign.SignSide;
 import kamkeel.hextext.common.sign.SignSideHelper;
 import kamkeel.hextext.common.util.ItemHelper;
+import kamkeel.hextext.config.HexTextConfig;
+import kamkeel.hextext.network.HexTextNetwork;
+import kamkeel.hextext.network.SignEditRequestMessage;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.BlockSign;
 import net.minecraft.block.material.Material;
@@ -29,7 +32,7 @@ public abstract class MixinBlockSign extends BlockContainer {
     }
 
     public boolean onBlockActivated(World worldIn, int x, int y, int z, EntityPlayer player, int side, float subX, float subY, float subZ) {
-        if (player == null || player.isSneaking()) {
+        if (player == null) {
             return false;
         }
 
@@ -51,8 +54,9 @@ public abstract class MixinBlockSign extends BlockContainer {
 
         SignSide clickedSide = SignSideHelper.determineSide(sign, player.posX, player.posZ, subX, subZ);
         ItemStack stack = player.getCurrentEquippedItem();
+        boolean sneaking = player.isSneaking();
 
-        if (stack != null) {
+        if (!sneaking && stack != null) {
             Set<SignInteractionType> interactions = HexTextApi.signInteractions().getInteractions(stack);
             if (!interactions.isEmpty()) {
                 if (worldIn.isRemote) {
@@ -122,8 +126,16 @@ public abstract class MixinBlockSign extends BlockContainer {
             return false;
         }
 
-        sign.func_145912_a(player);
         if (worldIn.isRemote) {
+            boolean requireSneak = HexTextConfig.isRequireSneakToEditSignEnabled();
+            if (requireSneak && !sneaking) {
+                return false;
+            }
+            if (!requireSneak && sneaking) {
+                return false;
+            }
+
+            HexTextNetwork.channel.sendToServer(new SignEditRequestMessage(x, y, z, clickedSide));
             hexTextSign.setEditSide(clickedSide);
             player.func_146100_a(sign);
         }

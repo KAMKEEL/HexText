@@ -9,6 +9,7 @@ import java.io.File;
  */
 public final class HexTextConfig {
 
+    public static final String CATEGORY_CLIENT = "client";
     public static final String CATEGORY_EFFECTS = "effects";
     public static final String CATEGORY_SERVER = "server";
     public static final String CATEGORY_SIGN_MODIFIERS =
@@ -25,6 +26,8 @@ public final class HexTextConfig {
     private static final boolean DEFAULT_CHAT_AMPERSAND_CONVERSION = true;
     private static final boolean DEFAULT_SIGN_AMPERSAND_CONVERSION = true;
     private static final boolean DEFAULT_REPAIR_AMPERSAND_CONVERSION = true;
+
+    private static final boolean DEFAULT_REQUIRE_SNEAK_TO_EDIT_SIGN = false;
 
     private static final boolean DEFAULT_GLOWSTONE_DUST_GLOW = true;
     private static final boolean DEFAULT_REDSTONE_DUST_OUTLINE = true;
@@ -52,6 +55,8 @@ public final class HexTextConfig {
     private static boolean signAmpersandConversion = DEFAULT_SIGN_AMPERSAND_CONVERSION;
     private static boolean repairAmpersandConversion = DEFAULT_REPAIR_AMPERSAND_CONVERSION;
 
+    private static boolean requireSneakToEditSign = DEFAULT_REQUIRE_SNEAK_TO_EDIT_SIGN;
+
     private static boolean enableGlowstoneDustGlow = DEFAULT_GLOWSTONE_DUST_GLOW;
     private static boolean enableRedstoneDustOutline = DEFAULT_REDSTONE_DUST_OUTLINE;
     private static boolean enableSlimeballWax = DEFAULT_SLIMEBALL_WAX;
@@ -74,12 +79,21 @@ public final class HexTextConfig {
 
         configuration.load();
 
+        configuration.addCustomCategoryComment(CATEGORY_CLIENT,
+            "Client-side preferences for HexText.");
         configuration.addCustomCategoryComment(CATEGORY_EFFECTS,
             "Timing controls for HexText's dynamic formatting effects.");
         configuration.addCustomCategoryComment(CATEGORY_SERVER,
             "Server-side behavioural toggles for HexText formatting and sign editing.");
         configuration.addCustomCategoryComment(CATEGORY_SIGN_MODIFIERS,
             "Enable or disable the built-in HexText sign modifier items.");
+
+        requireSneakToEditSign = configuration.getBoolean(
+            "requireSneakToEditSign",
+            CATEGORY_CLIENT,
+            DEFAULT_REQUIRE_SNEAK_TO_EDIT_SIGN,
+            "Require the player to sneak while right-clicking with an empty hand to open the sign editor."
+        );
 
         rainbowSpeed = clamp(configuration.getFloat(
             "rainbowCycleDurationMs",
@@ -219,6 +233,10 @@ public final class HexTextConfig {
         return repairAmpersandConversion;
     }
 
+    public static boolean isRequireSneakToEditSignEnabled() {
+        return requireSneakToEditSign;
+    }
+
     public static boolean isGlowstoneDustGlowEnabled() {
         return enableGlowstoneDustGlow;
     }
@@ -273,6 +291,7 @@ public final class HexTextConfig {
         chatAmpersandConversion = DEFAULT_CHAT_AMPERSAND_CONVERSION;
         signAmpersandConversion = DEFAULT_SIGN_AMPERSAND_CONVERSION;
         repairAmpersandConversion = DEFAULT_REPAIR_AMPERSAND_CONVERSION;
+        requireSneakToEditSign = DEFAULT_REQUIRE_SNEAK_TO_EDIT_SIGN;
         enableGlowstoneDustGlow = DEFAULT_GLOWSTONE_DUST_GLOW;
         enableRedstoneDustOutline = DEFAULT_REDSTONE_DUST_OUTLINE;
         enableSlimeballWax = DEFAULT_SLIMEBALL_WAX;
