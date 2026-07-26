@@ -47,6 +47,28 @@ public final class FontRendererUtils {
             char chr = text.charAt(index);
 
             if (!rawMode) {
+                if (index >= 14 && text.charAt(index - 14) == '&'
+                    && text.charAt(index - 13) == '#'
+                    && text.charAt(index - 6) == '-'
+                    && ColorCodeUtils.isValidHexString(text, index - 12)
+                    && ColorCodeUtils.isValidHexString(text, index - 5)) {
+                    index -= 15;
+                    firstSafePosition = index + 1;
+                    bold = false;
+                    continue;
+                }
+
+                if (index >= 14 && text.charAt(index - 14) == 167
+                    && text.charAt(index - 13) == '#'
+                    && text.charAt(index - 6) == '-'
+                    && ColorCodeUtils.isValidHexString(text, index - 12)
+                    && ColorCodeUtils.isValidHexString(text, index - 5)) {
+                    index -= 15;
+                    firstSafePosition = index + 1;
+                    bold = false;
+                    continue;
+                }
+
                 if (index >= 6 && text.charAt(index - 6) == '&' && ColorCodeUtils.isValidHexString(text, index - 5)) {
                     index -= 7;
                     firstSafePosition = index + 1;
