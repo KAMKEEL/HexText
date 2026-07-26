@@ -64,7 +64,7 @@ public final class StringUtils {
 
             if (current == '&') {
                 int codeLen = ColorCodeUtils.detectAmpersandFormattingCodeLength(text, index);
-                if (codeLen == 2 || codeLen == 8) {
+                if (codeLen == 2 || codeLen == 8 || codeLen == 15) {
                     if (builder == null) {
                         builder = new StringBuilder(text.length());
                         builder.append(text, 0, index);
@@ -108,7 +108,7 @@ public final class StringUtils {
 
             if (current == SECTION_SIGN) {
                 int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(text, index, env);
-                if (codeLen == 2 || codeLen == 8) {
+                if (codeLen == 2 || codeLen == 8 || codeLen == 15) {
                     if (builder == null) {
                         builder = new StringBuilder(text.length());
                         builder.append(text, 0, index);
@@ -147,7 +147,11 @@ public final class StringUtils {
                 char firstChar = str.charAt(i);
                 String code = str.substring(i, i + codeLen);
 
-                if (codeLen == 8 && (firstChar == '&' || firstChar == 167)) {
+                if (codeLen == 15 && (firstChar == '&' || firstChar == 167)) {
+                    currentColorCode = code;
+                    colorStack.clear();
+                    styleCodes.setLength(0);
+                } else if (codeLen == 8 && (firstChar == '&' || firstChar == 167)) {
                     currentColorCode = code;
                     colorStack.clear();
                     styleCodes.setLength(0);

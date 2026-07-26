@@ -121,7 +121,7 @@ public final class ColorCodeUtils {
         }
 
         char start = input.charAt(index);
-        if (codeLen == 8 && (start == '&' || start == 167)) {
+        if ((codeLen == 8 || codeLen == 15) && (start == '&' || start == 167)) {
             return true;
         }
 
@@ -176,6 +176,10 @@ public final class ColorCodeUtils {
 
         char next = text.charAt(index + 1);
         if (next == '#') {
+            if (index + 15 <= text.length() && text.charAt(index + 8) == '-'
+                && isValidHexString(text, index + 2) && isValidHexString(text, index + 9)) {
+                return 15;
+            }
             return index + 8 <= text.length() && isValidHexString(text, index + 2) ? 8 : 0;
         }
 
@@ -242,9 +246,14 @@ public final class ColorCodeUtils {
         char c = str.charAt(pos);
 
         if (c == 167) {
-            if (pos + 2 <= str.length() && str.charAt(pos + 1) == '#'
-                && pos + 8 <= str.length() && isValidHexString(str, pos + 2)) {
-                return 8;
+            if (pos + 2 <= str.length() && str.charAt(pos + 1) == '#') {
+                if (pos + 15 <= str.length() && str.charAt(pos + 8) == '-'
+                    && isValidHexString(str, pos + 2) && isValidHexString(str, pos + 9)) {
+                    return 15;
+                }
+                if (pos + 8 <= str.length() && isValidHexString(str, pos + 2)) {
+                    return 8;
+                }
             }
             if (pos + 1 < str.length() && isFormattingCode(str.charAt(pos + 1))) {
                 return 2;
@@ -256,9 +265,14 @@ public final class ColorCodeUtils {
             if (!allowAmpersand) {
                 return 0;
             }
-            if (pos + 2 <= str.length() && str.charAt(pos + 1) == '#'
-                && pos + 8 <= str.length() && isValidHexString(str, pos + 2)) {
-                return 8;
+            if (pos + 2 <= str.length() && str.charAt(pos + 1) == '#') {
+                if (pos + 15 <= str.length() && str.charAt(pos + 8) == '-'
+                    && isValidHexString(str, pos + 2) && isValidHexString(str, pos + 9)) {
+                    return 15;
+                }
+                if (pos + 8 <= str.length() && isValidHexString(str, pos + 2)) {
+                    return 8;
+                }
             }
             if (pos + 1 < str.length() && isFormattingCode(str.charAt(pos + 1))) {
                 return 2;

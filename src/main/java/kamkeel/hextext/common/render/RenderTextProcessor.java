@@ -4,6 +4,7 @@ import kamkeel.hextext.HexText;
 import kamkeel.hextext.api.rendering.RenderDirective;
 import kamkeel.hextext.api.rendering.RenderPlan;
 import kamkeel.hextext.common.util.ColorCodeUtils;
+import kamkeel.hextext.common.util.ColorMath;
 import kamkeel.hextext.common.util.StringUtils;
 
 import java.util.ArrayList;
@@ -44,6 +45,39 @@ public final class RenderTextProcessor {
 
                 if (processed.charAt(i + 1) == '#') {
                     int hexStart = i + 2;
+
+                    if (hexStart + 13 <= processed.length() && processed.charAt(hexStart + 6) == '-'
+                        && ColorCodeUtils.isValidHexString(processed, hexStart)
+                        && ColorCodeUtils.isValidHexString(processed, hexStart + 7)) {
+                        int color1 = ColorCodeUtils.parseHexColor(processed, hexStart);
+                        int color2 = ColorCodeUtils.parseHexColor(processed, hexStart + 7);
+                        if (color1 != -1 && color2 != -1) {
+                            int textStart = hexStart + 13;
+                            int textEnd = gradientTextEnd(processed, textStart, allowHtml);
+                            int gradientLen = textEnd - textStart;
+                            if (gradientLen > 0) {
+                                directives = ensureDirectiveMap(directives);
+                                int basePos = sanitized.length();
+                                for (int j = 0; j < gradientLen; j++) {
+                                    float ratio = gradientLen > 1 ? (float) j / (gradientLen - 1) : 0;
+                                    int blended = ColorMath.blend(color1, color2, ratio);
+                                    directives.computeIfAbsent(basePos + j, k -> new ArrayList<>())
+                                        .add(RenderDirectiveImpl.apply(blended, j == 0));
+                                }
+                                sanitized.append(processed, textStart, textEnd);
+                                directives.computeIfAbsent(sanitized.length(), k -> new ArrayList<>())
+                                    .add(RenderDirectiveImpl.resetToBase());
+                            }
+                            if (rawMode) {
+                                sanitized.append(processed, i, textStart);
+                            } else {
+                                modified = true;
+                            }
+                            i = textEnd - 1;
+                            continue;
+                        }
+                    }
+
                     if (hexStart + 6 <= processed.length() && ColorCodeUtils.isValidHexString(processed, hexStart)) {
                         int rgb = ColorCodeUtils.parseHexColor(processed, hexStart);
                         if (rgb != -1) {
@@ -233,6 +267,16 @@ public final class RenderTextProcessor {
             default:
                 break;
         }
+    }
+
+    private static int gradientTextEnd(CharSequence text, int start, boolean allowHtml) {
+        for (int i = start; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == 167) return i;
+            if (c == '&') return i;
+            if (allowHtml && c == '<') return i;
+        }
+        return text.length();
     }
 
     private static Map<Integer, List<RenderDirective>> normalizeDirectives(
