@@ -46,6 +46,39 @@ public final class ColorCodeUtils {
         return captureFormattingEnvironment(false);
     }
 
+    /** {@code §x} and six {@code §<nibble>} pairs: the other spelling of a hex colour. */
+    public static final int SECTION_X_LENGTH = 14;
+
+    /**
+     * Reads {@code §x§R§R§G§G§B§B}, or {@code -1} when that is not what is there.
+     *
+     * <p>The form other mods and servers write RGB in. HexText's own spelling is
+     * {@code &#RRGGBB}, and until this was read too a string authored in section-x
+     * rendered correctly only where something else happened to understand it - under
+     * Angelica it was a colour, and under HexText alone it was six vanilla colours in
+     * a row with the last one winning.</p>
+     */
+    public static int parseSectionX(CharSequence str, int start) {
+        if (str == null || start < 0 || start + SECTION_X_LENGTH > str.length()) {
+            return -1;
+        }
+        if (str.charAt(start) != 167 || Character.toLowerCase(str.charAt(start + 1)) != 'x') {
+            return -1;
+        }
+        int rgb = 0;
+        for (int pos = start + 2; pos < start + SECTION_X_LENGTH; pos += 2) {
+            if (str.charAt(pos) != 167) {
+                return -1;
+            }
+            char nibble = str.charAt(pos + 1);
+            if (!isValidHexChar(nibble)) {
+                return -1;
+            }
+            rgb = (rgb << 4) | Character.digit(nibble, 16);
+        }
+        return rgb;
+    }
+
     public static boolean isValidHexChar(char c) {
         return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
     }
@@ -81,6 +114,8 @@ public final class ColorCodeUtils {
             || lower == 'h'
             || lower == 'i'
             || lower == 'j'
+            || lower == 'z'
+            || lower == 'u'
             || isStyleCode(lower)
             || isResetCode(lower);
     }
@@ -108,7 +143,8 @@ public final class ColorCodeUtils {
 
     public static boolean isEffectCode(char c) {
         char lower = Character.toLowerCase(c);
-        return lower == 'g' || lower == 'h' || lower == 'i' || lower == 'j';
+        return lower == 'g' || lower == 'h' || lower == 'i' || lower == 'j' || lower == 'z'
+            || lower == 'u';
     }
 
     public static boolean isResetCode(char c) {
@@ -245,6 +281,11 @@ public final class ColorCodeUtils {
             if (pos + 2 <= str.length() && str.charAt(pos + 1) == '#'
                 && pos + 8 <= str.length() && isValidHexString(str, pos + 2)) {
                 return 8;
+            }
+            // Checked before the single-character codes: 'x' is not one of them, and
+            // reading it as one would leave six §<nibble> pairs behind as colours.
+            if (parseSectionX(str, pos) != -1) {
+                return SECTION_X_LENGTH;
             }
             if (pos + 1 < str.length() && isFormattingCode(str.charAt(pos + 1))) {
                 return 2;

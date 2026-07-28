@@ -21,11 +21,22 @@ public final class RenderDirectiveImpl implements RenderDirective {
         SET_RAINBOW,
         SET_DINNERBONE,
         SET_IGNITE,
-        SET_SHAKE
+        SET_SHAKE,
+        SET_WAVE,
+        SET_GRADIENT,
+        SET_SHADOW_COLOR
     }
 
     private final Type type;
     private final int rgb;
+    /**
+     * The far end of a gradient. Unused by everything else, and zero there.
+     *
+     * <p>A gradient is the one directive that needs two colours and a distance at
+     * once: {@code rgb} is where it starts, this is where it ends, and
+     * {@code parameter} is how many visible glyphs it has to get there in.</p>
+     */
+    private final int secondaryRgb;
     private final boolean clearStack;
     private final int parameter;
     private final boolean enabled;
@@ -33,6 +44,12 @@ public final class RenderDirectiveImpl implements RenderDirective {
 
     private RenderDirectiveImpl(Type type, int rgb, boolean clearStack, int parameter, boolean enabled,
                                 boolean resetFormatting) {
+        this(type, rgb, 0, clearStack, parameter, enabled, resetFormatting);
+    }
+
+    private RenderDirectiveImpl(Type type, int rgb, int secondaryRgb, boolean clearStack, int parameter,
+                                boolean enabled, boolean resetFormatting) {
+        this.secondaryRgb = secondaryRgb;
         this.type = type;
         this.rgb = rgb;
         this.clearStack = clearStack;
@@ -91,6 +108,40 @@ public final class RenderDirectiveImpl implements RenderDirective {
 
     public static RenderDirective setIgnite(boolean enabled) {
         return new RenderDirectiveImpl(Type.SET_IGNITE, 0, false, 0, enabled, false);
+    }
+
+    /**
+     * Tints the shadow the text already casts.
+     *
+     * <p>Only the colour of a shadow being drawn anyway, not a way to give shadowless
+     * text one - a glyph is drawn once here, and the caller decided for the whole
+     * string whether there would be a shadow pass at all.</p>
+     *
+     * @param enabled false restores the darkened base colour
+     */
+    public static RenderDirective setShadowColor(int rgb, boolean enabled) {
+        return new RenderDirectiveImpl(Type.SET_SHADOW_COLOR, rgb, false, 0, enabled, false);
+    }
+
+    public int getSecondaryRgb() {
+        return secondaryRgb;
+    }
+
+    /**
+     * A gradient across the glyphs that follow it.
+     *
+     * <p>Clears the colour stack and resets formatting, the same as an inline hex
+     * colour: it is a colour, it just takes a while to arrive.</p>
+     *
+     * @param span how many visible glyphs it is spread over
+     */
+    public static RenderDirective setGradient(int startRgb, int endRgb, int span) {
+        return new RenderDirectiveImpl(Type.SET_GRADIENT, startRgb, endRgb, true, span, true, true);
+    }
+
+    /** Wave is positional like shake, but a travelling sine rather than noise. */
+    public static RenderDirective setWave(boolean enabled) {
+        return new RenderDirectiveImpl(Type.SET_WAVE, 0, false, 0, enabled, false);
     }
 
     public static RenderDirective setShake(boolean enabled) {

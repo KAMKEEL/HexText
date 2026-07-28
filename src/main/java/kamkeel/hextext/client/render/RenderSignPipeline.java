@@ -5,6 +5,10 @@ import cpw.mods.fml.relauncher.SideOnly;
 import kamkeel.hextext.client.render.font.GlowingTextRenderer;
 import kamkeel.hextext.api.sign.IHexTextSign;
 import kamkeel.hextext.api.sign.SignSide;
+import kamkeel.hextext.common.compat.AngelicaCompatibility;
+import kamkeel.hextext.common.util.ColorCodeUtils;
+import kamkeel.hextext.common.util.ColorMath;
+import kamkeel.hextext.common.util.StringUtils;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.tileentity.TileEntitySign;
@@ -40,6 +44,7 @@ public class RenderSignPipeline {
         }
 
         GlowingTextRenderer.setOutlineEnabled(outlined);
+        boolean manualOutline = outlined && AngelicaCompatibility.isAngelicaFontRendererActive();
         String[] lines = state.getLines(side);
         int baseY = -lines.length * 5;
         for (int i = 0; i < lines.length; ++i) {
@@ -48,7 +53,12 @@ public class RenderSignPipeline {
                 line = "> " + line + " <";
             }
             int lineWidth = fontRenderer.getStringWidth(line);
-            fontRenderer.drawString(line, -lineWidth / 2, i * 10 + baseY, 0);
+            int x = -lineWidth / 2;
+            int y = i * 10 + baseY;
+            if (manualOutline) {
+                drawOutlinePasses(fontRenderer, line, x, y);
+            }
+            fontRenderer.drawString(line, x, y, 0);
         }
 
         GlowingTextRenderer.setOutlineEnabled(false);
@@ -62,6 +72,45 @@ public class RenderSignPipeline {
         }
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         GL11.glPopMatrix();
+    }
+
+    /**
+     * Outline fallback for Angelica's font renderer. HexText's glyph hooks normally draw the
+     * outline per character, but they are not installed when Angelica batches text, so the whole
+     * line is redrawn at the eight outline offsets instead. Colour tokens are stripped from the
+     * outline passes so the offset copies render in the outline colour, while styles and effects
+     * are kept so the outline tracks the shape and motion of the main text.
+     */
+    private static void drawOutlinePasses(FontRenderer fontRenderer, String line, int x, int y) {
+        String outlineText = StringUtils.stripHexColors(line);
+        int outlineColor = GlowingTextRenderer.computeOutlineColor(findFirstColor(line));
+        for (float[] offset : GlowingTextRenderer.getOutlineOffsets()) {
+            fontRenderer.drawString(outlineText, x + (int) offset[0], y + (int) offset[1], outlineColor);
+        }
+    }
+
+    private static int findFirstColor(String line) {
+        ColorCodeUtils.FormattingEnvironment env = ColorCodeUtils.captureFormattingEnvironment(false);
+        for (int i = 0; i < line.length(); i++) {
+            int codeLen = ColorCodeUtils.detectColorCodeLength(line, i, false, env);
+            if (codeLen == 8) {
+                char start = line.charAt(i);
+                int hexStart = start == '<' ? i + 1 : i + 2;
+                int rgb = ColorCodeUtils.parseHexColor(line, hexStart);
+                if (rgb != -1) {
+                    return rgb;
+                }
+            } else if (codeLen == 2) {
+                char code = line.charAt(i + 1);
+                if (ColorCodeUtils.isMinecraftColorCode(code)) {
+                    return ColorMath.vanillaColorRgb(ColorCodeUtils.getMinecraftColorIndex(code));
+                }
+            }
+            if (codeLen > 0) {
+                i += codeLen - 1;
+            }
+        }
+        return 0;
     }
 
 }

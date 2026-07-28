@@ -38,6 +38,54 @@ public final class TextEffectMath {
         return minClamp + (1.0f - minClamp) * progress;
     }
 
+    /**
+     * How far a glyph rides up or down on the wave, in pixels.
+     *
+     * <p>A travelling sine: position along the string sets the phase and the clock
+     * moves it, so the shape holds still relative to the text and the text appears to
+     * move through it. Shake is the other kind of motion here - it is noise, reseeded
+     * per frame window, and deliberately has no shape at all.</p>
+     *
+     * @param speed how long, in milliseconds, one full cycle takes
+     */
+    public static float computeWaveOffset(long now, int charIndex, long speed, float frequency,
+                                          float amplitude) {
+        if (amplitude == 0.0f) {
+            return 0.0f;
+        }
+        double cycle = speed <= 0L ? 0.0 : (now % speed) / (double) speed * Math.PI * 2.0;
+        return (float) (Math.sin(charIndex * frequency + cycle) * amplitude);
+    }
+
+    /**
+     * The colour of one glyph along a two-colour gradient.
+     *
+     * <p>Interpolated in straight RGB rather than through a colour space, which is
+     * what Angelica's gradient does and is what makes the two agree. A run of one
+     * glyph is the start colour: there is no distance to travel, and dividing by the
+     * span would divide by zero.</p>
+     *
+     * @param span how many visible glyphs the gradient covers
+     */
+    public static int computeGradientColor(int startRgb, int endRgb, int charIndex, int span) {
+        if (span <= 1) {
+            return startRgb;
+        }
+        int clamped = charIndex < 0 ? 0 : Math.min(charIndex, span - 1);
+        float t = clamped / (float) (span - 1);
+
+        int r = lerpChannel(startRgb >> 16, endRgb >> 16, t);
+        int g = lerpChannel(startRgb >> 8, endRgb >> 8, t);
+        int b = lerpChannel(startRgb, endRgb, t);
+        return (r << 16) | (g << 8) | b;
+    }
+
+    private static int lerpChannel(int from, int to, float t) {
+        int a = from & 0xFF;
+        int b = to & 0xFF;
+        return Math.round(a + (b - a) * t) & 0xFF;
+    }
+
     public static long computeShakeSeed(int charIndex, long now, long frameWindow) {
         long safeFrame = frameWindow <= 0 ? 1L : frameWindow;
         return ((long) charIndex * 341873128712L) ^ (now / safeFrame);

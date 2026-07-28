@@ -14,6 +14,11 @@ public final class TextEffectController {
 
     private static final float RAINBOW_SPREAD = 12.0f;
     private static final float SHAKE_VERTICAL_RANGE = 1.05f;
+    /** How far apart in phase two neighbouring glyphs sit on the wave. */
+    private static final float WAVE_FREQUENCY = 0.6f;
+    private static final float WAVE_AMPLITUDE = 1.5f;
+    /** Milliseconds for one full pass of the wave. */
+    private static final long WAVE_SPEED = 1000L;
     private static final long SHAKE_Y_SALT = 0xC6A4A7935BD1E995L;
     private static final float IGNITE_MIN_FACTOR = 0.35f;
 
@@ -21,6 +26,14 @@ public final class TextEffectController {
     private boolean dinnerboneActive;
     private boolean igniteActive;
     private boolean shakeActive;
+    private boolean waveActive;
+    private boolean shadowColorActive;
+    private int shadowColorOverride;
+    private boolean gradientActive;
+    private int gradientStartRgb;
+    private int gradientEndRgb;
+    private int gradientSpan;
+    private int gradientAnchorIndex;
     private int rainbowAnchorIndex;
     private int baseColor;
     private boolean transformApplied;
@@ -46,6 +59,10 @@ public final class TextEffectController {
         dinnerboneActive = false;
         igniteActive = false;
         shakeActive = false;
+        waveActive = false;
+        gradientActive = false;
+        gradientAnchorIndex = 0;
+        shadowColorActive = false;
         rainbowAnchorIndex = 0;
     }
 
@@ -68,8 +85,42 @@ public final class TextEffectController {
         shakeActive = enabled;
     }
 
+    public void setWave(boolean enabled) {
+        waveActive = enabled;
+    }
+
+    public void setShadowColor(int rgb, boolean enabled) {
+        shadowColorActive = enabled;
+        shadowColorOverride = rgb;
+    }
+
+    public boolean hasShadowColor() {
+        return shadowColorActive;
+    }
+
+    public int getShadowColor() {
+        return shadowColorOverride;
+    }
+
+    /**
+     * @param anchorIndex the glyph the gradient starts from, so the ramp is measured
+     *                    from where the code was written rather than from the start of
+     *                    whatever string it happened to land in
+     */
+    public void setGradient(int startRgb, int endRgb, int span, int anchorIndex) {
+        gradientActive = true;
+        gradientStartRgb = startRgb;
+        gradientEndRgb = endRgb;
+        gradientSpan = Math.max(1, span);
+        gradientAnchorIndex = Math.max(0, anchorIndex);
+        // A gradient is a colour, and a colour ends the rainbow rather than blending
+        // with it - two things driving the same channel would leave neither readable.
+        rainbowActive = false;
+    }
+
     public boolean hasActiveEffects() {
-        return rainbowActive || dinnerboneActive || igniteActive || shakeActive;
+        return rainbowActive || dinnerboneActive || igniteActive || shakeActive || waveActive
+            || gradientActive || shadowColorActive;
     }
 
     public int computeColor(int charIndex) {
@@ -79,6 +130,11 @@ public final class TextEffectController {
         if (rainbowActive) {
             color = TextEffectMath.computeRainbowColor(now, HexTextConfig.getRainbowSpeed(), charIndex,
                 rainbowAnchorIndex, RAINBOW_SPREAD);
+        }
+
+        if (gradientActive) {
+            color = TextEffectMath.computeGradientColor(gradientStartRgb, gradientEndRgb,
+                charIndex - gradientAnchorIndex, gradientSpan);
         }
 
         if (igniteActive) {
@@ -91,7 +147,7 @@ public final class TextEffectController {
     }
 
     public void beforeGlyph(FontRenderer fontRenderer, char glyph, int charIndex, float posX, float posY, int fontHeight) {
-        if (!dinnerboneActive && !shakeActive) {
+        if (!dinnerboneActive && !shakeActive && !waveActive) {
             transformApplied = false;
             return;
         }
@@ -102,6 +158,13 @@ public final class TextEffectController {
 
         if (shakeActive) {
             applyShake(charIndex);
+        }
+
+        // After shake, so a glyph carrying both rides the wave and jitters about that
+        // point rather than the two fighting over the same translate.
+        if (waveActive) {
+            GL11.glTranslatef(0.0f, TextEffectMath.computeWaveOffset(currentTime(), charIndex,
+                WAVE_SPEED, WAVE_FREQUENCY, WAVE_AMPLITUDE), 0.0f);
         }
 
         if (dinnerboneActive) {

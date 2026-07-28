@@ -62,6 +62,72 @@ public final class RenderTextProcessor {
                     }
                 }
 
+                // A shadow tint, which is a code carrying a colour rather than a flag.
+                // Written bare it clears the tint again, so the darkened base colour
+                // comes back without needing a full reset.
+                if (Character.toLowerCase(processed.charAt(i + 1)) == 'u') {
+                    int shadowRgb = -1;
+                    int after = i + 2;
+                    if (after + 8 <= processed.length() && isHexMarker(processed, after)
+                        && ColorCodeUtils.isValidHexString(processed, after + 2)) {
+                        shadowRgb = ColorCodeUtils.parseHexColor(processed, after + 2);
+                    }
+                    directives = ensureDirectiveMap(directives);
+                    directives.computeIfAbsent(directiveIndex, key -> new ArrayList<>())
+                        .add(RenderDirectiveImpl.setShadowColor(Math.max(shadowRgb, 0), shadowRgb != -1));
+                    int consumed = shadowRgb != -1 ? 10 : 2;
+                    if (rawMode) {
+                        sanitized.append(processed, i, i + consumed);
+                    } else {
+                        modified = true;
+                    }
+                    i += consumed - 1;
+                    continue;
+                }
+
+                // Checked ahead of the plain 'g', which is rainbow. A gradient is the
+                // same letter carrying two colours, and reading it as rainbow left the
+                // two colours to apply in turn with the second one winning - a flat
+                // line in the end colour, which is what it looked like.
+                if (Character.toLowerCase(processed.charAt(i + 1)) == 'g') {
+                    int gradientEnd = gradientTokenEnd(processed, i);
+                    if (gradientEnd > 0) {
+                        int startRgb = ColorCodeUtils.parseHexColor(processed, i + 4);
+                        int endRgb = ColorCodeUtils.parseHexColor(processed, i + 12);
+                        if (startRgb != -1 && endRgb != -1) {
+                            directives = ensureDirectiveMap(directives);
+                            directives.computeIfAbsent(directiveIndex, key -> new ArrayList<>())
+                                .add(RenderDirectiveImpl.setGradient(startRgb, endRgb,
+                                    countVisibleGlyphs(processed, gradientEnd)));
+                            if (rawMode) {
+                                sanitized.append(processed, i, gradientEnd);
+                            } else {
+                                modified = true;
+                            }
+                            i = gradientEnd - 1;
+                            continue;
+                        }
+                    }
+                }
+
+                // The other spelling of an inline hex colour, and the same directive:
+                // a colour that also clears the styles standing in front of it.
+                if (usingSectionSign) {
+                    int sectionX = ColorCodeUtils.parseSectionX(processed, i);
+                    if (sectionX != -1) {
+                        directives = ensureDirectiveMap(directives);
+                        directives.computeIfAbsent(directiveIndex, key -> new ArrayList<>())
+                            .add(RenderDirectiveImpl.apply(sectionX, true));
+                        if (rawMode) {
+                            sanitized.append(processed, i, i + ColorCodeUtils.SECTION_X_LENGTH);
+                        } else {
+                            modified = true;
+                        }
+                        i += ColorCodeUtils.SECTION_X_LENGTH - 1;
+                        continue;
+                    }
+                }
+
                 char next = processed.charAt(i + 1);
                 char lower = Character.toLowerCase(next);
 
@@ -152,6 +218,53 @@ public final class RenderTextProcessor {
         return directives != null ? directives : new HashMap<>();
     }
 
+    /**
+     * Where {@code [&§]g[&§]#RRGGBB[&§]#RRGGBB} ends, or {@code -1}.
+     *
+     * <p>Every marker is taken as either spelling independently, because the string
+     * changes on its way out: what is typed with ampersands arrives at the chat
+     * history with section signs, and it is the same gradient both times.</p>
+     */
+    private static int gradientTokenEnd(CharSequence text, int start) {
+        if (start + 18 > text.length()) {
+            return -1;
+        }
+        if (!isHexMarker(text, start + 2) || !ColorCodeUtils.isValidHexString(text, start + 4)) {
+            return -1;
+        }
+        if (!isHexMarker(text, start + 10) || !ColorCodeUtils.isValidHexString(text, start + 12)) {
+            return -1;
+        }
+        return start + 18;
+    }
+
+    private static boolean isHexMarker(CharSequence text, int at) {
+        char marker = text.charAt(at);
+        return (marker == '&' || marker == 167) && text.charAt(at + 1) == '#';
+    }
+
+    /**
+     * How many glyphs a gradient has left to travel across.
+     *
+     * <p>Counted here because the ramp needs its length before the first glyph is
+     * drawn, and the renderer only ever knows where it currently is. Formatting codes
+     * are skipped: they occupy no width, so counting them would stretch the gradient
+     * over positions nothing is ever drawn at and leave the end colour unreached.</p>
+     */
+    private static int countVisibleGlyphs(CharSequence text, int from) {
+        int visible = 0;
+        for (int i = from; i < text.length(); ) {
+            int code = ColorCodeUtils.detectColorCodeLength(text, i);
+            if (code > 0) {
+                i += code;
+                continue;
+            }
+            visible++;
+            i++;
+        }
+        return visible;
+    }
+
     private static FormatCategory classifyFormatting(char lower) {
         if (ColorCodeUtils.isMinecraftColorCode(lower)) {
             return FormatCategory.COLOR;
@@ -226,6 +339,9 @@ public final class RenderTextProcessor {
                 break;
             case 'i':
                 bucket.add(RenderDirectiveImpl.setIgnite(true));
+                break;
+            case 'z':
+                bucket.add(RenderDirectiveImpl.setWave(true));
                 break;
             case 'j':
                 bucket.add(RenderDirectiveImpl.setShake(true));

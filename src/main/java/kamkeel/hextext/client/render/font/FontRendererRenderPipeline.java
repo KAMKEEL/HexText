@@ -177,7 +177,13 @@ public final class FontRendererRenderPipeline {
         int baseColor = bridge.hexText$getTextColor();
         if (effects.hasActiveEffects()) {
             int targetColor = effects.computeColor(visibleGlyphIndex);
-            int appliedColor = shadowPass ? ColorCodeUtils.calculateShadowColor(targetColor) : targetColor;
+            // A shadow being drawn takes the override where one was asked for, and
+            // the usual darkening otherwise. Nothing here decides whether there is a
+            // shadow pass - the caller settled that for the whole string.
+            int appliedColor = shadowPass
+                ? (effects.hasShadowColor() ? effects.getShadowColor()
+                    : ColorCodeUtils.calculateShadowColor(targetColor))
+                : targetColor;
             setColorFromInt(appliedColor);
             effects.beforeGlyph(bridge.hexText$getFontRenderer(), glyph, visibleGlyphIndex, bridge.hexText$getPosX(), bridge.hexText$getPosY(),
                 bridge.hexText$getFontHeight());
@@ -300,6 +306,16 @@ public final class FontRendererRenderPipeline {
                     effects.updateBaseColor(bridge.hexText$getTextColor());
                 }
                 effects.setIgnite(instruction.isEnabled());
+                break;
+            case SET_WAVE:
+                effects.setWave(instruction.isEnabled());
+                break;
+            case SET_SHADOW_COLOR:
+                effects.setShadowColor(instruction.getRgb(), instruction.isEnabled());
+                break;
+            case SET_GRADIENT:
+                effects.setGradient(instruction.getRgb(), instruction.getSecondaryRgb(),
+                    instruction.getParameter(), 0);
                 break;
             case SET_SHAKE:
                 effects.setShake(instruction.isEnabled());

@@ -41,6 +41,8 @@ public final class HexTextEarlyMixins implements IMixinConfigPlugin {
         if (SIDE == MixinEnvironment.Side.CLIENT) {
             if (!AngelicaCompatibility.shouldDisableHexTextFontRendererMixin()) {
                 mixins.add("client.MixinFontRenderer");
+            } else {
+                mixins.add("client.MixinFontRendererAngelica");
             }
             mixins.add("client.MixinGuiNewChat");
             mixins.add("client.MixinGuiTextField");

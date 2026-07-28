@@ -5,6 +5,7 @@ import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import kamkeel.hextext.CommonProxy;
+import kamkeel.hextext.client.compat.AngelicaClientCompat;
 import kamkeel.hextext.client.config.ClientConfig;
 import kamkeel.hextext.client.event.ClientConnectionEventHandler;
 
@@ -24,6 +25,8 @@ public class ClientProxy extends CommonProxy {
     public void init(FMLInitializationEvent ev) {
         super.init(ev);
         registerClientEvents();
+        AngelicaClientCompat.registerRawTextSuppressor();
+        AngelicaClientCompat.registerGlyphEffects();
     }
 
     @Override

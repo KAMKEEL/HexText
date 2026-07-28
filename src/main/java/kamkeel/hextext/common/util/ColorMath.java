@@ -16,6 +16,22 @@ public final class ColorMath {
         return (red << 16) | (green << 8) | blue;
     }
 
+    /**
+     * Resolves a vanilla colour code index (0-15) to the RGB value the font renderer derives in
+     * its constructor, for contexts where no FontRenderer palette is reachable.
+     */
+    public static int vanillaColorRgb(int colorIndex) {
+        int index = Math.max(0, Math.min(colorIndex, 15));
+        int brightness = (index >> 3 & 1) * 85;
+        int red = (index >> 2 & 1) * 170 + brightness;
+        int green = (index >> 1 & 1) * 170 + brightness;
+        int blue = (index & 1) * 170 + brightness;
+        if (index == 6) {
+            red += 85;
+        }
+        return (red & 0xFF) << 16 | (green & 0xFF) << 8 | (blue & 0xFF);
+    }
+
     public static int blend(int first, int second, float ratio) {
         float clampedRatio = clamp(ratio, 0.0f, 1.0f);
         float inverse = 1.0f - clampedRatio;
