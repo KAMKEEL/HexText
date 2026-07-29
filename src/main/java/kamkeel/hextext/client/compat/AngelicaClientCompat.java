@@ -8,6 +8,7 @@ import java.util.function.BooleanSupplier;
 import kamkeel.hextext.CommonProxy;
 import kamkeel.hextext.HexText;
 import kamkeel.hextext.api.HexTextApi;
+import net.minecraft.client.Minecraft;
 import kamkeel.hextext.client.render.FontRenderContext;
 import kamkeel.hextext.common.compat.AngelicaCompatibility;
 import kamkeel.hextext.common.util.ColorCodeUtils;
@@ -152,12 +153,12 @@ public final class AngelicaClientCompat {
                         return argb;
                     }
                     int rgb = HexTextApi.dynamicEffects()
-                        .computeIgniteColor(System.currentTimeMillis(), argb & 0xFFFFFF);
+                        .computeIgniteColor(Minecraft.getSystemTime(), argb & 0xFFFFFF);
                     return (argb & 0xFF000000) | (rgb & 0xFFFFFF);
                 }
                 case "offsetY":
                     return ignite ? 0.0f
-                        : HexTextApi.dynamicEffects().computeShakeOffset(System.currentTimeMillis(), (Integer) args[0]);
+                        : HexTextApi.dynamicEffects().computeShakeOffset(Minecraft.getSystemTime(), (Integer) args[0]);
                 case "offsetX":
                     return 0.0f;
                 case "backgroundColor":
@@ -223,6 +224,12 @@ public final class AngelicaClientCompat {
         rainbowRegistered = registered;
     }
 
+    /**
+     * Uses {@link Minecraft#getSystemTime()}, not wall clock, like the native pipeline.
+     * The hue maths casts to float, and a millisecond epoch is far past what seven
+     * significant digits can hold - both the per-glyph spread and the per-frame movement
+     * round away, leaving a flat unchanging colour.
+     */
     private static Object newRainbowProxy(Class<?> effectType) {
         InvocationHandler handler = (proxy, method, args) -> {
             switch (method.getName()) {
@@ -231,7 +238,7 @@ public final class AngelicaClientCompat {
                     boolean shadowPass = (Boolean) args[1];
                     int glyphIndex = (Integer) args[2];
                     int rgb = HexTextApi.dynamicEffects()
-                        .computeRainbowColor(System.currentTimeMillis(), glyphIndex, 0);
+                        .computeRainbowColor(Minecraft.getSystemTime(), glyphIndex, 0);
                     // Darkened on the shadow pass. This hook is called twice per glyph
                     // and the second call arrives with the shadow's own colour already
                     // worked out; replacing it outright - which is what a rainbow does,
