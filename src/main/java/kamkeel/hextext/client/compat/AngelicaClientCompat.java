@@ -31,10 +31,47 @@ public final class AngelicaClientCompat {
     private static final String ANGELICA_COLOR_CODE_UTILS = "com.gtnewhorizons.angelica.client.font.ColorCodeUtils";
     private static final String ANGELICA_FONT_EFFECT_REGISTRY = "com.gtnewhorizons.angelica.client.font.FontEffectRegistry";
     private static final String ANGELICA_CUSTOM_GLYPH_EFFECT = "com.gtnewhorizons.angelica.client.font.CustomGlyphEffect";
+    private static final String ANGELICA_CONFIG = "com.gtnewhorizons.angelica.config.AngelicaConfig";
 
     private static volatile boolean glyphEffectsRegistered;
 
+    private static volatile Boolean ampersandCodesConverted;
+
     private AngelicaClientCompat() {
+    }
+
+    /**
+     * Whether Angelica turns ampersand codes into its own grammar downstream.
+     *
+     * <p>Asked about the codes HexText does not own - Angelica's q and v - to decide
+     * whether an editor should preview them. What the editor shows is a promise about
+     * what the finished line will look like, and the only thing that keeps that
+     * promise for a code somebody else converts is that they are actually going to
+     * convert it. With the setting off the code stays text once sent, so previewing a
+     * rainbow would be showing the writer something they are not going to get.</p>
+     *
+     * <p>Read once. It is a startup setting, and this is asked per token.</p>
+     */
+    public static boolean convertsAmpersandCodes() {
+        final Boolean cached = ampersandCodesConverted;
+        if (cached != null) {
+            return cached;
+        }
+        boolean converts;
+        try {
+            converts = Class.forName(ANGELICA_CONFIG).getField("enableAmpersandConversion").getBoolean(null);
+        } catch (ReflectiveOperationException | LinkageError ex) {
+            // Nothing to read means nothing downstream is going to convert anything.
+            converts = false;
+            LOGGER.debug("Could not read Angelica's ampersand conversion setting", ex);
+        }
+        ampersandCodesConverted = converts;
+        return converts;
+    }
+
+    /** Test hook. */
+    static void setAmpersandCodesConverted(Boolean converted) {
+        ampersandCodesConverted = converted;
     }
 
     public static void registerRawTextSuppressor() {

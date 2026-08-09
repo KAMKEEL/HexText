@@ -30,6 +30,7 @@ public class AngelicaTextTranslatorTest {
         AngelicaClientCompat.setGlyphEffectsRegistered(false);
         AngelicaClientCompat.setHighlightRegistered(false);
         AngelicaClientCompat.setRainbowRegistered(false);
+        AngelicaClientCompat.setAmpersandCodesConverted(Boolean.TRUE);
     }
 
     @After
@@ -37,6 +38,7 @@ public class AngelicaTextTranslatorTest {
         AngelicaClientCompat.setGlyphEffectsRegistered(false);
         AngelicaClientCompat.setHighlightRegistered(false);
         AngelicaClientCompat.setRainbowRegistered(false);
+        AngelicaClientCompat.setAmpersandCodesConverted(null);
     }
 
     /** Angelica's §q never moves, so HexText's own rainbow is used where it registered. */
@@ -290,6 +292,56 @@ public class AngelicaTextTranslatorTest {
         // outside an editor they are somebody else's to convert.
         assertEquals("&qRainbow", AngelicaTextTranslator.translate("&qRainbow"));
         assertEquals("&vFlip", AngelicaTextTranslator.translate("&vFlip"));
+    }
+
+    /**
+     * And the editor only previews them while Angelica is going to convert them. With
+     * the setting off the code stays text once sent, so a preview that styled anyway
+     * was showing the writer a line they were not going to get.
+     */
+    @Test
+    public void angelicaAmpersandCodesOnlyPreviewWhereTheyWillConvert() {
+        AngelicaClientCompat.setAmpersandCodesConverted(Boolean.FALSE);
+        FontRenderContext.pushRawTextRendering();
+        try {
+            assertEquals("&qRainbow", AngelicaTextTranslator.translate("&qRainbow"));
+            assertEquals("&vFlip", AngelicaTextTranslator.translate("&vFlip"));
+        } finally {
+            FontRenderContext.popRawTextRendering();
+        }
+    }
+
+    /**
+     * A backslash spoken for the marker behind it. Angelica reads the pair and draws a
+     * bare ampersand, so the translator hands both characters on untouched; reading the
+     * code here ate the ampersand and left the slash in front of a colour that was
+     * never meant to apply.
+     */
+    @Test
+    public void escapedCodesArePassedToAngelicaIntact() {
+        assertEquals("\\&c literal", AngelicaTextTranslator.translate("\\&c literal"));
+        assertEquals("\\&#FF0000literal hex", AngelicaTextTranslator.translate("\\&#FF0000literal hex"));
+        assertEquals("\\&q\\&z\\&v\\&u", AngelicaTextTranslator.translate("\\&q\\&z\\&v\\&u"));
+    }
+
+    /** An escape covers its own token and nothing after it. */
+    @Test
+    public void escapeDoesNotStopLaterCodesTranslating() {
+        assertEquals("§cred \\&a not green §agreen",
+            AngelicaTextTranslator.translate("&cred \\&a not green &agreen"));
+    }
+
+    /** The section form escapes too, so a converted string can still be shown literally. */
+    @Test
+    public void escapedSectionSignIsPassedOnIntact() {
+        assertEquals("§cred \\§aliteral", AngelicaTextTranslator.translate("&cred \\§aliteral"));
+    }
+
+    /** A backslash in front of anything else is just a backslash. */
+    @Test
+    public void loneBackslashIsUntouched() {
+        assertEquals("§cpath\\to\\thing", AngelicaTextTranslator.translate("&cpath\\to\\thing"));
+        assertEquals("a\\b", AngelicaTextTranslator.translate("a\\b"));
     }
 
     /** Wave and the shadow tint are HexText's own, so both renderers read them alike. */

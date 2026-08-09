@@ -46,6 +46,7 @@ public final class AngelicaTextTranslator {
     private static String lastOutput;
     private static boolean lastGlyphEffects;
     private static boolean lastRaw;
+    private static boolean lastAmpersandCodes;
 
     private AngelicaTextTranslator() {
     }
@@ -62,10 +63,13 @@ public final class AngelicaTextTranslator {
         }
 
         boolean glyphEffects = AngelicaClientCompat.areGlyphEffectsRegistered();
+        boolean ampersandCodes = AngelicaClientCompat.convertsAmpersandCodes();
         // Raw belongs in the key. The chat line draws its contents raw while the
         // history above it draws the same string normally, so one cache slot
-        // keyed only on the text hands one of them the other's answer.
-        if (text == lastInput && glyphEffects == lastGlyphEffects && raw == lastRaw) {
+        // keyed only on the text hands one of them the other's answer. Every other
+        // flag the output turns on belongs there for the same reason.
+        if (text == lastInput && glyphEffects == lastGlyphEffects && raw == lastRaw
+            && ampersandCodes == lastAmpersandCodes) {
             return lastOutput;
         }
 
@@ -74,6 +78,7 @@ public final class AngelicaTextTranslator {
         lastOutput = translated;
         lastGlyphEffects = glyphEffects;
         lastRaw = raw;
+        lastAmpersandCodes = ampersandCodes;
         return translated;
     }
 
@@ -112,6 +117,23 @@ public final class AngelicaTextTranslator {
 
         for (int i = 0; i < length; i++) {
             char current = text.charAt(i);
+
+            // A backslash spoken for the marker behind it. Angelica reads the pair
+            // itself and draws a bare ampersand, so both characters go through
+            // untouched and none of the branches below get a look at them. Reading
+            // the code here instead consumed the ampersand and left the backslash
+            // standing in front of a colour that was never meant to apply, which is
+            // every escaped form rendering as a stray slash and a styled word.
+            if (current == '\\' && i + 1 < length) {
+                char escaped = text.charAt(i + 1);
+                if (escaped == '&' || escaped == SECTION) {
+                    if (out != null) {
+                        out.append(current).append(escaped);
+                    }
+                    i++;
+                    continue;
+                }
+            }
 
             // The literal goes in before the branches run, because each of them
             // consumes its own token and there is no shared place afterwards to
@@ -186,8 +208,14 @@ public final class AngelicaTextTranslator {
                 // the native renderer consumes it and these two must agree. q and v
                 // are Angelica's spellings of codes HexText writes as g and h, so
                 // outside an editor they stay text and Angelica converts them itself.
+                // The editor previews them only when Angelica is actually going to
+                // make that conversion; with it switched off the code stays text once
+                // sent, and a preview that rainbowed anyway was promising something
+                // the chat line would not deliver.
                 if ((lower == 'z' && (current == SECTION || allowAmpersand))
-                    || ((lower == 'q' || lower == 'v') && (current == SECTION || raw))) {
+                    || ((lower == 'q' || lower == 'v')
+                        && (current == SECTION
+                            || (raw && AngelicaClientCompat.convertsAmpersandCodes())))) {
                     if (lower == 'z') {
                         waveActive = !waveActive;
                     } else if (lower == 'v') {
@@ -399,8 +427,14 @@ public final class AngelicaTextTranslator {
         if (current == SECTION && lower == 'x') {
             return parseSectionX(text, i) != -1 ? SECTION_X_TOKEN_LENGTH : 0;
         }
-        if (lower == 'u' || lower == 'q' || lower == 'z' || lower == 'v') {
+        if (lower == 'u' || lower == 'z') {
             return 2;
+        }
+        if (lower == 'q' || lower == 'v') {
+            // This is only ever asked in raw mode, so the branch it mirrors consumes
+            // these exactly when Angelica is the one that would have converted them.
+            // Claiming a length the branch will not take repeats the characters.
+            return current == SECTION || AngelicaClientCompat.convertsAmpersandCodes() ? 2 : 0;
         }
         if (lower == 'g') {
             if (current == SECTION && parseSectionX(text, i + 2) != -1
