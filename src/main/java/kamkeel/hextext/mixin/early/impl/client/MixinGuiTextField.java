@@ -26,9 +26,13 @@ public abstract class MixinGuiTextField extends Gui {
     @Unique
     private String hextext$lastRawText = "";
 
+    @Unique
+    private boolean hextext$rawDraw;
+
     @Inject(method = "drawTextBox", at = @At("HEAD"))
     private void hextext$legacy$resetRawText(CallbackInfo ci) {
         hextext$lastRawText = "";
+        hextext$rawDraw = HexText.getActiveProxy() != null && HexText.rawRenderingEnabled;
     }
 
     @Inject(method = "drawTextBox", at = @At("RETURN"))
@@ -79,10 +83,39 @@ public abstract class MixinGuiTextField extends Gui {
     }
 
     /**
-     * In raw chat mode, when GuiTextField draws the suffix (text after cursor),
-     * instead draw the full visible substring `s` so earlier colour codes still
-     * affect the text after the cursor.
+     * In raw mode the whole visible line goes down in one pass, so codes sitting
+     * before the cursor still style what comes after it.
+     *
+     * <p>Vanilla cuts the line at the cursor and draws it in two calls, and the
+     * full line used to be drawn from the second one - with the first still
+     * drawing the part before the cursor, so everything to its left went down
+     * twice. Two passes of the same glyphs read as one while the font renderer
+     * kept submission order, but a batching one sorts the commands, which lays
+     * the second pass's shadows over the first pass's glyphs and stacks the wash
+     * behind a code until it turns into a block. The doubled run grew as the
+     * cursor moved right, and vanished at either end of the line where only one
+     * of the two calls runs at all.</p>
      */
+    @Redirect(
+        method = "drawTextBox",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/FontRenderer;drawStringWithShadow(Ljava/lang/String;III)I",
+            ordinal = 0 // first call: the text before the cursor
+        )
+    )
+    private int hextext$drawFullVisibleInRaw(FontRenderer fontRenderer, String prefix, int x, int y, int color) {
+        if (!hextext$rawDraw) {
+            return fontRenderer.drawStringWithShadow(prefix, x, y, color);
+        }
+
+        fontRenderer.drawStringWithShadow(hextext$lastRawText, x, y, color);
+        // The caller places the cursor from what this returns, so it has to stay the
+        // width of the part in front of it and not of the line that was just drawn.
+        return x + fontRenderer.getStringWidth(prefix);
+    }
+
+    /** The line is already down in full, so the second call has nothing left to draw. */
     @Redirect(
         method = "drawTextBox",
         at = @At(
@@ -91,14 +124,10 @@ public abstract class MixinGuiTextField extends Gui {
             ordinal = 1 // second call: s.substring(j)
         )
     )
-    private int hextext$drawFullVisibleInRaw(FontRenderer fontRenderer, String suffix, int x, int y, int color) {
-        GuiTextField self = (GuiTextField) (Object) this;
-
-        int l = self.getEnableBackgroundDrawing()
-            ? self.xPosition + 4
-            : self.xPosition;
-
-        fontRenderer.drawStringWithShadow(hextext$lastRawText, l, y, color);
+    private int hextext$skipSuffixInRaw(FontRenderer fontRenderer, String suffix, int x, int y, int color) {
+        if (!hextext$rawDraw) {
+            return fontRenderer.drawStringWithShadow(suffix, x, y, color);
+        }
         return x;
     }
 }
