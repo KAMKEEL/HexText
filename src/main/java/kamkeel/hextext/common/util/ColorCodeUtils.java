@@ -105,12 +105,7 @@ public final class ColorCodeUtils {
     public static boolean isFormattingCode(char c) {
         char lower = Character.toLowerCase(c);
         return isMinecraftColorCode(lower)
-            || lower == 'g'
-            || lower == 'h'
-            || lower == 'i'
-            || lower == 'j'
-            || lower == 'z'
-            || lower == 'u'
+            || isEffectCode(lower)
             || isStyleCode(lower)
             || isResetCode(lower);
     }
@@ -139,7 +134,7 @@ public final class ColorCodeUtils {
     public static boolean isEffectCode(char c) {
         char lower = Character.toLowerCase(c);
         return lower == 'g' || lower == 'h' || lower == 'i' || lower == 'j' || lower == 'z'
-            || lower == 'u';
+            || lower == 'u' || lower == 'q';
     }
 
     public static boolean isResetCode(char c) {

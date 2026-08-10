@@ -287,6 +287,13 @@ public final class FontRendererRenderPipeline {
             case SET_ITALIC:
                 bridge.hexText$setItalicStyle(instruction.isEnabled());
                 break;
+            case SET_STATIC_RAINBOW:
+                if (instruction.shouldClearStack()) {
+                    colorState.clearStacks();
+                }
+                effects.resetDynamicEffects();
+                effects.setRainbow(true, visibleGlyphIndex, true);
+                break;
             case SET_RAINBOW:
                 if (instruction.shouldClearStack()) {
                     colorState.clearStacks();

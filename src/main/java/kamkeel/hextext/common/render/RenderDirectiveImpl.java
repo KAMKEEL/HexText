@@ -19,6 +19,7 @@ public final class RenderDirectiveImpl implements RenderDirective {
         SET_UNDERLINE,
         SET_ITALIC,
         SET_RAINBOW,
+        SET_STATIC_RAINBOW,
         SET_DINNERBONE,
         SET_IGNITE,
         SET_SHAKE,
@@ -97,6 +98,11 @@ public final class RenderDirectiveImpl implements RenderDirective {
 
     public static RenderDirective setRainbow(boolean enabled, int anchorIndex) {
         return new RenderDirectiveImpl(Type.SET_RAINBOW, 0, true, anchorIndex, enabled, true);
+    }
+
+    /** {@code &q}: a fixed table by position, matching Angelica's. */
+    public static RenderDirective setStaticRainbow(int anchorIndex) {
+        return new RenderDirectiveImpl(Type.SET_STATIC_RAINBOW, 0, true, anchorIndex, true, true);
     }
 
     public static RenderDirective setDinnerbone(boolean enabled) {

@@ -35,6 +35,7 @@ public final class TextEffectController {
     private int gradientSpan;
     private int gradientAnchorIndex;
     private int rainbowAnchorIndex;
+    private boolean rainbowStatic;
     private int baseColor;
     private boolean transformApplied;
     private boolean cullFaceTemporarilyDisabled;
@@ -64,10 +65,17 @@ public final class TextEffectController {
         gradientAnchorIndex = 0;
         shadowColorActive = false;
         rainbowAnchorIndex = 0;
+        rainbowStatic = false;
     }
 
     public void setRainbow(boolean enabled, int anchorIndex) {
+        setRainbow(enabled, anchorIndex, false);
+    }
+
+    /** @param stat_ic a fixed table by position rather than a cycling one */
+    public void setRainbow(boolean enabled, int anchorIndex, boolean stat_ic) {
         rainbowActive = enabled;
+        rainbowStatic = stat_ic;
         if (enabled) {
             rainbowAnchorIndex = Math.max(0, anchorIndex);
         }
@@ -128,8 +136,10 @@ public final class TextEffectController {
         long now = currentTime();
 
         if (rainbowActive) {
-            color = TextEffectMath.computeRainbowColor(now, HexTextConfig.getRainbowSpeed(), charIndex,
-                rainbowAnchorIndex, RAINBOW_SPREAD);
+            color = rainbowStatic
+                ? TextEffectMath.computeStaticRainbowColor(charIndex, rainbowAnchorIndex)
+                : TextEffectMath.computeRainbowColor(now, HexTextConfig.getRainbowSpeed(), charIndex,
+                    rainbowAnchorIndex, RAINBOW_SPREAD);
         }
 
         if (gradientActive) {

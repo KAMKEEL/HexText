@@ -54,6 +54,27 @@ public final class TextEffectMath {
         return (float) (Math.sin(charIndex * frequency + cycle) * amplitude);
     }
 
+    /** Hues of the static rainbow, one step per visible character. */
+    private static final int STATIC_RAINBOW_SIZE = 24;
+    private static final int[] STATIC_RAINBOW = new int[STATIC_RAINBOW_SIZE];
+    static {
+        for (int i = 0; i < STATIC_RAINBOW_SIZE; i++) {
+            STATIC_RAINBOW[i] = ColorCodeUtils.hsvToRgb(i * 15f, 1f, 1f);
+        }
+    }
+
+    /**
+     * The colour of one glyph of a static rainbow. A fixed table indexed by position, so
+     * the text holds still; {@link #computeRainbowColor} is the animated one.
+     */
+    public static int computeStaticRainbowColor(int charIndex, int anchorIndex) {
+        int offset = charIndex - anchorIndex;
+        if (offset < 0) {
+            offset = 0;
+        }
+        return STATIC_RAINBOW[offset % STATIC_RAINBOW_SIZE];
+    }
+
     /**
      * The colour of one glyph along a two-colour gradient, interpolated in HSV along the
      * shorter hue arc. Straight RGB fades through greys where turning the hue stays
