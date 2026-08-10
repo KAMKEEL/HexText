@@ -151,6 +151,36 @@ public final class ColorCodeUtils {
         return Character.toLowerCase(c) == 'r';
     }
 
+    /** {@code [&§]g[&§]#RRGGBB[&§]#RRGGBB}, under any mix of spellings. */
+    public static final int GRADIENT_TOKEN_LENGTH = 18;
+
+    /**
+     * The length of a full gradient token starting at {@code start}, or {@code -1}.
+     *
+     * <p>Every marker is taken as either spelling independently, because the string
+     * changes on its way out: what is typed with ampersands arrives at the chat
+     * history with section signs, and it is the same gradient both times.</p>
+     */
+    public static int gradientTokenLength(CharSequence text, int start) {
+        if (text == null || start < 0 || start + GRADIENT_TOKEN_LENGTH > text.length()) {
+            return -1;
+        }
+        char marker = text.charAt(start);
+        if ((marker != '&' && marker != 167) || Character.toLowerCase(text.charAt(start + 1)) != 'g') {
+            return -1;
+        }
+        if (!isGradientHexAt(text, start + 2) || !isGradientHexAt(text, start + 10)) {
+            return -1;
+        }
+        return GRADIENT_TOKEN_LENGTH;
+    }
+
+    private static boolean isGradientHexAt(CharSequence text, int at) {
+        char marker = text.charAt(at);
+        return (marker == '&' || marker == 167) && text.charAt(at + 1) == '#'
+            && isValidHexString(text, at + 2);
+    }
+
     public static boolean isHexColorToken(CharSequence input, int index, int codeLen) {
         if (input == null || codeLen <= 0 || index < 0 || index + codeLen > input.length()) {
             return false;

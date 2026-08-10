@@ -141,6 +141,18 @@ public final class StringUtils {
         ColorCodeUtils.FormattingEnvironment env = ColorCodeUtils.captureFormattingEnvironment(false);
 
         for (int i = 0; i < str.length(); ) {
+            // The whole token, before its pieces can be read one by one: the two
+            // hexes inside would each land as a flat colour and clear the styles,
+            // leaving a wrapped gradient line flat in its end colour and unbold.
+            // The token keeps styles for the same reason the renderer now does.
+            int gradientLen = ColorCodeUtils.gradientTokenLength(str, i);
+            if (gradientLen > 0) {
+                currentColorCode = str.substring(i, i + gradientLen);
+                colorStack.clear();
+                i += gradientLen;
+                continue;
+            }
+
             int codeLen = ColorCodeUtils.detectColorCodeLengthIgnoringRaw(str, i, env);
 
             if (codeLen > 0) {

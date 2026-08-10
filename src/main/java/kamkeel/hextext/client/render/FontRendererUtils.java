@@ -1,6 +1,7 @@
 package kamkeel.hextext.client.render;
 
 import kamkeel.hextext.common.util.ColorCodeUtils;
+import kamkeel.hextext.common.util.GradientWrap;
 import kamkeel.hextext.common.util.StringUtils;
 import net.minecraft.client.gui.FontRenderer;
 
@@ -137,9 +138,25 @@ public final class FontRendererUtils {
         String firstPart = text.substring(0, breakPoint);
         char breakChar = text.charAt(breakPoint);
         boolean skipChar = breakChar == ' ' || breakChar == '\n';
+        String rest = text.substring(breakPoint + (skipChar ? 1 : 0));
+
+        // A gradient still running at the break is split where the text is split:
+        // the first line keeps the ramp up to the boundary colour, the next line's
+        // prefix continues from it, and the recursion below does the same again at
+        // every further break. Without this, each chat line ramped start-to-end on
+        // its own and every continuation arrived flat in the end colour.
+        GradientWrap.Carry carry = GradientWrap.carryAcrossBreak(firstPart, rest);
+        if (carry != null) {
+            firstPart = carry.rewrittenFirstPart;
+        }
 
         String formatPrefix = StringUtils.extractFormatFromString(firstPart);
-        String remainder = formatPrefix + text.substring(breakPoint + (skipChar ? 1 : 0));
+        if (carry != null) {
+            formatPrefix = formatPrefix.startsWith(carry.rewrittenToken)
+                ? carry.continuationToken + formatPrefix.substring(carry.rewrittenToken.length())
+                : carry.continuationToken + formatPrefix;
+        }
+        String remainder = formatPrefix + rest;
 
         if (remainder.length() >= text.length()) {
             return firstPart + "\n" + remainder;

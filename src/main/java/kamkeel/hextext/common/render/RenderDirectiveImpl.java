@@ -130,13 +130,16 @@ public final class RenderDirectiveImpl implements RenderDirective {
     /**
      * A gradient across the glyphs that follow it.
      *
-     * <p>Clears the colour stack and resets formatting, the same as an inline hex
-     * colour: it is a colour, it just takes a while to arrive.</p>
+     * <p>Clears the colour stack like an inline hex colour, but keeps bold and its
+     * kin: the width walkers carry styles straight through a gradient token, and a
+     * renderer that dropped them measured one string and drew another - bold text
+     * with a cursor sitting past its end. Angelica's {@code §g} keeps styles too,
+     * so the two renderers agree.</p>
      *
      * @param span how many visible glyphs it is spread over
      */
     public static RenderDirective setGradient(int startRgb, int endRgb, int span) {
-        return new RenderDirectiveImpl(Type.SET_GRADIENT, startRgb, endRgb, true, span, true, true);
+        return new RenderDirectiveImpl(Type.SET_GRADIENT, startRgb, endRgb, true, span, true, false);
     }
 
     /** Wave is positional like shake, but a travelling sine rather than noise. */
