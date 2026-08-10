@@ -19,6 +19,21 @@ public class StringUtilsTest {
         HexTextConfig.setEnableRgbHtmlFormat(true);
     }
 
+    /**
+     * An escaped code is the reader's to see: the send conversion leaves the pair
+     * alone - backslash and all - so the renderer's escape handling can show the
+     * bare code. Converting it painted the text and stranded the backslash.
+     */
+    @Test
+    public void sendConversionLeavesEscapedCodesAlone() {
+        org.junit.Assert.assertEquals("\\&c literal", StringUtils.convertAmpersandsToSectionSigns("\\&c literal"));
+        org.junit.Assert.assertEquals("\\&#FF0000literal", StringUtils.convertAmpersandsToSectionSigns("\\&#FF0000literal"));
+        org.junit.Assert.assertEquals("§cred \\&a not green §agreen",
+            StringUtils.convertAmpersandsToSectionSigns("&cred \\&a not green &agreen"));
+        org.junit.Assert.assertEquals("\\&q\\&z\\&v\\&u",
+            StringUtils.convertAmpersandsToSectionSigns("\\&q\\&z\\&v\\&u"));
+    }
+
     @Test
     public void extractFormatKeepsLatestColour() {
         String input = "&a&lBold<123456>Still";

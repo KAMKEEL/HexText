@@ -65,6 +65,19 @@ public final class StringUtils {
             if (current == '&') {
                 int codeLen = ColorCodeUtils.detectAmpersandFormattingCodeLength(text, index);
                 if (codeLen == 2 || codeLen == 8) {
+                    // An escaped code is the reader's to see, not this converter's to
+                    // read. The pair goes through untouched - backslash and all - and
+                    // whichever renderer draws it knows the escape and shows the bare
+                    // code. Converting it anyway painted the text and left the
+                    // backslash standing in front of a colour it never asked for.
+                    if (index > 0 && text.charAt(index - 1) == '\\') {
+                        if (builder != null) {
+                            builder.append(text, index, index + codeLen);
+                        }
+                        index += codeLen;
+                        continue;
+                    }
+
                     if (builder == null) {
                         builder = new StringBuilder(text.length());
                         builder.append(text, 0, index);
