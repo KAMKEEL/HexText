@@ -52,13 +52,18 @@ public final class FormattedTextMetrics {
                     char marker = text.charAt(index);
                     if (marker == 167 || marker == '&') { // '§' or '&'
                         char fmt = Character.toLowerCase(text.charAt(index + 1));
-                        if (ColorCodeUtils.isFormattingCode(fmt)) {
+                        if (fmt == '#') {
+                            // A hex colour resets styles, its own characters included.
+                            isBold = false;
+                        } else if (ColorCodeUtils.isFormattingCode(fmt)) {
                             if (fmt == 'l') {
                                 isBold = true;
                             } else if (fmt == 'r' || ColorCodeUtils.isMinecraftColorCode(fmt)) {
                                 isBold = false;
                             }
                         }
+                    } else if (marker == '<') {
+                        isBold = false;
                     }
                 }
             }
@@ -136,13 +141,17 @@ public final class FormattedTextMetrics {
                     char marker = text.charAt(index);
                     if (marker == 167 || marker == '&') {
                         char fmt = Character.toLowerCase(text.charAt(index + 1));
-                        if (ColorCodeUtils.isFormattingCode(fmt)) {
+                        if (fmt == '#') {
+                            isBold = false;
+                        } else if (ColorCodeUtils.isFormattingCode(fmt)) {
                             if (fmt == 'l') {
                                 isBold = true;
                             } else if (fmt == 'r' || ColorCodeUtils.isMinecraftColorCode(fmt)) {
                                 isBold = false;
                             }
                         }
+                    } else if (marker == '<') {
+                        isBold = false;
                     }
                 }
             }

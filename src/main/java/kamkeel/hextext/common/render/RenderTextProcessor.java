@@ -36,13 +36,18 @@ public final class RenderTextProcessor {
         for (int i = 0; i < processed.length(); i++) {
             char current = processed.charAt(i);
 
-            // An escaped marker is text. The backslash is dropped and the marker kept,
-            // so the code shows as the characters it is made of and styles nothing.
+            // An escaped marker is text. Rendered, the backslash is dropped and the code
+            // shows as its own characters; in an editor it stays, because the reader is
+            // looking at what they typed and the width walkers count it.
             if (current == '\\' && i + 1 < processed.length()) {
                 char escaped = processed.charAt(i + 1);
                 if (escaped == '&' || escaped == 167) {
-                    sanitized.append(escaped);
-                    modified = true;
+                    if (rawMode) {
+                        sanitized.append(current).append(escaped);
+                    } else {
+                        sanitized.append(escaped);
+                        modified = true;
+                    }
                     i++;
                     continue;
                 }

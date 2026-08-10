@@ -493,10 +493,10 @@ public class AngelicaTextTranslatorTest {
             }) {
                 String raw = AngelicaTextTranslator.translate(token + "T");
                 String expectedLiteral = token.replace('§', '&');
-                // Colour tokens carry their own colour ahead of the characters, so
-                // the literal is contained rather than leading.
-                assertTrue(token + " -> " + raw, raw.contains(expectedLiteral));
-                assertTrue(token + " -> " + raw, raw.endsWith("T"));
+                // Tokens are interleaved with the colours they preview, so the literal
+                // is checked against what is left once those are taken out.
+                String characters = raw.replaceAll("§.", "");
+                assertEquals(token + " -> " + raw, expectedLiteral + "T", characters);
             }
         } finally {
             FontRenderContext.popRawTextRendering();

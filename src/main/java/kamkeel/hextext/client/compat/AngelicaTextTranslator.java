@@ -486,11 +486,25 @@ public final class AngelicaTextTranslator {
         // colour the token just set. Absent when Angelica refused the code.
         boolean wash = AngelicaClientCompat.isHighlightRegistered();
         if (wash) out.append(SECTION).append(AngelicaClientCompat.highlightCode());
+        // A gradient names two colours, so each half wears its own rather than the pair
+        // reading in the start colour.
+        int secondHalf = isGradientLiteral(text, from, count) ? from + 10 : -1;
         for (int index = from; index < from + count && index < text.length(); index++) {
+            if (index == secondHalf) {
+                int endRgb = ColorCodeUtils.parseHexColor(text, from + 12);
+                if (endRgb != -1) {
+                    appendSectionX(out, endRgb);
+                }
+            }
             char character = text.charAt(index);
             out.append(character == SECTION ? '&' : character);
         }
         if (wash) out.append(SECTION).append(AngelicaClientCompat.highlightCode());
+    }
+
+    private static boolean isGradientLiteral(String text, int from, int count) {
+        return count == 18 && from + 18 <= text.length()
+            && Character.toLowerCase(text.charAt(from + 1)) == 'g';
     }
 
     private static void appendLiteralColor(StringBuilder out, String text, int from, int count) {
