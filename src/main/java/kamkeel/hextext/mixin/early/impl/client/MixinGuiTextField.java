@@ -66,15 +66,12 @@ public abstract class MixinGuiTextField extends Gui {
     }
 
     /**
-     * Keeps the cursor moving over what the editor shows, one character at a time.
-     *
-     * <p>Hodgepodge snaps the cursor past whole {@code &}-codes and deletes them as
-     * units, which reads naturally when the codes are invisible at render time. In
-     * a HexText editor they are visible glyphs, and a cursor that leaps eight of
-     * them at once is jumping over characters the person editing can see. This
-     * runs ahead of that handler - the last-applied injection at HEAD executes
-     * first - and answers the four keys it would have claimed with vanilla's own
-     * behaviour, so editing here works exactly as it does without Hodgepodge.</p>
+     * Moves the cursor one character at a time over what the editor shows.
+     * <p>
+     * Hodgepodge snaps the cursor past whole {@code &}-codes and deletes them as
+     * units, which suits invisible codes. HexText draws them as glyphs, so this runs
+     * first (last-applied HEAD injection wins) and answers the four keys with
+     * vanilla behaviour.
      */
     @Inject(method = "textboxKeyTyped", at = @At("HEAD"), cancellable = true)
     private void hextext$vanillaCursorKeys(char typedChar, int keyCode, CallbackInfoReturnable<Boolean> cir) {
@@ -172,18 +169,14 @@ public abstract class MixinGuiTextField extends Gui {
     }
 
     /**
-     * In raw mode the whole visible line goes down in one pass, so codes sitting
-     * before the cursor still style what comes after it.
-     *
-     * <p>Vanilla cuts the line at the cursor and draws it in two calls, and the
-     * full line used to be drawn from the second one - with the first still
-     * drawing the part before the cursor, so everything to its left went down
-     * twice. Two passes of the same glyphs read as one while the font renderer
-     * kept submission order, but a batching one sorts the commands, which lays
-     * the second pass's shadows over the first pass's glyphs and stacks the wash
-     * behind a code until it turns into a block. The doubled run grew as the
-     * cursor moved right, and vanished at either end of the line where only one
-     * of the two calls runs at all.</p>
+     * Draws the whole visible line in one pass so codes before the cursor still
+     * style what follows it.
+     * <p>
+     * Vanilla cuts the line at the cursor and draws it in two calls. Drawing the
+     * full line from the second one left everything left of the cursor drawn twice -
+     * invisible while the renderer kept submission order, but a batching one sorts
+     * commands, laying one pass's shadows over the other's glyphs and stacking the
+     * code wash into a block.
      */
     @Redirect(
         method = "drawTextBox",
@@ -199,12 +192,10 @@ public abstract class MixinGuiTextField extends Gui {
         }
 
         fontRenderer.drawStringWithShadow(hextext$lastRawText, x, y, color);
-        // The caller places the cursor from what this returns, so it has to stay the
-        // width of the part in front of it and not of the line that was just drawn.
-        // Measured from the field's own state, not the argument: other mods decorate
-        // the argument with format codes before it arrives - Hodgepodge prepends §r
-        // and the scrolled-past formatting - and in a raw draw codes have width, so
-        // measuring the decorated string walked the cursor right of where it was.
+        // The caller places the cursor from this, so it must be the width of the part
+        // before it, not of the line just drawn. Measured from the field's own state:
+        // other mods decorate the argument with format codes, and codes have width in
+        // a raw draw, so measuring the argument walked the cursor right.
         final int prefixLength = Math.max(0,
             Math.min(this.cursorPosition - this.lineScrollOffset, hextext$lastRawText.length()));
         return x + fontRenderer.getStringWidth(hextext$lastRawText.substring(0, prefixLength));
