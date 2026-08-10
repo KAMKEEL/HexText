@@ -3,6 +3,7 @@ package kamkeel.hextext.mixin.early.impl.client;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import kamkeel.hextext.HexText;
+import kamkeel.hextext.common.util.ColorCodeUtils;
 import kamkeel.hextext.common.util.GradientWrap;
 import kamkeel.hextext.common.util.StringUtils;
 import net.minecraft.client.gui.Gui;
@@ -63,6 +64,25 @@ public abstract class MixinGuiNewChat extends Gui {
         }
 
         String continuation = args.get(0);
+
+        // Another mod may have prepended the first line's formatting here already -
+        // Hodgepodge's chat fix does - and the prefix built below says all of it
+        // again. Both spellings are peeled off: the extractor's, and vanilla's own,
+        // which reads §l as formatting and §#RRGGBB as nothing at all and so hands
+        // back a bold that the hex after it had already cleared. Only these two
+        // exact strings are removed, so codes that belong to the line survive.
+        String duplicatePrefix = StringUtils.extractFormatFromString(firstPart);
+        String vanillaPrefix = hextext$vanillaFormatPrefix(firstPart);
+        for (int pass = 0; pass < 2; pass++) {
+            if (!duplicatePrefix.isEmpty() && continuation.startsWith(duplicatePrefix)) {
+                continuation = continuation.substring(duplicatePrefix.length());
+            } else if (!vanillaPrefix.isEmpty() && continuation.startsWith(vanillaPrefix)) {
+                continuation = continuation.substring(vanillaPrefix.length());
+            } else {
+                break;
+            }
+        }
+
         String prefix;
         GradientWrap.Carry carry = GradientWrap.carryAcrossBreak(firstPart, continuation);
         if (carry != null) {
@@ -73,12 +93,33 @@ public abstract class MixinGuiNewChat extends Gui {
             }
             prefix = carry.continuationToken + styles;
         } else {
-            prefix = StringUtils.extractFormatFromString(firstPart);
+            prefix = duplicatePrefix;
         }
 
         if (!prefix.isEmpty()) {
             args.set(0, prefix + continuation);
         }
+    }
+
+    /** Vanilla's own formatting carry: colours latch, styles accumulate, hex is invisible to it. */
+    @Unique
+    private static String hextext$vanillaFormatPrefix(String text) {
+        StringBuilder prefix = new StringBuilder();
+        String color = "";
+        for (int i = text.indexOf(167); i != -1; i = text.indexOf(167, i + 1)) {
+            if (i >= text.length() - 1) {
+                break;
+            }
+            char code = text.charAt(i + 1);
+            if (ColorCodeUtils.isMinecraftColorCode(Character.toLowerCase(code))) {
+                color = String.valueOf((char) 167) + code;
+                prefix.setLength(0);
+            } else if (ColorCodeUtils.isStyleCode(Character.toLowerCase(code))
+                || ColorCodeUtils.isResetCode(Character.toLowerCase(code))) {
+                prefix.append((char) 167).append(code);
+            }
+        }
+        return color + prefix;
     }
 
     /** The first line again, cut back to the boundary colour the split chose. */

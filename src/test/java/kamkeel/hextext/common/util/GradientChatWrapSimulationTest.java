@@ -33,17 +33,29 @@ public class GradientChatWrapSimulationTest {
 
     @Test
     public void wrappedChatMessageReadsAsOneRamp() {
-        assertRampAcrossLines(buildMessage(100), 40);
+        assertRampAcrossLines(buildMessage(100), 40, false);
     }
 
     @Test
     public void manyShortLinesStillReadAsOneRamp() {
-        assertRampAcrossLines(buildMessage(90), 12);
+        assertRampAcrossLines(buildMessage(90), 12, false);
     }
 
     @Test
     public void twoLinesReadAsOneRamp() {
-        assertRampAcrossLines(buildMessage(50), 30);
+        assertRampAcrossLines(buildMessage(50), 30, false);
+    }
+
+    /**
+     * Hodgepodge prepends the first line's extracted format to every continuation
+     * before this mod's handler runs - which, with a gradient-aware extractor, is
+     * the whole original token. Unpeeled it sat after the carry token and restarted
+     * the ramp on every wrapped line.
+     */
+    @Test
+    public void hodgepodgePrependDoesNotRestartTheRamp() {
+        assertRampAcrossLines(buildMessage(100), 40, true);
+        assertRampAcrossLines(buildMessage(90), 12, true);
     }
 
     private static String buildMessage(int glyphs) {
@@ -54,8 +66,8 @@ public class GradientChatWrapSimulationTest {
         return text.toString();
     }
 
-    private void assertRampAcrossLines(String message, int glyphsPerLine) {
-        List<String> lines = splitLikeChat(message, glyphsPerLine);
+    private void assertRampAcrossLines(String message, int glyphsPerLine, boolean hodgepodgePrepend) {
+        List<String> lines = splitLikeChat(message, glyphsPerLine, hodgepodgePrepend);
         assertTrue("message did not wrap", lines.size() > 1);
 
         List<Integer> colors = new ArrayList<>();
@@ -63,31 +75,22 @@ public class GradientChatWrapSimulationTest {
             colors.addAll(renderLine(line));
         }
 
+        // Every glyph is held against the colour an unwrapped message would give
+        // it. This catches a restart, a snap and a drift alike, and is agnostic to
+        // the colour space the ramp is walked in. The tolerance covers each line
+        // quantising its own span.
         int total = colors.size();
-        // The largest step one ramp can take between neighbours, with slack for
-        // per-line rounding: each line quantises its own span.
-        int idealStep = (int) Math.ceil(255.0 / Math.max(1, total - 1));
-        int allowedStep = idealStep * 4 + 8;
-
-        int previousBlue = -1;
-        int previousRed = 256;
         for (int i = 0; i < total; i++) {
-            int red = (colors.get(i) >> 16) & 0xFF;
-            int blue = colors.get(i) & 0xFF;
-
-            assertTrue("ramp restarted: red rose from " + previousRed + " to " + red
-                + " at glyph " + i + " of " + total, red <= previousRed + allowedStep);
-            assertTrue("ramp went backwards: blue fell from " + previousBlue + " to " + blue
-                + " at glyph " + i + " of " + total, blue >= previousBlue - allowedStep);
-            assertTrue("ramp snapped: blue jumped " + (blue - previousBlue)
-                + " at glyph " + i + " of " + total, i == 0 || blue - previousBlue <= allowedStep);
-
-            previousRed = red;
-            previousBlue = blue;
+            int expected = TextEffectMath.computeGradientColor(START, END, i, total);
+            int actual = colors.get(i);
+            for (int shift = 0; shift <= 16; shift += 8) {
+                int expectedChannel = (expected >> shift) & 0xFF;
+                int actualChannel = (actual >> shift) & 0xFF;
+                assertTrue("glyph " + i + " of " + total + " strayed from the ramp: expected "
+                        + String.format("%06x", expected) + " but drew " + String.format("%06x", actual),
+                    Math.abs(expectedChannel - actualChannel) <= 24);
+            }
         }
-
-        int lastBlue = colors.get(total - 1) & 0xFF;
-        assertTrue("ramp never arrived: final blue " + lastBlue, lastBlue >= 0xFF - idealStep * 2);
     }
 
     /**
@@ -95,7 +98,7 @@ public class GradientChatWrapSimulationTest {
      * points: the first line is cut back to the boundary colour, the continuation
      * opens with the carry token.
      */
-    private List<String> splitLikeChat(String message, int glyphsPerLine) {
+    private List<String> splitLikeChat(String message, int glyphsPerLine, boolean hodgepodgePrepend) {
         List<String> lines = new ArrayList<>();
         String s = message;
         for (int guard = 0; guard < 64; guard++) {
@@ -105,6 +108,18 @@ public class GradientChatWrapSimulationTest {
                 return lines;
             }
             String s2 = s.substring(s1.length());
+
+            if (hodgepodgePrepend) {
+                // Hodgepodge's fix runs first and prepends getFormatFromString(s1),
+                // which this mod's inject answers with the extractor.
+                s2 = StringUtils.extractFormatFromString(s1) + s2;
+            }
+
+            // The mixin peels off exactly that duplicate before carrying.
+            String duplicatePrefix = StringUtils.extractFormatFromString(s1);
+            if (!duplicatePrefix.isEmpty() && s2.startsWith(duplicatePrefix)) {
+                s2 = s2.substring(duplicatePrefix.length());
+            }
 
             String prefix;
             GradientWrap.Carry carry = GradientWrap.carryAcrossBreak(s1, s2);
@@ -116,7 +131,7 @@ public class GradientChatWrapSimulationTest {
                 }
                 prefix = carry.continuationToken + styles;
             } else {
-                prefix = StringUtils.extractFormatFromString(s1);
+                prefix = duplicatePrefix;
             }
 
             lines.add(s1);
