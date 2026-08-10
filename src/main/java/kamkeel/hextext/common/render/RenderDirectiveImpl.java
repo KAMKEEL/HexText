@@ -30,11 +30,8 @@ public final class RenderDirectiveImpl implements RenderDirective {
     private final Type type;
     private final int rgb;
     /**
-     * The far end of a gradient. Unused by everything else, and zero there.
-     *
-     * <p>A gradient is the one directive that needs two colours and a distance at
-     * once: {@code rgb} is where it starts, this is where it ends, and
-     * {@code parameter} is how many visible glyphs it has to get there in.</p>
+     * The far end of a gradient, zero elsewhere. {@code rgb} starts the ramp, this ends
+     * it, and {@code parameter} is how many glyphs it has to get there in.
      */
     private final int secondaryRgb;
     private final boolean clearStack;
@@ -111,11 +108,8 @@ public final class RenderDirectiveImpl implements RenderDirective {
     }
 
     /**
-     * Tints the shadow the text already casts.
-     *
-     * <p>Only the colour of a shadow being drawn anyway, not a way to give shadowless
-     * text one - a glyph is drawn once here, and the caller decided for the whole
-     * string whether there would be a shadow pass at all.</p>
+     * Tints the shadow the text already casts. Only the colour of a shadow being drawn
+     * anyway - the caller decides for the whole string whether there is a shadow pass.
      *
      * @param enabled false restores the darkened base colour
      */
@@ -128,13 +122,9 @@ public final class RenderDirectiveImpl implements RenderDirective {
     }
 
     /**
-     * A gradient across the glyphs that follow it.
-     *
-     * <p>Clears the colour stack like an inline hex colour, but keeps bold and its
-     * kin: the width walkers carry styles straight through a gradient token, and a
-     * renderer that dropped them measured one string and drew another - bold text
-     * with a cursor sitting past its end. Angelica's {@code §g} keeps styles too,
-     * so the two renderers agree.</p>
+     * A gradient across the glyphs that follow. Clears the colour stack like an inline
+     * hex, but keeps styles: the width walkers carry them through a gradient token, and
+     * dropping them measured one string and drew another.
      *
      * @param span how many visible glyphs it is spread over
      */

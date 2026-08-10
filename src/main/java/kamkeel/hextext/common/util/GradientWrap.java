@@ -1,20 +1,13 @@
 package kamkeel.hextext.common.util;
 
 /**
- * Carries a gradient across a line break so it ramps over the whole message.
- *
- * <p>The renderer spreads a gradient over the visible glyphs of the one string it
- * is handed, and chat hands it each wrapped line separately - so the first line
- * ramped from start to end all by itself and every later line arrived flat in the
- * end colour. The ramp has to be split where the text is split: the first line's
- * token is rewritten to stop at the colour the ramp has reached by the break, and
- * the continuation opens with a token that carries on from there to the original
- * end. Each recursion of the wrap does this again, so a message that wraps three
- * times becomes three tokens drawing one straight ramp.</p>
- *
- * <p>The boundary colour comes from {@link TextEffectMath#computeGradientColor},
- * the same function the renderer asks per glyph, which is what makes the last
- * glyph of one line and the first of the next sit on the same ramp.</p>
+ * Splits a gradient at a line break so it ramps over the whole message.
+ * <p>
+ * The renderer spreads a ramp over one string's glyphs, and chat wraps each line
+ * separately, so every line would restart the ramp. The first line's token is
+ * rewritten to end at the boundary colour and the continuation opens from it.
+ * Boundary colours come from {@link TextEffectMath#computeGradientColor}, the same
+ * function the renderer uses per glyph, so the seam is exact.
  */
 public final class GradientWrap {
 
@@ -38,8 +31,8 @@ public final class GradientWrap {
     }
 
     /**
-     * Splits the ramp of a gradient still active at the end of {@code firstPart},
-     * or returns {@code null} when there is nothing to carry.
+     * Splits a gradient still active at the end of {@code firstPart}, or {@code null}
+     * when there is nothing to carry.
      *
      * @param firstPart the wrapped-off first line
      * @param rest      everything after the break, before any prefix is added
@@ -56,10 +49,8 @@ public final class GradientWrap {
             return null;
         }
 
-        // Glyphs are counted the way the renderer counts a span: every non-code
-        // character, to the end of the segment. Terminators are deliberately NOT
-        // stopped at - the renderer stretches a span past them too, and matching
-        // that quirk is what keeps the per-line ramps on one line's ramp.
+        // Counted as the renderer counts a span: non-code characters, stopping at the
+        // first token that carries a colour. Matching its count keeps the seam exact.
         int visibleFirst = countVisibleGlyphs(firstPart, token + ColorCodeUtils.GRADIENT_TOKEN_LENGTH);
         int visibleRest = countVisibleGlyphs(rest, 0);
         if (visibleFirst == 0 || visibleRest == 0) {
@@ -77,9 +68,8 @@ public final class GradientWrap {
         }
         String rewrittenToken = rewrittenFirst.substring(token, token + ColorCodeUtils.GRADIENT_TOKEN_LENGTH);
 
-        // Spelled with the same markers as the original, so an ampersand gradient
-        // stays an ampersand gradient and survives whatever conversion the string
-        // is about to go through.
+        // Same markers as the original, so an ampersand gradient stays one and
+        // survives whatever conversion the string still has ahead of it.
         StringBuilder continuation = new StringBuilder(ColorCodeUtils.GRADIENT_TOKEN_LENGTH);
         continuation.append(firstPart.charAt(token)).append(firstPart.charAt(token + 1));
         continuation.append(firstPart.charAt(token + 2)).append('#').append(boundaryHex);
@@ -127,11 +117,14 @@ public final class GradientWrap {
         for (int i = from; i < text.length(); ) {
             int gradient = ColorCodeUtils.gradientTokenLength(text, i);
             if (gradient > 0) {
-                i += gradient;
-                continue;
+                // Another gradient takes the colour over; the running ramp stops.
+                return visible;
             }
             int code = ColorCodeUtils.detectColorCodeLength(text, i);
             if (code > 0) {
+                if (replacesGradient(text, i, code)) {
+                    return visible;
+                }
                 i += code;
                 continue;
             }

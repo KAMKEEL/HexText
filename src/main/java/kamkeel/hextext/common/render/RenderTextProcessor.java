@@ -219,11 +219,8 @@ public final class RenderTextProcessor {
     }
 
     /**
-     * Where {@code [&§]g[&§]#RRGGBB[&§]#RRGGBB} ends, or {@code -1}.
-     *
-     * <p>Every marker is taken as either spelling independently, because the string
-     * changes on its way out: what is typed with ampersands arrives at the chat
-     * history with section signs, and it is the same gradient both times.</p>
+     * Where {@code [&§]g[&§]#RRGGBB[&§]#RRGGBB} ends, or {@code -1}. Each marker is taken
+     * as either spelling: the send conversion rewrites ampersands on the way out.
      */
     private static int gradientTokenEnd(CharSequence text, int start) {
         if (start + 18 > text.length()) {
@@ -244,18 +241,18 @@ public final class RenderTextProcessor {
     }
 
     /**
-     * How many glyphs a gradient has left to travel across.
-     *
-     * <p>Counted here because the ramp needs its length before the first glyph is
-     * drawn, and the renderer only ever knows where it currently is. Formatting codes
-     * are skipped: they occupy no width, so counting them would stretch the gradient
-     * over positions nothing is ever drawn at and leave the end colour unreached.</p>
+     * How many glyphs a gradient has to travel across. Counted up front because the ramp
+     * needs its length before the first glyph. Codes are zero-width and skipped, and
+     * counting stops at the first code carrying a colour, where the ramp ends.
      */
     private static int countVisibleGlyphs(CharSequence text, int from) {
         int visible = 0;
         for (int i = from; i < text.length(); ) {
             int code = ColorCodeUtils.detectColorCodeLength(text, i);
             if (code > 0) {
+                if (carriesColor(text, i, code)) {
+                    return visible;
+                }
                 i += code;
                 continue;
             }
@@ -263,6 +260,17 @@ public final class RenderTextProcessor {
             i++;
         }
         return visible;
+    }
+
+    /** Whether this code sets a colour, which is where a running ramp ends. */
+    private static boolean carriesColor(CharSequence text, int at, int codeLength) {
+        if (codeLength != 2) {
+            // Hex under either spelling, §x forms, and both span tags.
+            return true;
+        }
+        char code = Character.toLowerCase(text.charAt(at + 1));
+        return ColorCodeUtils.isMinecraftColorCode(code) || ColorCodeUtils.isResetCode(code)
+            || code == 'g';
     }
 
     private static FormatCategory classifyFormatting(char lower) {

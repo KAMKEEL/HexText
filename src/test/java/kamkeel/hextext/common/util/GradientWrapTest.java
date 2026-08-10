@@ -81,6 +81,16 @@ public class GradientWrapTest {
         assertTrue(carry.continuationToken.endsWith("&#ffffff"));
     }
 
+    /** The rest is only counted up to where the ramp ends, not past its terminator. */
+    @Test
+    public void restCountStopsAtTheTerminator() {
+        // 2 glyphs on the first line, then "cd " (3) before &c ends the ramp: 5 total.
+        GradientWrap.Carry carry = GradientWrap.carryAcrossBreak("&g&#ff0000&#0000ffab", "cd &cxx");
+
+        int boundary = TextEffectMath.computeGradientColor(0xFF0000, 0x0000FF, 2, 5);
+        assertEquals(String.format("&g&#%06x&#0000ff", boundary), carry.continuationToken);
+    }
+
     @Test
     public void plainTextHasNothingToCarry() {
         assertNull(GradientWrap.carryAcrossBreak("no gradient here", "more text"));

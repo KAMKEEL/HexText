@@ -50,13 +50,8 @@ public final class ColorCodeUtils {
     public static final int SECTION_X_LENGTH = 14;
 
     /**
-     * Reads {@code §x§R§R§G§G§B§B}, or {@code -1} when that is not what is there.
-     *
-     * <p>The form other mods and servers write RGB in. HexText's own spelling is
-     * {@code &#RRGGBB}, and until this was read too a string authored in section-x
-     * rendered correctly only where something else happened to understand it - under
-     * Angelica it was a colour, and under HexText alone it was six vanilla colours in
-     * a row with the last one winning.</p>
+     * Reads {@code §x§R§R§G§G§B§B}, or {@code -1}. The form other mods and servers write
+     * RGB in; unread, it renders as six vanilla colours with the last one winning.
      */
     public static int parseSectionX(CharSequence str, int start) {
         if (str == null || start < 0 || start + SECTION_X_LENGTH > str.length()) {
@@ -155,11 +150,8 @@ public final class ColorCodeUtils {
     public static final int GRADIENT_TOKEN_LENGTH = 18;
 
     /**
-     * The length of a full gradient token starting at {@code start}, or {@code -1}.
-     *
-     * <p>Every marker is taken as either spelling independently, because the string
-     * changes on its way out: what is typed with ampersands arrives at the chat
-     * history with section signs, and it is the same gradient both times.</p>
+     * The length of a full gradient token at {@code start}, or {@code -1}. Each marker is
+     * taken as either spelling: the send conversion rewrites ampersands on the way out.
      */
     public static int gradientTokenLength(CharSequence text, int start) {
         if (text == null || start < 0 || start + GRADIENT_TOKEN_LENGTH > text.length()) {
