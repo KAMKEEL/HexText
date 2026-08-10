@@ -2,32 +2,21 @@ package kamkeel.hextext.client.compat;
 
 import kamkeel.hextext.client.render.FontRenderContext;
 import kamkeel.hextext.common.util.ColorCodeUtils;
+import kamkeel.hextext.common.util.TextEffectMath;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 /**
- * Rewrites HexText formatting tokens into the section-sign grammar understood by Angelica's
- * batching font renderer. When Angelica owns the font pipeline the vanilla character loop never
- * runs, so HexText cannot apply its render directives per glyph; translating the text before
- * Angelica parses it keeps colours, spans and effects working without any render hooks.
- *
- * <p>Token mapping:
- * <ul>
- * <li>{@code &#RRGGBB} / {@code §#RRGGBB} become {@code §x§R§R§G§G§B§B}</li>
- * <li>{@code <RRGGBB>} becomes {@code §x…}; {@code </RRGGBB>} restores the enclosing colour</li>
- * <li>{@code &g} rainbow becomes {@code §q}; the Angelica gradient forms {@code &g&#..&#..} and
- * {@code §g§x..§x..} are preserved as gradients</li>
- * <li>{@code &h} dinnerbone becomes {@code §v}</li>
- * <li>{@code &i} ignite and {@code &j} shake become {@code §i}/{@code §j} when HexText's effects
- * are registered in Angelica's font effect registry; otherwise ignite is dropped and shake
- * becomes {@code §z} (wave)</li>
- * </ul>
- *
- * <p>Colour changes in HexText also cancel any active dynamic effect, so the translator emits
- * closing {@code §z}/{@code §v} toggles ahead of colour codes while those effects are active.
- * Strings that already use Angelica's grammar pass through unchanged, which makes the
- * translation safe to apply repeatedly.
+ * Rewrites HexText tokens into the section-sign grammar Angelica's batching renderer reads.
+ * Angelica owns the glyph loop, so HexText cannot apply render directives per character;
+ * translating before Angelica parses keeps colours, spans and effects working.
+ * <p>
+ * {@code &#RRGGBB} and {@code <RRGGBB>} spans become {@code §x}; {@code &g} rainbow becomes
+ * {@code §q}; {@code &h} becomes {@code §v}; {@code &i}/{@code &j} become {@code §i}/{@code §j}
+ * where registered. Gradients are expanded per glyph so a stock Angelica draws HexText's ramp.
+ * Colours cancel dynamic effects, so closing toggles are emitted ahead of them. Already-Angelica
+ * grammar passes through, making translation safe to repeat.
  */
 public final class AngelicaTextTranslator {
 
@@ -51,6 +40,43 @@ public final class AngelicaTextTranslator {
     private AngelicaTextTranslator() {
     }
 
+    /**
+     * Spells Angelica's own {@code &q}/{@code &v} into section form when sending.
+     * <p>
+     * They are not HexText codes, so the ordinary send conversion leaves them, and
+     * the render-side conversion is suppressed wherever the server has not allowed
+     * ampersand formatting - the code then arrives as dead text. Escaped pairs pass
+     * untouched, as in the main send conversion.
+     */
+    public static String convertAngelicaSendCodes(String text) {
+        if (text == null || text.length() < 2 || text.indexOf('&') == -1) {
+            return text;
+        }
+        StringBuilder out = null;
+        int i = 0;
+        while (i < text.length()) {
+            char current = text.charAt(i);
+            if (current == '&' && i + 1 < text.length()) {
+                char lower = Character.toLowerCase(text.charAt(i + 1));
+                if ((lower == 'q' || lower == 'v')
+                    && (i == 0 || text.charAt(i - 1) != '\\')) {
+                    if (out == null) {
+                        out = new StringBuilder(text.length());
+                        out.append(text, 0, i);
+                    }
+                    out.append(SECTION).append(text.charAt(i + 1));
+                    i += 2;
+                    continue;
+                }
+            }
+            if (out != null) {
+                out.append(current);
+            }
+            i++;
+        }
+        return out == null ? text : out.toString();
+    }
+
     public static String translate(String text) {
         if (text == null || text.isEmpty()) {
             return text;
@@ -64,10 +90,8 @@ public final class AngelicaTextTranslator {
 
         boolean glyphEffects = AngelicaClientCompat.areGlyphEffectsRegistered();
         boolean ampersandCodes = AngelicaClientCompat.convertsAmpersandCodes();
-        // Raw belongs in the key. The chat line draws its contents raw while the
-        // history above it draws the same string normally, so one cache slot
-        // keyed only on the text hands one of them the other's answer. Every other
-        // flag the output turns on belongs there for the same reason.
+        // Every flag the output depends on is in the key: the chat line draws raw while
+        // the history draws the same string normally.
         if (text == lastInput && glyphEffects == lastGlyphEffects && raw == lastRaw
             && ampersandCodes == lastAmpersandCodes) {
             return lastOutput;
@@ -83,24 +107,13 @@ public final class AngelicaTextTranslator {
     }
 
     /**
-     * @param raw whether the caller is drawing text that is being edited, where the
-     *            codes themselves are part of what the reader needs to see. Every
-     *            token is then emitted twice: once as the literal characters that
-     *            were typed, and once as the section-sign token that styles what
-     *            follows. HexText's own renderer does this by drawing the token's
-     *            glyphs and applying its directive in the same pass; Angelica owns
-     *            the glyph loop here, so the only way to say both things is to put
-     *            both in the string. Without it the chat line showed the codes and
-     *            no colour, which is half a live edit.
+     * @param raw drawing text being edited, where the codes are part of what the reader
+     *            needs to see. Every token is emitted twice: the literal characters that
+     *            were typed, then the token that styles what follows.
      */
     private static String translateImpl(String text, boolean glyphEffects, boolean raw) {
-        // Raw is passed through, not hardcoded false. An editor is the one place an
-        // ampersand is a code no matter what the config says: universal ampersand
-        // formatting governs text the world has already produced, while the thing
-        // being typed is on its way to a converter that will turn it into a section
-        // sign the moment it is sent. Reading it as plain text meanwhile is what made
-        // the chat line ignore every &-form code while colouring the same string
-        // correctly once it arrived in the history above.
+        // An editor reads ampersands as codes whatever the config says: the line being
+        // typed is on its way to a converter that will make them section signs.
         ColorCodeUtils.FormattingEnvironment env = ColorCodeUtils.captureFormattingEnvironment(raw);
         boolean allowHtml = env.allowsHtmlFormatting();
         boolean allowAmpersand = env.allowsUniversalAmpersand();
@@ -114,16 +127,21 @@ public final class AngelicaTextTranslator {
         int currentColor = COLOR_BASE;
         boolean waveActive = false;
         boolean dinnerboneActive = false;
+        // Expanded here rather than handed to Angelica's own gradient: every glyph
+        // gets its colour from HexText's ramp, so a stock Angelica draws what the
+        // native renderer draws.
+        boolean gradientActive = false;
+        int gradientStartRgb = 0;
+        int gradientEndRgb = 0;
+        int gradientSpan = 0;
+        int gradientIndex = 0;
 
         for (int i = 0; i < length; i++) {
             char current = text.charAt(i);
 
-            // A backslash spoken for the marker behind it. Angelica reads the pair
-            // itself and draws a bare ampersand, so both characters go through
-            // untouched and none of the branches below get a look at them. Reading
-            // the code here instead consumed the ampersand and left the backslash
-            // standing in front of a colour that was never meant to apply, which is
-            // every escaped form rendering as a stray slash and a styled word.
+            // Escaped: Angelica reads the pair itself and draws a bare ampersand, so
+            // both characters pass untouched and no branch below sees them. Reading
+            // the code here ate the ampersand and stranded the backslash.
             if (current == '\\' && i + 1 < length) {
                 char escaped = text.charAt(i + 1);
                 if (escaped == '&' || escaped == SECTION) {
@@ -135,10 +153,8 @@ public final class AngelicaTextTranslator {
                 }
             }
 
-            // The literal goes in before the branches run, because each of them
-            // consumes its own token and there is no shared place afterwards to
-            // put it. Emitted only where a branch will actually match, so an
-            // ampersand that spells nothing is left to fall through as text.
+            // Emitted before the branches, which each consume their own token. Only
+            // where a branch will match, so a meaningless ampersand stays text.
             if (raw) {
                 int spelt = tokenLength(text, i, allowHtml, allowAmpersand);
                 if (spelt > 0) {
@@ -154,9 +170,7 @@ public final class AngelicaTextTranslator {
                     int rgb = ColorCodeUtils.parseHexColor(text, i + 2);
                     if (rgb != -1) {
                         out = ensureOutput(out, text, i);
-                        // Inline hex resets styles and dynamic effects in HexText (APPLY_RGB has
-                        // resetFormatting set); §x alone would carry styles across, so a reset is
-                        // emitted first when any style is active.
+                        // Inline hex resets styles in HexText; §x alone would carry them across.
                         if (activeStyles != null && activeStyles.length() > 0) {
                             out.append(SECTION).append('r');
                             activeStyles.setLength(0);
@@ -171,6 +185,7 @@ public final class AngelicaTextTranslator {
                             colorStack.clear();
                         }
                         currentColor = rgb;
+                        gradientActive = false;
                         i += 7;
                         continue;
                     }
@@ -183,35 +198,27 @@ public final class AngelicaTextTranslator {
                             out.append(text, i, i + SECTION_X_TOKEN_LENGTH);
                         }
                         currentColor = rgb;
+                        gradientActive = false;
                         i += SECTION_X_TOKEN_LENGTH - 1;
                         continue;
                     }
                 }
 
-                // Angelica's own effects, under either spelling. Outside an editor
-                // Angelica converts the ampersand form itself, so these worked when
-                // sent and did nothing while being typed - the suppressor holds that
-                // conversion off precisely so HexText can show the code, and then
-                // HexText has to be the one that knows what the code means.
-                // u is HexText's own shadow tint now, so both renderers read it.
+                // Angelica's own effects, either spelling. The suppressor holds off
+                // Angelica's conversion in an editor, so HexText reads them itself.
                 if (lower == 'u' && (current == SECTION || allowAmpersand)) {
-                    // Only the marker is emitted; a colour after it is a token in its
-                    // own right and the next turn of the loop translates it, which is
-                    // what lets §u§x.. and &u&#.. both arrive as a custom shadow.
+                    // Marker only; a colour after it is its own token next turn, which
+                    // is what lets §u§x.. and &u&#.. both arrive as a custom shadow.
                     out = ensureOutput(out, text, i);
                     out.append(SECTION).append('u');
                     i++;
                     continue;
                 }
 
-                // z is HexText's own wave now, so it is read wherever it appears -
-                // the native renderer consumes it and these two must agree. q and v
-                // are Angelica's spellings of codes HexText writes as g and h, so
-                // outside an editor they stay text and Angelica converts them itself.
-                // The editor previews them only when Angelica is actually going to
-                // make that conversion; with it switched off the code stays text once
-                // sent, and a preview that rainbowed anyway was promising something
-                // the chat line would not deliver.
+                // z is HexText's own wave, read wherever it appears. q and v are
+                // Angelica's spellings of HexText's g and h, so outside an editor they
+                // stay text for Angelica to convert; an editor previews them only when
+                // that conversion is actually going to happen.
                 if ((lower == 'z' && (current == SECTION || allowAmpersand))
                     || ((lower == 'q' || lower == 'v')
                         && (current == SECTION
@@ -230,27 +237,31 @@ public final class AngelicaTextTranslator {
                 if (lower == 'g') {
                     if (current == SECTION && parseSectionX(text, i + 2) != -1
                         && parseSectionX(text, i + 2 + SECTION_X_TOKEN_LENGTH) != -1) {
-                        if (out != null) {
-                            out.append(text, i, i + GRADIENT_TOKEN_LENGTH);
-                        }
+                        out = ensureOutput(out, text, i);
+                        gradientStartRgb = parseSectionX(text, i + 2);
+                        gradientEndRgb = parseSectionX(text, i + 2 + SECTION_X_TOKEN_LENGTH);
+                        gradientSpan = countVisibleGlyphs(text, i + GRADIENT_TOKEN_LENGTH, allowHtml, allowAmpersand);
+                        gradientIndex = 0;
+                        gradientActive = true;
                         i += GRADIENT_TOKEN_LENGTH - 1;
                         continue;
                     }
                     if (isHexGradient(text, i)) {
                         out = ensureOutput(out, text, i);
-                        out.append(SECTION).append('g');
-                        appendSectionX(out, ColorCodeUtils.parseHexColor(text, i + 4));
-                        appendSectionX(out, ColorCodeUtils.parseHexColor(text, i + 12));
+                        gradientStartRgb = ColorCodeUtils.parseHexColor(text, i + 4);
+                        gradientEndRgb = ColorCodeUtils.parseHexColor(text, i + 12);
+                        gradientSpan = countVisibleGlyphs(text, i + 18, allowHtml, allowAmpersand);
+                        gradientIndex = 0;
+                        gradientActive = true;
                         i += 17;
                         continue;
                     }
-                    // HexText's own rainbow where Angelica took it, because §q is a
-                    // fixed table indexed by character and never moves; falling back
-                    // to it only when the registry refused, where a still rainbow
-                    // still beats no rainbow.
+                    // HexText's own rainbow where the registry took it; §q is a fixed
+                    // table and never animates, so it is only the fallback.
                     out = ensureOutput(out, text, i);
                     out.append(SECTION).append(AngelicaClientCompat.isRainbowRegistered()
                         ? AngelicaClientCompat.rainbowCode() : 'q');
+                    gradientActive = false;
                     i++;
                     continue;
                 }
@@ -297,6 +308,7 @@ public final class AngelicaTextTranslator {
                         activeStyles.setLength(0);
                     }
                     currentColor = encodeVanillaColor(ColorCodeUtils.getMinecraftColorIndex(lower));
+                    gradientActive = false;
                     i++;
                     continue;
                 }
@@ -317,6 +329,7 @@ public final class AngelicaTextTranslator {
                     currentColor = COLOR_BASE;
                     waveActive = false;
                     dinnerboneActive = false;
+                    gradientActive = false;
                     i++;
                     continue;
                 }
@@ -344,9 +357,8 @@ public final class AngelicaTextTranslator {
                     int rgb = ColorCodeUtils.parseHexColor(text, i + 1);
                     if (rgb != -1) {
                         out = ensureOutput(out, text, i);
-                        // Opening a span resets styles and dynamic effects like an inline hex
-                        // colour does (PUSH_RGB has resetFormatting set); only the closing tag
-                        // preserves styles.
+                        // Opening a span resets styles like an inline hex does; only the
+                        // closing tag preserves them.
                         if (activeStyles != null && activeStyles.length() > 0) {
                             out.append(SECTION).append('r');
                             activeStyles.setLength(0);
@@ -362,6 +374,7 @@ public final class AngelicaTextTranslator {
                         colorStack.push(currentColor);
                         appendSectionX(out, rgb);
                         currentColor = rgb;
+                        gradientActive = false;
                         i += 7;
                         continue;
                     }
@@ -375,12 +388,17 @@ public final class AngelicaTextTranslator {
                     int restored = colorStack == null || colorStack.isEmpty() ? COLOR_BASE : colorStack.pop();
                     appendRestoredColor(out, restored, activeStyles);
                     currentColor = restored;
+                    gradientActive = false;
                     i += 8;
                     continue;
                 }
             }
 
             if (out != null) {
+                if (gradientActive && current != '\n') {
+                    appendSectionX(out, TextEffectMath.computeGradientColor(
+                        gradientStartRgb, gradientEndRgb, gradientIndex++, gradientSpan));
+                }
                 out.append(current);
             }
         }
@@ -389,13 +407,9 @@ public final class AngelicaTextTranslator {
     }
 
     /**
-     * How many characters the branches below will consume as one token, or zero.
-     *
-     * <p>This mirrors their conditions rather than sharing them, because each
-     * branch decides its own length as it emits. The two must agree exactly: a
-     * literal shorter than what is consumed drops characters the reader typed, and
-     * a literal longer than it repeats them. The parity test walks every form and
-     * checks the literal against the source, which is what keeps the pair honest.</p>
+     * How many characters the branches below consume as one token, or zero. Mirrors
+     * their conditions and must agree exactly: too short drops typed characters, too
+     * long repeats them. The parity test checks every form against the source.
      */
     private static int tokenLength(String text, int i, boolean allowHtml, boolean allowAmpersand) {
         int length = text.length();
@@ -458,19 +472,18 @@ public final class AngelicaTextTranslator {
     }
 
     /**
-     * The token as it was typed, in a spelling Angelica will not read back.
-     *
-     * <p>Always ampersands: a section sign here would be parsed as the very code
-     * this is trying to show, and the characters would vanish into the thing they
-     * are meant to be displaying. HexText holds Angelica's conversion suppressor
-     * open for the whole of a raw draw, so the ampersands stay as glyphs.</p>
+     * The token as typed, always spelled with ampersands - a section sign would be
+     * parsed as the very code this is showing. The suppressor keeps them as glyphs.
      */
     private static void appendLiteral(StringBuilder out, String text, int from, int count) {
-        // Toggled on around the characters and off again, which is why the effect had
-        // to become a toggle: a latched one could only end by resetting the colour it
-        // sits in front of. When Angelica would not take the code the wash is simply
-        // absent and the characters still read - the highlight says "this is a code",
-        // it is not what makes it legible.
+        // A colour token wears its own colour, so the editor shows what each token
+        // will do. Styles and effects have no colour to show and keep the running
+        // one. Left open deliberately: the branch that follows re-emits the same
+        // colour as its real directive.
+        appendLiteralColor(out, text, from, count);
+
+        // A toggle, not a latch: a latched effect could only end by resetting the
+        // colour the token just set. Absent when Angelica refused the code.
         boolean wash = AngelicaClientCompat.isHighlightRegistered();
         if (wash) out.append(SECTION).append(AngelicaClientCompat.highlightCode());
         for (int index = from; index < from + count && index < text.length(); index++) {
@@ -478,6 +491,98 @@ public final class AngelicaTextTranslator {
             out.append(character == SECTION ? '&' : character);
         }
         if (wash) out.append(SECTION).append(AngelicaClientCompat.highlightCode());
+    }
+
+    private static void appendLiteralColor(StringBuilder out, String text, int from, int count) {
+        char first = text.charAt(from);
+
+        if (count == 2 && (first == '&' || first == SECTION)) {
+            char code = Character.toLowerCase(text.charAt(from + 1));
+            if (ColorCodeUtils.isMinecraftColorCode(code)) {
+                out.append(SECTION).append(code);
+            }
+            return;
+        }
+
+        // Inline hex, either spelling: the token names its own colour.
+        if (count == 8 && (first == '&' || first == SECTION) && text.charAt(from + 1) == '#') {
+            int rgb = ColorCodeUtils.parseHexColor(text, from + 2);
+            if (rgb != -1) {
+                appendSectionX(out, rgb);
+            }
+            return;
+        }
+
+        // Span open and close both carry a hex to show.
+        if (first == '<') {
+            int hexStart = count == 9 ? from + 2 : from + 1;
+            int rgb = ColorCodeUtils.parseHexColor(text, hexStart);
+            if (rgb != -1) {
+                appendSectionX(out, rgb);
+            }
+            return;
+        }
+
+        // A §x token colours itself.
+        if (count == SECTION_X_TOKEN_LENGTH && first == SECTION) {
+            int rgb = parseSectionX(text, from);
+            if (rgb != -1) {
+                appendSectionX(out, rgb);
+            }
+            return;
+        }
+
+        // A gradient opens in its start colour, under either spelling.
+        if (count == 18 && Character.toLowerCase(text.charAt(from + 1)) == 'g') {
+            int rgb = ColorCodeUtils.parseHexColor(text, from + 4);
+            if (rgb != -1) {
+                appendSectionX(out, rgb);
+            }
+            return;
+        }
+        if (count == GRADIENT_TOKEN_LENGTH && Character.toLowerCase(text.charAt(from + 1)) == 'g') {
+            int rgb = parseSectionX(text, from + 2);
+            if (rgb != -1) {
+                appendSectionX(out, rgb);
+            }
+        }
+    }
+
+    /**
+     * Glyphs a gradient has to travel, counted as the branches consume tokens: a
+     * {@link #tokenLength} match is zero-width, everything else is a glyph. Stops at
+     * the first token carrying a colour, so a ramp cut short still reaches its end
+     * colour. The native renderer and the wrap carry count the same way.
+     */
+    private static int countVisibleGlyphs(String text, int from, boolean allowHtml, boolean allowAmpersand) {
+        int visible = 0;
+        for (int i = from; i < text.length(); ) {
+            int token = tokenLength(text, i, allowHtml, allowAmpersand);
+            if (token > 0) {
+                if (endsGradient(text, i, token)) {
+                    return visible;
+                }
+                i += token;
+                continue;
+            }
+            if (text.charAt(i) != '\n') {
+                visible++;
+            }
+            i++;
+        }
+        return visible;
+    }
+
+    /** Whether a token carries a colour of its own, which is where a ramp stops. */
+    private static boolean endsGradient(String text, int at, int tokenLen) {
+        if (tokenLen != 2) {
+            // Hex under either spelling, §x forms, both span tags, and full gradient
+            // tokens all set a colour.
+            return true;
+        }
+        char code = Character.toLowerCase(text.charAt(at + 1));
+        return ColorCodeUtils.isMinecraftColorCode(code) || ColorCodeUtils.isResetCode(code)
+            || code == 'g' || code == 'q';
     }
 
     private static StringBuilder ensureOutput(StringBuilder out, String text, int upTo) {
@@ -489,9 +594,8 @@ public final class AngelicaTextTranslator {
     }
 
     /**
-     * Re-applies the colour a closing span tag restores. Vanilla colour codes and {@code §r}
-     * clear the style flags in Angelica's parser, so the active styles are replayed after them;
-     * {@code §x} keeps styles intact and needs no replay.
+     * Re-applies the colour a closing span restores. Vanilla colours and {@code §r} clear
+     * Angelica's style flags, so styles are replayed after them; {@code §x} keeps them.
      */
     private static void appendRestoredColor(StringBuilder out, int restored, StringBuilder activeStyles) {
         if (restored == COLOR_BASE) {
@@ -557,15 +661,9 @@ public final class AngelicaTextTranslator {
     }
 
     /**
-     * A gradient written as two inline hex colours, under either spelling.
-     *
-     * <p>Both markers are taken as {@code &} or {@code §} independently, because the
-     * string changes spelling on its way through. What is typed is {@code &g&#..&#..},
-     * and the chat converter turns every ampersand into a section sign as it is sent -
-     * so the very same gradient arrives at the history above as {@code §g§#..§#..}.
-     * Matching only the ampersand form meant a gradient previewed correctly while it
-     * was being written and then, once submitted, fell through to plain rainbow with
-     * two colours applied after it, leaving the whole line the second colour.</p>
+     * A gradient written as two inline hex colours. Each marker is taken as {@code &} or
+     * {@code §} independently: the send conversion rewrites ampersands, so the same
+     * gradient arrives spelled differently in the chat history.
      */
     private static boolean isHexGradient(String text, int start) {
         return start + 18 <= text.length()

@@ -108,10 +108,30 @@ public class AngelicaTextTranslatorTest {
     }
 
     @Test
-    public void ampersandGradientFormIsPreservedAsGradient() {
+    public void ampersandGradientFormIsExpandedPerGlyph() {
+        // The gradient is not handed to Angelica: every glyph is coloured here with
+        // HexText's own ramp, so a stock Angelica draws exactly what native draws.
         assertEquals(
-            "§g§x§f§f§0§0§0§0§x§0§0§0§0§f§fGrad",
+            expandedGradient(0xFF0000, 0x0000FF, "Grad"),
             AngelicaTextTranslator.translate("&g&#FF0000&#0000FFGrad"));
+    }
+
+    private static String expandedGradient(int startRgb, int endRgb, String glyphs) {
+        StringBuilder expected = new StringBuilder();
+        for (int i = 0; i < glyphs.length(); i++) {
+            expected.append(sectionX(kamkeel.hextext.common.util.TextEffectMath
+                .computeGradientColor(startRgb, endRgb, i, glyphs.length())));
+            expected.append(glyphs.charAt(i));
+        }
+        return expected.toString();
+    }
+
+    private static String sectionX(int rgb) {
+        StringBuilder token = new StringBuilder("§x");
+        for (int shift = 20; shift >= 0; shift -= 4) {
+            token.append('§').append(Character.forDigit((rgb >> shift) & 0xF, 16));
+        }
+        return token.toString();
     }
 
     @Test
@@ -153,7 +173,12 @@ public class AngelicaTextTranslatorTest {
             AngelicaTextTranslator.translate("§x§f§f§0§0§0§0Hi§qA§zB"));
         assertEquals("§u§x§1§2§3§4§5§6shadow",
             AngelicaTextTranslator.translate("§u§x§1§2§3§4§5§6shadow"));
-        assertEquals("§g§x§f§f§0§0§0§0§x§0§0§0§0§f§fgradient",
+    }
+
+    /** Even Angelica's own gradient spelling is expanded, so the ramp is HexText's. */
+    @Test
+    public void sectionGradientFormIsExpandedPerGlyph() {
+        assertEquals(expandedGradient(0xFF0000, 0x0000FF, "gradient"),
             AngelicaTextTranslator.translate("§g§x§f§f§0§0§0§0§x§0§0§0§0§f§fgradient"));
     }
 
@@ -202,7 +227,8 @@ public class AngelicaTextTranslatorTest {
     public void rawModeShowsTheCodeAndAppliesIt() {
         FontRenderContext.pushRawTextRendering();
         try {
-            assertEquals("&c§cHi &#FF0000§x§f§f§0§0§0§0there",
+            // Colour tokens wear their own colour ahead of the literal characters.
+            assertEquals("§c&c§cHi §x§f§f§0§0§0§0&#FF0000§x§f§f§0§0§0§0there",
                 AngelicaTextTranslator.translate("§cHi &#FF0000there"));
         } finally {
             FontRenderContext.popRawTextRendering();
@@ -222,8 +248,8 @@ public class AngelicaTextTranslatorTest {
         HexTextConfig.setUniversalAmpersandEnabled(false);
         FontRenderContext.pushRawTextRendering();
         try {
-            assertEquals("&c§cHi", AngelicaTextTranslator.translate("&cHi"));
-            assertEquals("&#123123§x§1§2§3§1§2§3OKO",
+            assertEquals("§c&c§cHi", AngelicaTextTranslator.translate("&cHi"));
+            assertEquals("§x§1§2§3§1§2§3&#123123§x§1§2§3§1§2§3OKO",
                 AngelicaTextTranslator.translate("&#123123OKO"));
         } finally {
             FontRenderContext.popRawTextRendering();
@@ -249,10 +275,31 @@ public class AngelicaTextTranslatorTest {
      */
     @Test
     public void aGradientSurvivesBeingSent() {
-        String expected = "§g§x§4§2§8§7§f§5§x§e§9§4§2§f§5HELLO";
+        String expected = expandedGradient(0x4287f5, 0xe942f5, "HELLO");
         assertEquals(expected, AngelicaTextTranslator.translate("&g&#4287f5&#e942f5HELLO"));
         assertEquals(expected, AngelicaTextTranslator.translate("§g§#4287f5§#e942f5HELLO"));
         assertEquals(expected, AngelicaTextTranslator.translate("&g§#4287f5&#e942f5HELLO"));
+    }
+
+    /**
+     * Angelica's own letters are spelled out at send: they are not HexText codes,
+     * so the ordinary conversion leaves them - and on a server that has not allowed
+     * ampersand formatting they arrive dead. The section form is read everywhere.
+     */
+    @Test
+    public void angelicaSendCodesAreSpelledOut() {
+        assertEquals("§qRAINBOW", AngelicaTextTranslator.convertAngelicaSendCodes("&qRAINBOW"));
+        assertEquals("§vflip§v normal", AngelicaTextTranslator.convertAngelicaSendCodes("&vflip&v normal"));
+        assertEquals("\\&q stays", AngelicaTextTranslator.convertAngelicaSendCodes("\\&q stays"));
+        assertEquals("ends with §q", AngelicaTextTranslator.convertAngelicaSendCodes("ends with &q"));
+        assertEquals("no codes here", AngelicaTextTranslator.convertAngelicaSendCodes("no codes here"));
+    }
+
+    /** The ramp spends itself on the glyphs it owns, not on text past its end. */
+    @Test
+    public void gradientSpanStopsAtItsTerminator() {
+        assertEquals(expandedGradient(0xFF0000, 0x0000FF, "ramp ") + "§cthen",
+            AngelicaTextTranslator.translate("&g&#FF0000&#0000FFramp &cthen"));
     }
 
     /** Without two colours after it, g is still plain rainbow. */
@@ -358,7 +405,7 @@ public class AngelicaTextTranslatorTest {
         FontRenderContext.pushRawTextRendering();
         try {
             assertEquals("&z§zWave", AngelicaTextTranslator.translate("&zWave"));
-            assertEquals("&u§u&#e942f5§x§e§9§4§2§f§5T",
+            assertEquals("&u§u§x§e§9§4§2§f§5&#e942f5§x§e§9§4§2§f§5T",
                 AngelicaTextTranslator.translate("&u&#e942f5T"));
         } finally {
             FontRenderContext.popRawTextRendering();
@@ -378,8 +425,8 @@ public class AngelicaTextTranslatorTest {
         AngelicaClientCompat.setHighlightRegistered(true);
         FontRenderContext.pushRawTextRendering();
         try {
-            assertEquals("§y&c§y§cHi", AngelicaTextTranslator.translate("&cHi"));
-            assertEquals("§y&#FF0000§y§x§f§f§0§0§0§0T",
+            assertEquals("§c§y&c§y§cHi", AngelicaTextTranslator.translate("&cHi"));
+            assertEquals("§x§f§f§0§0§0§0§y&#FF0000§y§x§f§f§0§0§0§0T",
                 AngelicaTextTranslator.translate("&#FF0000T"));
         } finally {
             FontRenderContext.popRawTextRendering();
@@ -392,7 +439,7 @@ public class AngelicaTextTranslatorTest {
         AngelicaClientCompat.setHighlightRegistered(false);
         FontRenderContext.pushRawTextRendering();
         try {
-            assertEquals("&c§cHi", AngelicaTextTranslator.translate("&cHi"));
+            assertEquals("§c&c§cHi", AngelicaTextTranslator.translate("&cHi"));
         } finally {
             FontRenderContext.popRawTextRendering();
         }
@@ -445,7 +492,9 @@ public class AngelicaTextTranslatorTest {
             }) {
                 String raw = AngelicaTextTranslator.translate(token + "T");
                 String expectedLiteral = token.replace('§', '&');
-                assertTrue(token + " -> " + raw, raw.startsWith(expectedLiteral));
+                // Colour tokens carry their own colour ahead of the characters, so
+                // the literal is contained rather than leading.
+                assertTrue(token + " -> " + raw, raw.contains(expectedLiteral));
                 assertTrue(token + " -> " + raw, raw.endsWith("T"));
             }
         } finally {
@@ -461,7 +510,7 @@ public class AngelicaTextTranslatorTest {
         assertEquals("§cHi", AngelicaTextTranslator.translate(text));
         FontRenderContext.pushRawTextRendering();
         try {
-            assertEquals("&c§cHi", AngelicaTextTranslator.translate(text));
+            assertEquals("§c&c§cHi", AngelicaTextTranslator.translate(text));
         } finally {
             FontRenderContext.popRawTextRendering();
         }
