@@ -314,8 +314,11 @@ public final class FontRendererRenderPipeline {
                 effects.setShadowColor(instruction.getRgb(), instruction.isEnabled());
                 break;
             case SET_GRADIENT:
+                // Anchored where the code sits, not at the start of the line: chat draws
+                // the name in the same string, and a ramp from zero spent its first
+                // glyphs on it.
                 effects.setGradient(instruction.getRgb(), instruction.getSecondaryRgb(),
-                    instruction.getParameter(), 0);
+                    instruction.getParameter(), visibleGlyphIndex);
                 break;
             case SET_SHAKE:
                 effects.setShake(instruction.isEnabled());
