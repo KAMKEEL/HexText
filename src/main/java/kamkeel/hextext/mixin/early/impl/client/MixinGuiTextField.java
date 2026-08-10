@@ -10,8 +10,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiChat;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -28,6 +30,21 @@ public abstract class MixinGuiTextField extends Gui {
 
     @Unique
     private boolean hextext$rawDraw;
+
+    @Shadow
+    private int lineScrollOffset;
+
+    @Shadow
+    private int cursorPosition;
+
+    @Shadow
+    private boolean isFocused;
+
+    @Shadow
+    private boolean isEnabled;
+
+    @Shadow
+    private String text;
 
     @Inject(method = "drawTextBox", at = @At("HEAD"))
     private void hextext$legacy$resetRawText(CallbackInfo ci) {
@@ -46,6 +63,78 @@ public abstract class MixinGuiTextField extends Gui {
         }
 
         hextext$lastRawText = "";
+    }
+
+    /**
+     * Keeps the cursor moving over what the editor shows, one character at a time.
+     *
+     * <p>Hodgepodge snaps the cursor past whole {@code &}-codes and deletes them as
+     * units, which reads naturally when the codes are invisible at render time. In
+     * a HexText editor they are visible glyphs, and a cursor that leaps eight of
+     * them at once is jumping over characters the person editing can see. This
+     * runs ahead of that handler - the last-applied injection at HEAD executes
+     * first - and answers the four keys it would have claimed with vanilla's own
+     * behaviour, so editing here works exactly as it does without Hodgepodge.</p>
+     */
+    @Inject(method = "textboxKeyTyped", at = @At("HEAD"), cancellable = true)
+    private void hextext$vanillaCursorKeys(char typedChar, int keyCode, CallbackInfoReturnable<Boolean> cir) {
+        if (HexText.getActiveProxy() == null || !this.isFocused) {
+            return;
+        }
+        if (!HexText.getActiveProxy().convertAmpersandsInChat()
+            && !HexText.getActiveProxy().allowUniversalAmpersand()) {
+            return;
+        }
+        if (this.text == null || this.text.indexOf('&') == -1) {
+            return;
+        }
+        if (GuiScreen.isCtrlKeyDown() && keyCode != 14 && keyCode != 211) {
+            // Word-wise movement is not char-wise movement; vanilla handles it the
+            // same way either side of this, so there is nothing to protect.
+            return;
+        }
+
+        GuiTextField self = (GuiTextField) (Object) this;
+        switch (keyCode) {
+            case 203: // LEFT
+                if (GuiScreen.isShiftKeyDown()) {
+                    self.setSelectionPos(self.getSelectionEnd() - 1);
+                } else {
+                    self.moveCursorBy(-1);
+                }
+                cir.setReturnValue(true);
+                break;
+            case 205: // RIGHT
+                if (GuiScreen.isShiftKeyDown()) {
+                    self.setSelectionPos(self.getSelectionEnd() + 1);
+                } else {
+                    self.moveCursorBy(1);
+                }
+                cir.setReturnValue(true);
+                break;
+            case 14: // BACKSPACE
+                if (this.isEnabled) {
+                    if (GuiScreen.isCtrlKeyDown()) {
+                        self.deleteWords(-1);
+                    } else {
+                        self.deleteFromCursor(-1);
+                    }
+                }
+                cir.setReturnValue(true);
+                break;
+            case 211: // DELETE
+                if (this.isEnabled) {
+                    if (GuiScreen.isCtrlKeyDown()) {
+                        self.deleteWords(1);
+                    } else {
+                        self.deleteFromCursor(1);
+                    }
+                }
+                cir.setReturnValue(true);
+                break;
+            default:
+                break;
+        }
     }
 
     @Inject(method = "setSelectionPos", at = @At("HEAD"))
@@ -112,7 +201,13 @@ public abstract class MixinGuiTextField extends Gui {
         fontRenderer.drawStringWithShadow(hextext$lastRawText, x, y, color);
         // The caller places the cursor from what this returns, so it has to stay the
         // width of the part in front of it and not of the line that was just drawn.
-        return x + fontRenderer.getStringWidth(prefix);
+        // Measured from the field's own state, not the argument: other mods decorate
+        // the argument with format codes before it arrives - Hodgepodge prepends §r
+        // and the scrolled-past formatting - and in a raw draw codes have width, so
+        // measuring the decorated string walked the cursor right of where it was.
+        final int prefixLength = Math.max(0,
+            Math.min(this.cursorPosition - this.lineScrollOffset, hextext$lastRawText.length()));
+        return x + fontRenderer.getStringWidth(hextext$lastRawText.substring(0, prefixLength));
     }
 
     /** The line is already down in full, so the second call has nothing left to draw. */
