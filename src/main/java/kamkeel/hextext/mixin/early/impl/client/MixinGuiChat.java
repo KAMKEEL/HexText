@@ -3,7 +3,9 @@ package kamkeel.hextext.mixin.early.impl.client;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import kamkeel.hextext.HexText;
+import kamkeel.hextext.client.compat.AngelicaTextTranslator;
 import kamkeel.hextext.client.render.FontRenderContext;
+import kamkeel.hextext.common.compat.AngelicaCompatibility;
 import kamkeel.hextext.common.util.StringUtils;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
@@ -38,6 +40,13 @@ public abstract class MixinGuiChat extends GuiScreen {
         if (!HexText.getActiveProxy().convertAmpersandsInChat())
             return original;
 
-        return StringUtils.convertAmpersandsToSectionSigns(original);
+        String converted = StringUtils.convertAmpersandsToSectionSigns(original);
+        // Angelica's own letters are not HexText codes and the conversion above
+        // leaves them as typed; where its renderer is the one drawing, they are
+        // spelled out too, so the sent line keeps the rainbow the preview showed.
+        if (AngelicaCompatibility.isAngelicaFontRendererActive()) {
+            converted = AngelicaTextTranslator.convertAngelicaSendCodes(converted);
+        }
+        return converted;
     }
 }
