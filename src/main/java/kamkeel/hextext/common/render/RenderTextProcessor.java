@@ -36,6 +36,18 @@ public final class RenderTextProcessor {
         for (int i = 0; i < processed.length(); i++) {
             char current = processed.charAt(i);
 
+            // An escaped marker is text. The backslash is dropped and the marker kept,
+            // so the code shows as the characters it is made of and styles nothing.
+            if (current == '\\' && i + 1 < processed.length()) {
+                char escaped = processed.charAt(i + 1);
+                if (escaped == '&' || escaped == 167) {
+                    sanitized.append(escaped);
+                    modified = true;
+                    i++;
+                    continue;
+                }
+            }
+
             boolean usingSectionSign = current == 167;
             boolean usingAmpersand = current == '&';
 
@@ -283,7 +295,7 @@ public final class RenderTextProcessor {
         if (ColorCodeUtils.isStyleCode(lower)) {
             return FormatCategory.STYLE;
         }
-        if (lower == 'g') {
+        if (lower == 'g' || lower == 'q') {
             return FormatCategory.RAINBOW;
         }
         if (ColorCodeUtils.isEffectCode(lower)) {
@@ -311,7 +323,11 @@ public final class RenderTextProcessor {
                 applyEffectDirective(bucket, lower);
                 break;
             case RAINBOW:
-                bucket.add(RenderDirectiveImpl.setRainbow(true, directiveIndex));
+                // g cycles, q holds still - Angelica's q is a fixed table and the two
+                // renderers have to agree about the same string.
+                bucket.add(lower == 'q'
+                    ? RenderDirectiveImpl.setStaticRainbow(directiveIndex)
+                    : RenderDirectiveImpl.setRainbow(true, directiveIndex));
                 break;
             default:
                 break;
