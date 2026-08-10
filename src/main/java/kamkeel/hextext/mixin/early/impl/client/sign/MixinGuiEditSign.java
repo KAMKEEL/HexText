@@ -1,5 +1,7 @@
 package kamkeel.hextext.mixin.early.impl.client.sign;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import kamkeel.hextext.HexText;
@@ -132,10 +134,16 @@ public abstract class MixinGuiEditSign extends GuiScreen {
         return this.editLines;
     }
 
-    @Redirect(method = "keyTyped", at = @At(value = "INVOKE", target = "Ljava/lang/String;length()I", ordinal = 2))
-    private int hextext$measureVisibleLength(String line) {
+    // A wrapper rather than a redirect, because Hodgepodge redirects this same call for
+    // the same reason - counting visible characters instead of raw ones - and two
+    // redirects on one call are a conflict that fails the whole class. Wrappers chain:
+    // when the server speaks HexText this count is the one that matches what will
+    // render, spans and all, and otherwise whoever else claimed the call - or vanilla -
+    // answers through original.
+    @WrapOperation(method = "keyTyped", at = @At(value = "INVOKE", target = "Ljava/lang/String;length()I", ordinal = 2))
+    private int hextext$measureVisibleLength(String line, Operation<Integer> original) {
         if (!HexText.getActiveProxy().isRemoteHexTextPresent()) {
-            return line.length();
+            return original.call(line);
         }
 
         return SignTextHelper.visibleLength(line);

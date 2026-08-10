@@ -1,5 +1,6 @@
 package kamkeel.hextext.mixin.early.impl.sign;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import kamkeel.hextext.HexText;
 import kamkeel.hextext.api.sign.SignSide;
 import kamkeel.hextext.common.sign.SignUpdatePacket;
@@ -11,9 +12,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.IOException;
@@ -36,9 +35,14 @@ public abstract class MixinC12PacketUpdateSign extends Packet implements SignUpd
     @Unique
     private SignSide side = SignSide.FRONT;
 
-    @ModifyConstant(method = "readPacketData", constant = @Constant(intValue = 15))
+    // A wrapper rather than a constant modifier, because Hodgepodge modifies this same
+    // 15 (to 90) and two constant modifiers on one constant are a conflict that takes
+    // the whole class down - which killed every world join with both mods installed.
+    // Wrappers chain instead: this one raises the floor and leaves a larger limit
+    // someone else already set alone.
+    @ModifyExpressionValue(method = "readPacketData", at = @At(value = "CONSTANT", args = "intValue=15"))
     private int hextext$expandReadLimit(int original) {
-        return SignTextHelper.SIGN_LINE_VISIBLE_LIMIT * 2;
+        return Math.max(original, SignTextHelper.SIGN_LINE_VISIBLE_LIMIT * 2);
     }
 
     @Inject(method = "writePacketData", at = @At("RETURN"))
