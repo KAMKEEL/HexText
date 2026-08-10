@@ -498,7 +498,10 @@ public final class AngelicaTextTranslator {
 
         if (count == 2 && (first == '&' || first == SECTION)) {
             char code = Character.toLowerCase(text.charAt(from + 1));
-            if (ColorCodeUtils.isMinecraftColorCode(code)) {
+            // Styles as well as colours: the native renderer applies a code to its own
+            // characters, and the width walkers measure them that way, so a token that
+            // did not style itself here left the cursor short by its own bold.
+            if (ColorCodeUtils.isMinecraftColorCode(code) || ColorCodeUtils.isStyleCode(code)) {
                 out.append(SECTION).append(code);
             }
             return;

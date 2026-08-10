@@ -457,7 +457,8 @@ public class AngelicaTextTranslatorTest {
     public void rawModeSpellsSectionTokensWithAmpersands() {
         FontRenderContext.pushRawTextRendering();
         try {
-            assertEquals("&l§lBold", AngelicaTextTranslator.translate("§lBold"));
+            // A style token previews itself, so its own characters are bold too.
+            assertEquals("§l&l§lBold", AngelicaTextTranslator.translate("§lBold"));
         } finally {
             FontRenderContext.popRawTextRendering();
         }

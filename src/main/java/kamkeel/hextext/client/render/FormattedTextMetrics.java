@@ -46,36 +46,18 @@ public final class FormattedTextMetrics {
                     continue;
                 }
             } else {
-                // RAW MODE:
-                // We still render the formatting codes literally (e.g. "&l"),
-                // but we want their *style* effect (bold) to influence widths.
-                // The code's own two characters draw in the style running BEFORE
-                // it - the editor applies the directive after showing the token -
-                // so both are measured first and the style changes after them.
-                // Applying it early drifted the cursor a pixel per code.
+                // RAW MODE: the codes are drawn as characters, and a code applies to its
+                // own two characters - both renderers do this, so widths must too.
                 if (index + 1 < length) {
                     char marker = text.charAt(index);
                     if (marker == 167 || marker == '&') { // '§' or '&'
                         char fmt = Character.toLowerCase(text.charAt(index + 1));
                         if (ColorCodeUtils.isFormattingCode(fmt)) {
-                            for (int codeChar = 0; codeChar < 2; codeChar++) {
-                                float width = charWidthFunc.getWidth(text.charAt(index + codeChar));
-                                if (width > 0.0f) {
-                                    currentLineWidth += width;
-                                    if (isBold) {
-                                        currentLineWidth += boldExtra;
-                                    }
-                                    currentLineWidth += glyphSpacing;
-                                }
-                            }
-                            maxWidth = Math.max(maxWidth, currentLineWidth);
                             if (fmt == 'l') {
                                 isBold = true;
                             } else if (fmt == 'r' || ColorCodeUtils.isMinecraftColorCode(fmt)) {
                                 isBold = false;
                             }
-                            index += 2;
-                            continue;
                         }
                     }
                 }
@@ -149,37 +131,17 @@ public final class FormattedTextMetrics {
                 }
             } else {
                 // RAW MODE: respect style/color codes for measuring, but don't strip them.
-                // As above, the code's own characters draw in the style running before
-                // it; the change applies after both are measured.
+                // As above, a code applies to its own two characters.
                 if (index + 1 < length) {
                     char marker = text.charAt(index);
                     if (marker == 167 || marker == '&') {
                         char fmt = Character.toLowerCase(text.charAt(index + 1));
                         if (ColorCodeUtils.isFormattingCode(fmt)) {
-                            for (int codeChar = 0; codeChar < 2; codeChar++) {
-                                float width = charWidthFunc.getWidth(text.charAt(index + codeChar));
-                                if (width > 0.0f) {
-                                    currentWidth += width;
-                                    if (isBold) {
-                                        currentWidth += boldExtra;
-                                    }
-                                    currentWidth += glyphSpacing;
-                                }
-                            }
-                            if (currentWidth > maxWidth) {
-                                if (preferSpaceBreak && lastSpacePosition >= 0) {
-                                    return lastSpacePosition;
-                                }
-                                return Math.min(lastSafePosition, length);
-                            }
                             if (fmt == 'l') {
                                 isBold = true;
                             } else if (fmt == 'r' || ColorCodeUtils.isMinecraftColorCode(fmt)) {
                                 isBold = false;
                             }
-                            index += 2;
-                            lastSafePosition = index;
-                            continue;
                         }
                     }
                 }
