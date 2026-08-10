@@ -2,6 +2,7 @@ package kamkeel.hextext;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLLoadCompleteEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import kamkeel.hextext.api.HexTextApi;
@@ -45,6 +46,9 @@ public class CommonProxy {
     }
 
     public void postInit(FMLPostInitializationEvent ev) {
+    }
+
+    public void loadComplete(FMLLoadCompleteEvent ev) {
     }
 
     public boolean allowUniversalAmpersand() {

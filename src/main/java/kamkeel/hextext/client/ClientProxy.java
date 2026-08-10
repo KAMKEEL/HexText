@@ -2,10 +2,12 @@ package kamkeel.hextext.client;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLLoadCompleteEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import kamkeel.hextext.CommonProxy;
 import kamkeel.hextext.client.compat.AngelicaClientCompat;
+import kamkeel.hextext.client.compat.GTNHLibTextCompat;
 import kamkeel.hextext.client.config.ClientConfig;
 import kamkeel.hextext.client.event.ClientConnectionEventHandler;
 
@@ -32,6 +34,12 @@ public class ClientProxy extends CommonProxy {
     @Override
     public void postInit(FMLPostInitializationEvent ev) {
         super.postInit(ev);
+    }
+
+    @Override
+    public void loadComplete(FMLLoadCompleteEvent ev) {
+        super.loadComplete(ev);
+        GTNHLibTextCompat.claimTextPreprocessor();
     }
 
     @Override
