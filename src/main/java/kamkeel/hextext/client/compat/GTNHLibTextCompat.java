@@ -12,26 +12,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Claims GTNHLib's text preprocessor slot when HexText is rendering text itself.
- *
- * <p>The slot holds one function that other mods run over every string before the
- * font renderer sees it. Angelica fills it with its own colour conversion, and
- * Hodgepodge - when Angelica is absent - fills it with a fallback that rewrites
- * extended colours down to the sixteen vanilla ones: hex to the nearest colour
- * code, gradients to a single flat colour. Reasonable when nothing better is
- * installed; with HexText present it destroys exactly the codes HexText's own
- * renderer would have drawn in full, before that renderer ever sees them.</p>
- *
- * <p>So HexText puts an identity function there. Text then reaches the vanilla
- * pipeline untouched, where HexText's renderer reads the codes natively - and an
- * edit box keeps showing the characters that were typed, which the rewriting
- * preprocessor also broke. The claim happens at loadComplete because Hodgepodge
- * registers its fallback at postInit, and every mod's postInit has run by then -
- * last write wins and this has to be it.</p>
- *
- * <p>When Angelica's font renderer is active this does nothing: the slot is
- * Angelica's, HexText translates its grammar to Angelica's instead, and the
- * suppressor already governs the ampersand conversion.</p>
+ * Claims GTNHLib's text preprocessor slot when HexText renders text itself. Other mods
+ * fill it with fallbacks that flatten hex and gradients before the renderer sees them,
+ * so an identity function is registered instead. Registered at loadComplete, after every
+ * postInit, since the slot is last-write-wins. Skipped when Angelica owns the renderer.
  */
 public final class GTNHLibTextCompat {
 
@@ -66,9 +50,8 @@ public final class GTNHLibTextCompat {
                 case "apply":
                     return args[0];
                 case "handlesAmpCodes": {
-                    // Live, not captured: width code asks this to decide whether &-pairs
-                    // are zero-width, and the answer is whatever the config says the
-                    // renderer will do with them right now.
+                    // Live, not captured: width code asks this to decide whether
+                    // &-pairs are zero-width, and the config can change.
                     CommonProxy proxy1 = HexText.getActiveProxy();
                     return proxy1 != null && proxy1.allowUniversalAmpersand();
                 }

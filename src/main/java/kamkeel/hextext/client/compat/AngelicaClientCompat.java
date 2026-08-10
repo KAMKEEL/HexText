@@ -41,16 +41,9 @@ public final class AngelicaClientCompat {
     }
 
     /**
-     * Whether Angelica turns ampersand codes into its own grammar downstream.
-     *
-     * <p>Asked about the codes HexText does not own - Angelica's q and v - to decide
-     * whether an editor should preview them. What the editor shows is a promise about
-     * what the finished line will look like, and the only thing that keeps that
-     * promise for a code somebody else converts is that they are actually going to
-     * convert it. With the setting off the code stays text once sent, so previewing a
-     * rainbow would be showing the writer something they are not going to get.</p>
-     *
-     * <p>Read once. It is a startup setting, and this is asked per token.</p>
+     * Whether Angelica converts ampersand codes downstream. Decides if an editor should
+     * preview the codes HexText does not own, since with the setting off they stay text
+     * once sent. Read once - a startup setting asked per token.
      */
     public static boolean convertsAmpersandCodes() {
         final Boolean cached = ampersandCodesConverted;
@@ -91,23 +84,10 @@ public final class AngelicaClientCompat {
     }
 
     /**
-     * Whether Angelica should leave ampersands alone right now.
-     *
-     * <p>Two unrelated reasons, both answered here because Angelica only offers the
-     * one hook.</p>
-     *
-     * <p>The first is an editor: a code being typed has to stay visible as the
-     * characters it is made of, so nothing may convert it out from under the person
-     * writing it.</p>
-     *
-     * <p>The second is the server's policy. Angelica is a client mod and its
-     * ampersand conversion is a client setting, so a server cannot turn it off - a
-     * player could switch colour codes on locally and use them where the server had
-     * decided they were not allowed. HexText already learns the server's answer
-     * through its own config sync, and holding conversion off is the one lever that
-     * works from this side: it cannot force a setting, but it can decline to act on
-     * one. Soft, and honest about which side owns what - a player who leaves the
-     * server keeps their own setting untouched.</p>
+     * Whether Angelica should leave ampersands alone. Two reasons through one hook: a
+     * code being typed must stay visible, and a server that has not allowed ampersand
+     * formatting cannot turn off a client setting - declining to convert is the lever
+     * that works from this side.
      */
     static boolean shouldSuppressConversion() {
         if (FontRenderContext.isRawTextRendering()) {
@@ -218,11 +198,8 @@ public final class AngelicaClientCompat {
     }
 
     /**
-     * Whether this Angelica's {@code CustomGlyphEffect} can draw behind a glyph.
-     *
-     * <p>Capability rather than version. Every other hook here is guarded the same way
-     * - by whether the class and method are there to call - which is what lets one
-     * feature degrade without taking the rest of the compat down with it.</p>
+     * Whether this Angelica's {@code CustomGlyphEffect} can draw behind a glyph. Guarded
+     * by capability rather than version, so each hook degrades on its own.
      */
     private static boolean hasBackgroundHook(Class<?> effectType) {
         try {
@@ -302,13 +279,8 @@ public final class AngelicaClientCompat {
     }
 
     /**
-     * The wash drawn behind a formatting code while it is being edited.
-     *
-     * <p>Angelica's renderer clears custom effects on a colour and on reset, and
-     * toggles them on their own code, so this is turned on before the characters of a
-     * token and off after them. The colour is the one HexText's own renderer uses for
-     * a recognised code, so an editor looks the same whichever renderer is under
-     * it.</p>
+     * The wash drawn behind a formatting code while editing. Toggled on before a token's
+     * characters and off after them; the colour matches HexText's own renderer.
      */
     private static final int TOKEN_HIGHLIGHT_ARGB = 0x304080FF;
     /** Free in Angelica's namespace, and free in HexText's. */
