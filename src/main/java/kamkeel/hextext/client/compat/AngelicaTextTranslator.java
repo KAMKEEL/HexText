@@ -170,15 +170,19 @@ public final class AngelicaTextTranslator {
                     int rgb = ColorCodeUtils.parseHexColor(text, i + 2);
                     if (rgb != -1) {
                         out = ensureOutput(out, text, i);
-                        // Inline hex resets styles in HexText; §x alone would carry them across.
-                        if (activeStyles != null && activeStyles.length() > 0) {
-                            out.append(SECTION).append('r');
-                            activeStyles.setLength(0);
-                            waveActive = false;
-                            dinnerboneActive = false;
-                        } else {
-                            waveActive = closeWave(out, waveActive);
-                            dinnerboneActive = closeDinnerbone(out, dinnerboneActive);
+                        // Angelica carries styles through a colour where HexText clears
+                        // them. Following its rules means emitting the colour alone;
+                        // otherwise a reset goes first to restore HexText's.
+                        if (!ColorCodeUtils.followsAngelicaFormatting()) {
+                            if (activeStyles != null && activeStyles.length() > 0) {
+                                out.append(SECTION).append('r');
+                                activeStyles.setLength(0);
+                                waveActive = false;
+                                dinnerboneActive = false;
+                            } else {
+                                waveActive = closeWave(out, waveActive);
+                                dinnerboneActive = closeDinnerbone(out, dinnerboneActive);
+                            }
                         }
                         appendSectionX(out, rgb);
                         if (colorStack != null) {
@@ -357,16 +361,17 @@ public final class AngelicaTextTranslator {
                     int rgb = ColorCodeUtils.parseHexColor(text, i + 1);
                     if (rgb != -1) {
                         out = ensureOutput(out, text, i);
-                        // Opening a span resets styles like an inline hex does; only the
-                        // closing tag preserves them.
-                        if (activeStyles != null && activeStyles.length() > 0) {
-                            out.append(SECTION).append('r');
-                            activeStyles.setLength(0);
-                            waveActive = false;
-                            dinnerboneActive = false;
-                        } else {
-                            waveActive = closeWave(out, waveActive);
-                            dinnerboneActive = closeDinnerbone(out, dinnerboneActive);
+                        // A span opens with a colour, and follows the same rule as one.
+                        if (!ColorCodeUtils.followsAngelicaFormatting()) {
+                            if (activeStyles != null && activeStyles.length() > 0) {
+                                out.append(SECTION).append('r');
+                                activeStyles.setLength(0);
+                                waveActive = false;
+                                dinnerboneActive = false;
+                            } else {
+                                waveActive = closeWave(out, waveActive);
+                                dinnerboneActive = closeDinnerbone(out, dinnerboneActive);
+                            }
                         }
                         if (colorStack == null) {
                             colorStack = new ArrayDeque<>();

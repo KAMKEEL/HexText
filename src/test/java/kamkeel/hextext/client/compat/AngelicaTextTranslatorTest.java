@@ -3,6 +3,7 @@ package kamkeel.hextext.client.compat;
 import kamkeel.hextext.CommonProxy;
 import kamkeel.hextext.HexText;
 import kamkeel.hextext.client.render.FontRenderContext;
+import kamkeel.hextext.common.compat.AngelicaCompatibility;
 import kamkeel.hextext.config.HexTextConfig;
 
 import org.junit.After;
@@ -300,6 +301,33 @@ public class AngelicaTextTranslatorTest {
     public void gradientSpanStopsAtItsTerminator() {
         assertEquals(expandedGradient(0xFF0000, 0x0000FF, "ramp ") + "§cthen",
             AngelicaTextTranslator.translate("&g&#FF0000&#0000FFramp &cthen"));
+    }
+
+    /**
+     * Angelica carries styles through a colour where HexText clears them. Following its
+     * rules drops the reset, so bold survives a hex the way it does for its own codes.
+     */
+    @Test
+    public void angelicaRulesKeepStylesThroughAColour() {
+        HexTextConfig.setFollowAngelicaFormatting(true);
+        AngelicaCompatibility.setAngelicaFontRendererActive(true);
+        try {
+            assertEquals("§lBold§x§f§f§0§0§0§0Red", AngelicaTextTranslator.translate("&lBold&#FF0000Red"));
+        } finally {
+            AngelicaCompatibility.setAngelicaFontRendererActive(null);
+        }
+    }
+
+    /** Turned off, HexText's own rules apply and a colour clears what came before. */
+    @Test
+    public void hexTextRulesClearStylesAtAColour() {
+        HexTextConfig.setFollowAngelicaFormatting(false);
+        AngelicaCompatibility.setAngelicaFontRendererActive(true);
+        try {
+            assertEquals("§lBold§r§x§f§f§0§0§0§0Red", AngelicaTextTranslator.translate("&lBold&#FF0000Red"));
+        } finally {
+            AngelicaCompatibility.setAngelicaFontRendererActive(null);
+        }
     }
 
     /** Without two colours after it, g is still plain rainbow. */

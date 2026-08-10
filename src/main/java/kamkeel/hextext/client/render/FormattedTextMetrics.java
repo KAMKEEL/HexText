@@ -27,6 +27,9 @@ public final class FormattedTextMetrics {
         final int length = text.length();
 
         ColorCodeUtils.FormattingEnvironment env = rawMode ? null : ColorCodeUtils.captureFormattingEnvironment(false);
+        // Angelica carries styles through a colour where HexText clears them, and the
+        // widths have to follow whichever renderer is drawing. Read once per string.
+        final boolean hexResetsStyles = ColorCodeUtils.hexResetsStyles();
 
         for (int index = 0; index < length; ) {
             if (!rawMode) {
@@ -53,8 +56,7 @@ public final class FormattedTextMetrics {
                     if (marker == 167 || marker == '&') { // '§' or '&'
                         char fmt = Character.toLowerCase(text.charAt(index + 1));
                         if (fmt == '#') {
-                            // A hex colour resets styles, its own characters included.
-                            isBold = false;
+                            isBold &= !hexResetsStyles;
                         } else if (ColorCodeUtils.isFormattingCode(fmt)) {
                             if (fmt == 'l') {
                                 isBold = true;
@@ -63,7 +65,7 @@ public final class FormattedTextMetrics {
                             }
                         }
                     } else if (marker == '<') {
-                        isBold = false;
+                        isBold &= !hexResetsStyles;
                     }
                 }
             }
@@ -115,6 +117,9 @@ public final class FormattedTextMetrics {
         final int length = text.length();
 
         ColorCodeUtils.FormattingEnvironment env = rawMode ? null : ColorCodeUtils.captureFormattingEnvironment(false);
+        // Angelica carries styles through a colour where HexText clears them, and the
+        // widths have to follow whichever renderer is drawing. Read once per string.
+        final boolean hexResetsStyles = ColorCodeUtils.hexResetsStyles();
 
         for (int index = 0; index < length; ) {
             if (!rawMode) {
@@ -151,7 +156,7 @@ public final class FormattedTextMetrics {
                             }
                         }
                     } else if (marker == '<') {
-                        isBold = false;
+                        isBold &= !hexResetsStyles;
                     }
                 }
             }

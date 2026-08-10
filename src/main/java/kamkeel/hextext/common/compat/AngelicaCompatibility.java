@@ -37,6 +37,11 @@ public final class AngelicaCompatibility {
         return shouldDisableHexTextFontRendererMixin();
     }
 
+    /** Test hook; null restores detection. */
+    public static void setAngelicaFontRendererActive(Boolean active) {
+        cachedResult = active;
+    }
+
     /**
      * Returns {@code true} when HexText should skip applying its font renderer mixin because Angelica will
      * provide its own implementation.

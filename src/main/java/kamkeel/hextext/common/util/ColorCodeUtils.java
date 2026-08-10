@@ -2,6 +2,8 @@ package kamkeel.hextext.common.util;
 
 import kamkeel.hextext.CommonProxy;
 import kamkeel.hextext.HexText;
+import kamkeel.hextext.common.compat.AngelicaCompatibility;
+import kamkeel.hextext.config.HexTextConfig;
 
 /**
  * Utility helpers for parsing and working with Minecraft formatting and RGB colour codes.
@@ -139,6 +141,21 @@ public final class ColorCodeUtils {
 
     public static boolean isResetCode(char c) {
         return Character.toLowerCase(c) == 'r';
+    }
+
+    /**
+     * Whether Angelica's formatting rules apply. They differ from HexText's - a colour
+     * carries styles there rather than clearing them - and only matter where Angelica's
+     * renderer is the one drawing. Configurable, since it is a choice rather than a fact.
+     */
+    public static boolean followsAngelicaFormatting() {
+        return AngelicaCompatibility.isAngelicaFontRendererActive()
+            && HexTextConfig.isFollowAngelicaFormatting();
+    }
+
+    /** Whether a hex colour clears bold and its kin, which is HexText's own rule. */
+    public static boolean hexResetsStyles() {
+        return !followsAngelicaFormatting();
     }
 
     /** {@code [&§]g[&§]#RRGGBB[&§]#RRGGBB}, under any mix of spellings. */
