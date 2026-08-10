@@ -1,22 +1,25 @@
 package kamkeel.hextext.mixin.early.impl.client;
 
+import kamkeel.hextext.HexText;
 import kamkeel.hextext.client.compat.AngelicaTextTranslator;
 import kamkeel.hextext.client.render.FontRenderContext;
+import kamkeel.hextext.client.render.FontRendererUtils;
+import kamkeel.hextext.common.util.StringUtils;
 import net.minecraft.client.gui.FontRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Lightweight replacement for {@link MixinFontRenderer} installed when Angelica's batching font
- * renderer owns string drawing. Vanilla's renderStringAtPos never runs in that configuration, so
- * instead of hooking the glyph pipeline this mixin rewrites HexText tokens into the section-sign
- * grammar Angelica understands before Angelica's own hooks capture the text.
- *
- * <p>The priority must stay below Angelica's default of 1000: injections at HEAD execute in
- * mixin application order, so applying first places the rewrite ahead of Angelica's cancellable
- * drawString/renderString injections and its ampersand conversion on the measurement methods.
- * Verified against the transformed class dump - Angelica's handlers receive the rewritten text.
+ * Replaces {@link MixinFontRenderer} when Angelica's batching renderer owns drawing. Vanilla's
+ * glyph loop never runs there, so tokens are rewritten into Angelica's grammar instead.
+ * <p>
+ * Only draw methods translate. Callers use measurement results as indices into the string they
+ * passed, and a translated string has different lengths, so those are answered with HexText's
+ * own metrics over the original text. Priority stays below Angelica's 1000 so the rewrite lands
+ * ahead of its hooks.
  */
 @Mixin(value = FontRenderer.class, priority = 500)
 public abstract class MixinFontRendererAngelica {
@@ -31,49 +34,54 @@ public abstract class MixinFontRendererAngelica {
         return AngelicaTextTranslator.translate(text);
     }
 
-    @ModifyVariable(method = "getStringWidth", at = @At("HEAD"), argsOnly = true)
-    private String hextext$translateWidth(String text) {
-        return AngelicaTextTranslator.translate(text);
-    }
-
-    @ModifyVariable(method = "sizeStringToWidth", at = @At("HEAD"), argsOnly = true)
-    private String hextext$translateSize(String text) {
-        return AngelicaTextTranslator.translate(text);
-    }
-
-    /**
-     * Trimming is the one hook whose <em>result</em> is drawn rather than measured.
-     *
-     * <p>{@code MixinGuiTextField} keeps what this returns and hands it back to
-     * {@code drawStringWithShadow}, so translating here means translating twice: the
-     * second pass sees the section-x token the first one emitted, spells it out as a
-     * literal, and emits another beside it. That is the doubling on screen.</p>
-     *
-     * <p>Left alone while raw, the field keeps the characters the reader typed and the
-     * draw translates them once. Nothing is lost by measuring the untranslated string,
-     * because everything translation adds is a formatting token and those are zero
-     * width - the cut lands in the same place either way.</p>
-     */
-    @ModifyVariable(method = "trimStringToWidth(Ljava/lang/String;IZ)Ljava/lang/String;", at = @At("HEAD"), argsOnly = true)
-    private String hextext$translateTrim(String text) {
-        if (FontRenderContext.isRawTextRendering()) {
-            return text;
+    @Inject(method = "getStringWidth", at = @At("RETURN"), cancellable = true)
+    private void hextext$width(String text, CallbackInfoReturnable<Integer> cir) {
+        if (HexText.getActiveProxy() == null) {
+            return;
         }
-        return AngelicaTextTranslator.translate(text);
+        cir.setReturnValue(Math.round(FontRendererUtils.calculateMaxLineWidth(
+            (FontRenderer) (Object) this, text, FontRenderContext.isRawTextRendering())));
     }
 
-    @ModifyVariable(method = "listFormattedStringToWidth", at = @At("HEAD"), argsOnly = true)
-    private String hextext$translateListWrap(String text) {
-        return AngelicaTextTranslator.translate(text);
+    @Inject(method = "sizeStringToWidth", at = @At("RETURN"), cancellable = true)
+    private void hextext$size(String text, int maxWidth, CallbackInfoReturnable<Integer> cir) {
+        if (HexText.getActiveProxy() == null) {
+            return;
+        }
+        cir.setReturnValue(FontRendererUtils.computeLineBreakIndex(
+            (FontRenderer) (Object) this, text, maxWidth, FontRenderContext.isRawTextRendering()));
     }
 
-    @ModifyVariable(method = "wrapFormattedStringToWidth", at = @At("HEAD"), argsOnly = true)
-    private String hextext$translateWrap(String text) {
-        return AngelicaTextTranslator.translate(text);
+    @Inject(method = "trimStringToWidth(Ljava/lang/String;IZ)Ljava/lang/String;", at = @At("RETURN"), cancellable = true)
+    private void hextext$trim(String text, int width, boolean reverse, CallbackInfoReturnable<String> cir) {
+        if (HexText.getActiveProxy() == null || text == null || text.isEmpty()) {
+            return;
+        }
+        boolean rawMode = FontRenderContext.isRawTextRendering();
+        FontRenderer self = (FontRenderer) (Object) this;
+        if (!reverse) {
+            int endIndex = FontRendererUtils.computeTrimIndex(self, text, width, rawMode);
+            cir.setReturnValue(text.substring(0, Math.min(endIndex, text.length())));
+        } else {
+            cir.setReturnValue(FontRendererUtils.trimStringFromEnd(self, text, width, rawMode));
+        }
     }
 
-    @ModifyVariable(method = "getFormatFromString", at = @At("HEAD"), argsOnly = true)
-    private static String hextext$translateFormat(String text) {
-        return AngelicaTextTranslator.translate(text);
+    @Inject(method = "wrapFormattedStringToWidth", at = @At("RETURN"), cancellable = true)
+    private void hextext$wrap(String text, int width, CallbackInfoReturnable<String> cir) {
+        if (HexText.getActiveProxy() == null) {
+            return;
+        }
+        cir.setReturnValue(FontRendererUtils.wrapFormattedString(
+            (FontRenderer) (Object) this, text, width, FontRenderContext.isRawTextRendering()));
+    }
+
+    /** The formatting callers carry onto a continuation line; the chat mixin peels off this same string. */
+    @Inject(method = "getFormatFromString", at = @At("RETURN"), cancellable = true)
+    private static void hextext$format(String text, CallbackInfoReturnable<String> cir) {
+        if (HexText.getActiveProxy() == null) {
+            return;
+        }
+        cir.setReturnValue(StringUtils.extractFormatFromString(text));
     }
 }
