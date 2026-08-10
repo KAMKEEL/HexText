@@ -39,12 +39,9 @@ public final class TextEffectMath {
     }
 
     /**
-     * How far a glyph rides up or down on the wave, in pixels.
-     *
-     * <p>A travelling sine: position along the string sets the phase and the clock
-     * moves it, so the shape holds still relative to the text and the text appears to
-     * move through it. Shake is the other kind of motion here - it is noise, reseeded
-     * per frame window, and deliberately has no shape at all.</p>
+     * How far a glyph rides up or down on the wave, in pixels. A travelling sine:
+     * position sets the phase and the clock moves it. Shake is the other motion here -
+     * noise reseeded per frame window, with no shape at all.
      *
      * @param speed how long, in milliseconds, one full cycle takes
      */
@@ -58,12 +55,10 @@ public final class TextEffectMath {
     }
 
     /**
-     * The colour of one glyph along a two-colour gradient.
-     *
-     * <p>Interpolated in straight RGB rather than through a colour space, which is
-     * what Angelica's gradient does and is what makes the two agree. A run of one
-     * glyph is the start colour: there is no distance to travel, and dividing by the
-     * span would divide by zero.</p>
+     * The colour of one glyph along a two-colour gradient, interpolated in HSV along the
+     * shorter hue arc. Straight RGB fades through greys where turning the hue stays
+     * vivid. This is the only ramp HexText draws: under Angelica the translator expands
+     * gradients per glyph with it, so both renderers agree. A span of one is the start.
      *
      * @param span how many visible glyphs the gradient covers
      */
@@ -73,17 +68,61 @@ public final class TextEffectMath {
         }
         int clamped = charIndex < 0 ? 0 : Math.min(charIndex, span - 1);
         float t = clamped / (float) (span - 1);
-
-        int r = lerpChannel(startRgb >> 16, endRgb >> 16, t);
-        int g = lerpChannel(startRgb >> 8, endRgb >> 8, t);
-        int b = lerpChannel(startRgb, endRgb, t);
-        return (r << 16) | (g << 8) | b;
+        return interpolateHsv(startRgb, endRgb, t);
     }
 
-    private static int lerpChannel(int from, int to, float t) {
-        int a = from & 0xFF;
-        int b = to & 0xFF;
-        return Math.round(a + (b - a) * t) & 0xFF;
+    private static int interpolateHsv(int startRgb, int endRgb, float t) {
+        float[] from = rgbToHsv(startRgb);
+        float[] to = rgbToHsv(endRgb);
+
+        // A grey end has no hue of its own; borrowing the other end's keeps a fade
+        // to white or black from sweeping through unrelated colours on the way.
+        if (from[1] == 0f) {
+            from[0] = to[0];
+        }
+        if (to[1] == 0f) {
+            to[0] = from[0];
+        }
+
+        float hueDelta = to[0] - from[0];
+        if (hueDelta > 180f) {
+            hueDelta -= 360f;
+        } else if (hueDelta < -180f) {
+            hueDelta += 360f;
+        }
+
+        float hue = from[0] + hueDelta * t;
+        float saturation = from[1] + (to[1] - from[1]) * t;
+        float value = from[2] + (to[2] - from[2]) * t;
+        return ColorCodeUtils.hsvToRgb(hue, saturation, value);
+    }
+
+    private static float[] rgbToHsv(int rgb) {
+        float r = ((rgb >> 16) & 0xFF) / 255.0f;
+        float g = ((rgb >> 8) & 0xFF) / 255.0f;
+        float b = (rgb & 0xFF) / 255.0f;
+
+        float max = Math.max(r, Math.max(g, b));
+        float min = Math.min(r, Math.min(g, b));
+        float delta = max - min;
+
+        float hue = 0f;
+        if (delta != 0f) {
+            if (max == r) {
+                hue = ((g - b) / delta) % 6.0f;
+            } else if (max == g) {
+                hue = (b - r) / delta + 2.0f;
+            } else {
+                hue = (r - g) / delta + 4.0f;
+            }
+            hue *= 60.0f;
+            if (hue < 0f) {
+                hue += 360.0f;
+            }
+        }
+
+        float saturation = max == 0f ? 0f : delta / max;
+        return new float[] { hue, saturation, max };
     }
 
     public static long computeShakeSeed(int charIndex, long now, long frameWindow) {
