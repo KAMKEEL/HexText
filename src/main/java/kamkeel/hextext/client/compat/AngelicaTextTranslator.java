@@ -494,6 +494,9 @@ public final class AngelicaTextTranslator {
                 int endRgb = ColorCodeUtils.parseHexColor(text, from + 12);
                 if (endRgb != -1) {
                     appendSectionX(out, endRgb);
+                    // A colour clears custom effects in Angelica, so the wash is turned
+                    // back on rather than left for the closing toggle to re-enable.
+                    if (wash) out.append(SECTION).append(AngelicaClientCompat.highlightCode());
                 }
             }
             char character = text.charAt(index);

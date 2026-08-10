@@ -67,6 +67,20 @@ public class NativeCodeSupportTest {
             RenderTextProcessor.prepare("&cred \\&a not green &agreen", false).getDisplayText());
     }
 
+    /**
+     * A gradient token wears the two colours it names, and the ramp begins on the text
+     * after it rather than on the code's own characters.
+     */
+    @Test
+    public void gradientTokenWearsItsOwnColoursWhileEditing() {
+        java.util.Map<Integer, java.util.List<kamkeel.hextext.api.rendering.RenderDirective>> directives =
+            RenderTextProcessor.prepare("&g&#FFFF00&#FF00FFtext", true).getInstructions();
+
+        assertTrue("start colour on the token", directives.containsKey(0));
+        assertTrue("end colour on the second half", directives.containsKey(10));
+        assertTrue("ramp begins after the token", directives.containsKey(18));
+    }
+
     /** A backslash in front of anything else is just a backslash. */
     @Test
     public void loneBackslashIsUntouched() {

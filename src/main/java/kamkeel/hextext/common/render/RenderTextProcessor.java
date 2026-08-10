@@ -113,12 +113,20 @@ public final class RenderTextProcessor {
                         int endRgb = ColorCodeUtils.parseHexColor(processed, i + 12);
                         if (startRgb != -1 && endRgb != -1) {
                             directives = ensureDirectiveMap(directives);
-                            directives.computeIfAbsent(directiveIndex, key -> new ArrayList<>())
-                                .add(RenderDirectiveImpl.setGradient(startRgb, endRgb,
-                                    countVisibleGlyphs(processed, gradientEnd)));
+                            final int span = countVisibleGlyphs(processed, gradientEnd);
                             if (rawMode) {
+                                // The token names two colours, so it wears them - and the
+                                // ramp starts after it rather than spending itself on the
+                                // code's own characters.
+                                addDirective(directives, directiveIndex, RenderDirectiveImpl.apply(startRgb, true));
+                                addDirective(directives, directiveIndex + SECOND_COLOR_OFFSET,
+                                    RenderDirectiveImpl.apply(endRgb, true));
                                 sanitized.append(processed, i, gradientEnd);
+                                addDirective(directives, sanitized.length(),
+                                    RenderDirectiveImpl.setGradient(startRgb, endRgb, span));
                             } else {
+                                addDirective(directives, directiveIndex,
+                                    RenderDirectiveImpl.setGradient(startRgb, endRgb, span));
                                 modified = true;
                             }
                             i = gradientEnd - 1;
@@ -239,6 +247,14 @@ public final class RenderTextProcessor {
      * Where {@code [&§]g[&§]#RRGGBB[&§]#RRGGBB} ends, or {@code -1}. Each marker is taken
      * as either spelling: the send conversion rewrites ampersands on the way out.
      */
+    /** Where a gradient token's second colour begins, from the token's own start. */
+    private static final int SECOND_COLOR_OFFSET = 10;
+
+    private static void addDirective(Map<Integer, List<RenderDirective>> directives, int index,
+        RenderDirective directive) {
+        directives.computeIfAbsent(index, key -> new ArrayList<>(2)).add(directive);
+    }
+
     private static int gradientTokenEnd(CharSequence text, int start) {
         if (start + 18 > text.length()) {
             return -1;
