@@ -39,8 +39,10 @@ public class HexTextConfigGui extends GuiConfig {
         if (this.entryList != null) {
             this.entryList.saveConfigElements();
         }
+        // Saved unconditionally: sync reloads from disk, so a change still sitting in
+        // memory would be read back off the old file and silently reverted.
         Configuration configuration = HexTextConfig.getConfiguration();
-        if (configuration != null && configuration.hasChanged()) {
+        if (configuration != null) {
             configuration.save();
         }
         HexTextConfig.sync();
