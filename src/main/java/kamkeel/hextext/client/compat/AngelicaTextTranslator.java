@@ -176,16 +176,14 @@ public final class AngelicaTextTranslator {
                         // Angelica carries styles through a colour where HexText clears
                         // them. Following its rules means emitting the colour alone;
                         // otherwise a reset goes first to restore HexText's.
-                        if (ColorCodeUtils.hexResetsStyles()) {
-                            if (activeStyles != null && activeStyles.length() > 0) {
-                                out.append(SECTION).append('r');
-                                activeStyles.setLength(0);
-                                waveActive = false;
-                                dinnerboneActive = false;
-                            } else {
-                                waveActive = closeWave(out, waveActive);
-                                dinnerboneActive = closeDinnerbone(out, dinnerboneActive);
-                            }
+                        // Wave and dinnerbone always end at a colour - HexText's own rule,
+                        // and Angelica would carry them otherwise. Styles are the flag's.
+                        waveActive = closeWave(out, waveActive);
+                        dinnerboneActive = closeDinnerbone(out, dinnerboneActive);
+                        if (ColorCodeUtils.hexResetsStyles() && activeStyles != null
+                            && activeStyles.length() > 0) {
+                            out.append(SECTION).append('r');
+                            activeStyles.setLength(0);
                         }
                         appendSectionX(out, rgb);
                         if (colorStack != null) {
@@ -365,16 +363,14 @@ public final class AngelicaTextTranslator {
                     if (rgb != -1) {
                         out = ensureOutput(out, text, i);
                         // A span opens with a colour, and follows the same rule as one.
-                        if (ColorCodeUtils.hexResetsStyles()) {
-                            if (activeStyles != null && activeStyles.length() > 0) {
-                                out.append(SECTION).append('r');
-                                activeStyles.setLength(0);
-                                waveActive = false;
-                                dinnerboneActive = false;
-                            } else {
-                                waveActive = closeWave(out, waveActive);
-                                dinnerboneActive = closeDinnerbone(out, dinnerboneActive);
-                            }
+                        // Wave and dinnerbone always end at a colour - HexText's own rule,
+                        // and Angelica would carry them otherwise. Styles are the flag's.
+                        waveActive = closeWave(out, waveActive);
+                        dinnerboneActive = closeDinnerbone(out, dinnerboneActive);
+                        if (ColorCodeUtils.hexResetsStyles() && activeStyles != null
+                            && activeStyles.length() > 0) {
+                            out.append(SECTION).append('r');
+                            activeStyles.setLength(0);
                         }
                         if (colorStack == null) {
                             colorStack = new ArrayDeque<>();
@@ -634,6 +630,11 @@ public final class AngelicaTextTranslator {
             appendStyles(out, activeStyles);
         } else {
             appendSectionX(out, restored);
+            // Closing a span keeps styles, so they are replayed wherever the colour that
+            // restores them clears them on the way past.
+            if (ColorCodeUtils.hexResetsStyles()) {
+                appendStyles(out, activeStyles);
+            }
         }
     }
 

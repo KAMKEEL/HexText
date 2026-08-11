@@ -90,11 +90,27 @@ public class AngelicaParityTest {
         }
     }
 
+    /**
+     * Both renderers agree under either formatting rule, so the setting cannot be what
+     * makes them diverge. Run over the same corpus and fuzz as the tests above.
+     */
+    @Test
+    public void bothFormattingRulesRenderIdentically() {
+        for (boolean vanillaReset : new boolean[] { false, true }) {
+            HexTextConfig.setVanillaReset(vanillaReset);
+            Random random = new Random(FUZZ_SEED);
+            for (int iteration = 0; iteration < FUZZ_ITERATIONS; iteration++) {
+                assertParity(generate(random));
+            }
+        }
+    }
+
     private static void assertParity(String input) {
         String translated = AngelicaTextTranslator.translate(input);
         List<String> expected = HexTextModel.render(input);
         List<String> actual = AngelicaModel.render(translated);
-        assertEquals("input: " + visible(input) + "\ntranslated: " + visible(translated), expected, actual);
+        assertEquals("input: " + visible(input) + "\ntranslated: " + visible(translated)
+            + "\nvanillaReset: " + HexTextConfig.isVanillaReset(), expected, actual);
     }
 
     private static String visible(String s) {
@@ -222,7 +238,12 @@ public class AngelicaParityTest {
                         continue;
                     }
                     if (ColorCodeUtils.isMinecraftColorCode(lower)) {
-                        applyColor(ColorMath.vanillaColorRgb(ColorCodeUtils.getMinecraftColorIndex(lower)));
+                        // A vanilla colour always clears styles, in both renderers. Only
+                        // hex follows the flag.
+                        color = ColorMath.vanillaColorRgb(ColorCodeUtils.getMinecraftColorIndex(lower));
+                        colorStack.clear();
+                        clearStyles();
+                        clearDynamicEffects();
                         i++;
                         continue;
                     }
@@ -266,7 +287,9 @@ public class AngelicaParityTest {
                         && ColorCodeUtils.isValidHexString(text, i + 1)) {
                         colorStack.push(color);
                         color = ColorCodeUtils.parseHexColor(text, i + 1);
-                        clearStyles();
+                        if (ColorCodeUtils.hexResetsStyles()) {
+                            clearStyles();
+                        }
                         clearDynamicEffects();
                         i += 7;
                         continue;
@@ -287,7 +310,9 @@ public class AngelicaParityTest {
         private void applyColor(int rgb) {
             color = rgb;
             colorStack.clear();
-            clearStyles();
+            if (ColorCodeUtils.hexResetsStyles()) {
+                clearStyles();
+            }
             clearDynamicEffects();
         }
     }
@@ -311,6 +336,11 @@ public class AngelicaParityTest {
 
                     if (lower == 'x' && isSectionX(text, i)) {
                         color = parseSectionX(text, i);
+                        // Angelica carries styles through a hex colour unless the mod that
+                        // owns the grammar says otherwise, which is what the flag decides.
+                        if (ColorCodeUtils.hexResetsStyles()) {
+                            clearStyles();
+                        }
                         rainbow = false;
                         ignite = false;
                         shake = false;
