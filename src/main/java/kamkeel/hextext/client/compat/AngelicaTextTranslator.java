@@ -36,6 +36,7 @@ public final class AngelicaTextTranslator {
     private static boolean lastGlyphEffects;
     private static boolean lastRaw;
     private static boolean lastAmpersandCodes;
+    private static boolean lastAngelicaRules;
 
     private AngelicaTextTranslator() {
     }
@@ -90,10 +91,11 @@ public final class AngelicaTextTranslator {
 
         boolean glyphEffects = AngelicaClientCompat.areGlyphEffectsRegistered();
         boolean ampersandCodes = AngelicaClientCompat.convertsAmpersandCodes();
+        boolean angelicaRules = ColorCodeUtils.followsAngelicaFormatting();
         // Every flag the output depends on is in the key: the chat line draws raw while
         // the history draws the same string normally.
         if (text == lastInput && glyphEffects == lastGlyphEffects && raw == lastRaw
-            && ampersandCodes == lastAmpersandCodes) {
+            && ampersandCodes == lastAmpersandCodes && angelicaRules == lastAngelicaRules) {
             return lastOutput;
         }
 
@@ -103,6 +105,7 @@ public final class AngelicaTextTranslator {
         lastGlyphEffects = glyphEffects;
         lastRaw = raw;
         lastAmpersandCodes = ampersandCodes;
+        lastAngelicaRules = angelicaRules;
         return translated;
     }
 

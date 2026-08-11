@@ -172,19 +172,30 @@ public final class StringUtils {
                 char firstChar = str.charAt(i);
                 String code = str.substring(i, i + codeLen);
 
+                // A hex colour clears styles under HexText's rules and carries them under
+                // Angelica's. The carry onto a wrapped line has to say the same thing the
+                // renderer will do, or bold stops at the line break.
+                boolean hexClearsStyles = ColorCodeUtils.hexResetsStyles();
+
                 if (codeLen == 8 && (firstChar == '&' || firstChar == 167)) {
                     currentColorCode = code;
                     colorStack.clear();
-                    styleCodes.setLength(0);
+                    if (hexClearsStyles) {
+                        styleCodes.setLength(0);
+                    }
                 } else if (codeLen == 8 && firstChar == '<') {
                     if (currentColorCode != null) {
                         colorStack.push(currentColorCode);
                     }
                     currentColorCode = code;
-                    styleCodes.setLength(0);
+                    if (hexClearsStyles) {
+                        styleCodes.setLength(0);
+                    }
                 } else if (codeLen == 9 && firstChar == '<') {
                     currentColorCode = colorStack.isEmpty() ? null : colorStack.pop();
-                    styleCodes.setLength(0);
+                    if (hexClearsStyles) {
+                        styleCodes.setLength(0);
+                    }
                 } else if (codeLen == 2) {
                     char fmt = Character.toLowerCase(str.charAt(i + 1));
 
