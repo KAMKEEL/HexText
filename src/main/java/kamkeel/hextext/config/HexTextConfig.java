@@ -104,7 +104,9 @@ public final class HexTextConfig {
             return;
         }
 
-        configuration.load();
+        // Deliberately no load() here. The constructor already read the file, and the
+        // config screen posts its change event while the new values are still only in
+        // memory - reloading at that point read the old file back over them.
 
         configuration.addCustomCategoryComment(CATEGORY_CLIENT,
             "Client-side preferences for HexText.");
