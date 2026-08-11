@@ -36,7 +36,7 @@ public final class AngelicaTextTranslator {
     private static boolean lastGlyphEffects;
     private static boolean lastRaw;
     private static boolean lastAmpersandCodes;
-    private static boolean lastAngelicaRules;
+    private static boolean lastVanillaReset;
 
     private AngelicaTextTranslator() {
     }
@@ -91,11 +91,11 @@ public final class AngelicaTextTranslator {
 
         boolean glyphEffects = AngelicaClientCompat.areGlyphEffectsRegistered();
         boolean ampersandCodes = AngelicaClientCompat.convertsAmpersandCodes();
-        boolean angelicaRules = ColorCodeUtils.followsAngelicaFormatting();
+        boolean vanillaReset = ColorCodeUtils.hexResetsStyles();
         // Every flag the output depends on is in the key: the chat line draws raw while
         // the history draws the same string normally.
         if (text == lastInput && glyphEffects == lastGlyphEffects && raw == lastRaw
-            && ampersandCodes == lastAmpersandCodes && angelicaRules == lastAngelicaRules) {
+            && ampersandCodes == lastAmpersandCodes && vanillaReset == lastVanillaReset) {
             return lastOutput;
         }
 
@@ -105,7 +105,7 @@ public final class AngelicaTextTranslator {
         lastGlyphEffects = glyphEffects;
         lastRaw = raw;
         lastAmpersandCodes = ampersandCodes;
-        lastAngelicaRules = angelicaRules;
+        lastVanillaReset = vanillaReset;
         return translated;
     }
 
@@ -176,7 +176,7 @@ public final class AngelicaTextTranslator {
                         // Angelica carries styles through a colour where HexText clears
                         // them. Following its rules means emitting the colour alone;
                         // otherwise a reset goes first to restore HexText's.
-                        if (!ColorCodeUtils.followsAngelicaFormatting()) {
+                        if (ColorCodeUtils.hexResetsStyles()) {
                             if (activeStyles != null && activeStyles.length() > 0) {
                                 out.append(SECTION).append('r');
                                 activeStyles.setLength(0);
@@ -365,7 +365,7 @@ public final class AngelicaTextTranslator {
                     if (rgb != -1) {
                         out = ensureOutput(out, text, i);
                         // A span opens with a colour, and follows the same rule as one.
-                        if (!ColorCodeUtils.followsAngelicaFormatting()) {
+                        if (ColorCodeUtils.hexResetsStyles()) {
                             if (activeStyles != null && activeStyles.length() > 0) {
                                 out.append(SECTION).append('r');
                                 activeStyles.setLength(0);

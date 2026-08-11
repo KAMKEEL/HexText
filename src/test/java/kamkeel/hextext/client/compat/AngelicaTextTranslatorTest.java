@@ -26,6 +26,8 @@ public class AngelicaTextTranslatorTest {
     public void setUp() {
         HexText.proxy = new CommonProxy();
         HexTextConfig.resetToDefaults();
+        // These cover HexText's own reset rules; the shipped default carries styles.
+        HexTextConfig.setVanillaReset(true);
         HexTextConfig.setUniversalAmpersandEnabled(true);
         HexTextConfig.setEnableRgbHtmlFormat(true);
         AngelicaClientCompat.setGlyphEffectsRegistered(false);
@@ -309,7 +311,7 @@ public class AngelicaTextTranslatorTest {
      */
     @Test
     public void angelicaRulesKeepStylesThroughAColour() {
-        HexTextConfig.setFollowAngelicaFormatting(true);
+        HexTextConfig.setVanillaReset(false);
         AngelicaCompatibility.setAngelicaFontRendererActive(true);
         try {
             assertEquals("§lBold§x§f§f§0§0§0§0Red", AngelicaTextTranslator.translate("&lBold&#FF0000Red"));
@@ -321,7 +323,7 @@ public class AngelicaTextTranslatorTest {
     /** Turned off, HexText's own rules apply and a colour clears what came before. */
     @Test
     public void hexTextRulesClearStylesAtAColour() {
-        HexTextConfig.setFollowAngelicaFormatting(false);
+        HexTextConfig.setVanillaReset(true);
         AngelicaCompatibility.setAngelicaFontRendererActive(true);
         try {
             assertEquals("§lBold§r§x§f§f§0§0§0§0Red", AngelicaTextTranslator.translate("&lBold&#FF0000Red"));

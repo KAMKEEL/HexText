@@ -15,6 +15,8 @@ public class StringUtilsTest {
     public void setUp() {
         HexText.proxy = new CommonProxy();
         HexTextConfig.resetToDefaults();
+        // These cover HexText's own reset rules; the shipped default carries styles.
+        HexTextConfig.setVanillaReset(true);
         HexTextConfig.setUniversalAmpersandEnabled(true);
         HexTextConfig.setEnableRgbHtmlFormat(true);
     }

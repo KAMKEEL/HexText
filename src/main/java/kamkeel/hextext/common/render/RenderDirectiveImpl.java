@@ -1,6 +1,7 @@
 package kamkeel.hextext.common.render;
 
 import kamkeel.hextext.api.rendering.RenderDirective;
+import kamkeel.hextext.common.util.ColorCodeUtils;
 
 /**
  * Represents a deferred colour-stack or formatting action emitted by the render pre-processor.
@@ -56,12 +57,15 @@ public final class RenderDirectiveImpl implements RenderDirective {
         this.resetFormatting = resetFormatting;
     }
 
+    /** Whether a colour clears styles is the reader's choice; every renderer reads the same call. */
     public static RenderDirective apply(int rgb, boolean clearStack) {
-        return new RenderDirectiveImpl(Type.APPLY_RGB, rgb, clearStack, 0, false, true);
+        return new RenderDirectiveImpl(Type.APPLY_RGB, rgb, clearStack, 0, false,
+            ColorCodeUtils.hexResetsStyles());
     }
 
     public static RenderDirective push(int rgb) {
-        return new RenderDirectiveImpl(Type.PUSH_RGB, rgb, false, 0, false, true);
+        return new RenderDirectiveImpl(Type.PUSH_RGB, rgb, false, 0, false,
+            ColorCodeUtils.hexResetsStyles());
     }
 
     public static RenderDirective pop() {

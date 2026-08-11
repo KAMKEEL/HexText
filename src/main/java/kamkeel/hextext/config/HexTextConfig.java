@@ -29,7 +29,7 @@ public final class HexTextConfig {
     private static final boolean DEFAULT_CHAT_AMPERSAND_CONVERSION = true;
     private static final boolean DEFAULT_SIGN_AMPERSAND_CONVERSION = true;
     private static final boolean DEFAULT_REPAIR_AMPERSAND_CONVERSION = true;
-    private static final boolean DEFAULT_FOLLOW_ANGELICA_FORMATTING = true;
+    private static final boolean DEFAULT_VANILLA_RESET = false;
 
     private static final boolean DEFAULT_REQUIRE_SNEAK_TO_EDIT_SIGN = false;
 
@@ -78,7 +78,7 @@ public final class HexTextConfig {
     private static boolean chatAmpersandConversion = DEFAULT_CHAT_AMPERSAND_CONVERSION;
     private static boolean signAmpersandConversion = DEFAULT_SIGN_AMPERSAND_CONVERSION;
     private static boolean repairAmpersandConversion = DEFAULT_REPAIR_AMPERSAND_CONVERSION;
-    private static boolean followAngelicaFormatting = DEFAULT_FOLLOW_ANGELICA_FORMATTING;
+    private static boolean vanillaReset = DEFAULT_VANILLA_RESET;
 
     private static boolean requireSneakToEditSign = DEFAULT_REQUIRE_SNEAK_TO_EDIT_SIGN;
 
@@ -172,13 +172,13 @@ public final class HexTextConfig {
             "Allow & as an alternative to the section sign when entering formatting codes."
         );
 
-        followAngelicaFormatting = configuration.getBoolean(
-            "followAngelicaFormatting",
+        vanillaReset = configuration.getBoolean(
+            "vanillaReset",
             CATEGORY_CLIENT,
-            DEFAULT_FOLLOW_ANGELICA_FORMATTING,
-            "Use Angelica's formatting rules where its font renderer is drawing, so a colour "
-                + "carries bold and its kin instead of clearing them. Off applies HexText's own "
-                + "rules everywhere. No effect without Angelica."
+            DEFAULT_VANILLA_RESET,
+            "Let a colour clear bold, italic and the other styles, the way vanilla colour codes "
+                + "do. Off carries them through, which is how Angelica draws hex colours. Applies "
+                + "to every renderer HexText draws with, so the result is the same either way."
         );
 
         chatAmpersandConversion = configuration.getBoolean(
@@ -268,8 +268,8 @@ public final class HexTextConfig {
         return universalAmpersand;
     }
 
-    public static boolean isFollowAngelicaFormatting() {
-        return followAngelicaFormatting;
+    public static boolean isVanillaReset() {
+        return vanillaReset;
     }
 
     public static boolean isChatAmpersandConversionEnabled() {
@@ -324,8 +324,8 @@ public final class HexTextConfig {
         universalAmpersand = enabled;
     }
 
-    public static void setFollowAngelicaFormatting(boolean enabled) {
-        followAngelicaFormatting = enabled;
+    public static void setVanillaReset(boolean enabled) {
+        vanillaReset = enabled;
     }
 
     public static void setChatAmpersandConversionEnabled(boolean enabled) {
@@ -355,7 +355,7 @@ public final class HexTextConfig {
         chatAmpersandConversion = DEFAULT_CHAT_AMPERSAND_CONVERSION;
         signAmpersandConversion = DEFAULT_SIGN_AMPERSAND_CONVERSION;
         repairAmpersandConversion = DEFAULT_REPAIR_AMPERSAND_CONVERSION;
-        followAngelicaFormatting = DEFAULT_FOLLOW_ANGELICA_FORMATTING;
+        vanillaReset = DEFAULT_VANILLA_RESET;
         requireSneakToEditSign = DEFAULT_REQUIRE_SNEAK_TO_EDIT_SIGN;
         enableGlowstoneDustGlow = DEFAULT_GLOWSTONE_DUST_GLOW;
         enableRedstoneDustOutline = DEFAULT_REDSTONE_DUST_OUTLINE;

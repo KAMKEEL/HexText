@@ -144,18 +144,13 @@ public final class ColorCodeUtils {
     }
 
     /**
-     * Whether Angelica's formatting rules apply. They differ from HexText's - a colour
-     * carries styles there rather than clearing them - and only matter where Angelica's
-     * renderer is the one drawing. Configurable, since it is a choice rather than a fact.
+     * Whether a colour clears bold and its kin, as vanilla colour codes do. Off carries
+     * them through, which is how Angelica draws hex. Deliberately not gated on which
+     * renderer is present: every renderer and every width walker reads this one call, so
+     * the same string looks the same in every configuration.
      */
-    public static boolean followsAngelicaFormatting() {
-        return AngelicaCompatibility.isAngelicaFontRendererActive()
-            && HexTextConfig.isFollowAngelicaFormatting();
-    }
-
-    /** Whether a hex colour clears bold and its kin, which is HexText's own rule. */
     public static boolean hexResetsStyles() {
-        return !followsAngelicaFormatting();
+        return HexTextConfig.isVanillaReset();
     }
 
     /** {@code [&§]g[&§]#RRGGBB[&§]#RRGGBB}, under any mix of spellings. */
